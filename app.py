@@ -160,3 +160,9 @@ try:
         else:
             # Posisi 'else' HARUS sejajar lurus ke atas dengan huruf 'i' pada 'if'
             st.warning("⚠️ Tidak ada data yang cocok dengan kombinasi filter Anda.")
+# ==========================================
+# PENUTUP TRY-EXCEPT (WAJIB ADA DI PALING BAWAH & RATA KIRI)
+# ==========================================
+except Exception as e:
+    st.error("Gagal memuat atau memproses data dari Google Sheets.")
+    st.error(f"Detail Error Teknis: {e}")
