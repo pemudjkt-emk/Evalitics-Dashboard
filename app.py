@@ -3,10 +3,6 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-import streamlit as st
-import pandas as pd
-import plotly.express as px
-
 # 1. Konfigurasi Awal
 st.set_page_config(page_title="Analytics Center PLN", layout="wide")
 
