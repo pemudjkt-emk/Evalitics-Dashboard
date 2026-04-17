@@ -20,7 +20,7 @@ st.write("Dashboard interaktif untuk menganalisis data evaluasi pembelajaran.")
 st.markdown("---")
 
 # MENAMBAHKAN TOMBOL REFRESH INTERNAL
-col_button, col_empty = st.columns([2, 4])
+col_button, col_empty = st.columns([0.5, 4])
 with col_button:
     # Jika tombol diklik, Streamlit akan otomatis memuat ulang halaman
     if st.button("🔄 Perbarui Data", use_container_width=True):
