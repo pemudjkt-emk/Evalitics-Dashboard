@@ -140,13 +140,22 @@ try:
 
     col_left, col_mid, col_right = st.columns([1.2, 1, 1.2], gap="large")
 
-    # FILTER DASHBOARD
+    # Eksekusi penarikan data
+    df = load_data(url)
+    
+    if st.button("🔄 Perbarui Data Sekarang"):
+        st.cache_data.clear()
+        st.rerun()
+        
+    st.markdown("<h2 style='text-align: center; color: #0B5394;'>OVERVIEW EVALUASI LEVEL 1 & 2 UPDL JAKARTA</h2>", unsafe_allow_html=True)
+    st.markdown("---")
+
     # ==========================================
-    # Membagi layout menjadi 4 kolom (3 untuk filter, 1 untuk ruang kosong di kanan agar tidak terlalu lebar)
+    # FILTER DASHBOARD (Pastikan posisinya menjorok ke dalam / di dalam try)
+    # ==========================================
     col_f1, col_f2, col_f3, _ = st.columns([2, 2, 2, 4]) 
     
     with col_f1:
-        # Mengambil nilai unik dari kolom untuk pilihan dropdown, ditambah opsi "Semua" di urutan pertama
         opsi_bulan = ["Semua Bulan"] + list(df['Laporan Bulan'].dropna().unique())
         filter_bulan = st.selectbox("Laporan Bulan", opsi_bulan)
 
@@ -157,4 +166,20 @@ try:
     with col_f3:
         opsi_validitas = ["Semua"] + list(df['% Valid'].dropna().unique())
         filter_validitas = st.selectbox("Validitas", opsi_validitas)
-st.markdown("<br>", unsafe_allow_html=True) # Memberi sedikit jarak/spasi ke bawah
+
+    st.markdown("<br>", unsafe_allow_html=True) 
+
+    # ==========================================
+    # TATA LETAK GRAFIK BAWAHNYA
+    # ==========================================
+    col_left, col_mid, col_right = st.columns([1.2, 1, 1.2], gap="large")
+    
+    # ... (lanjutan kode with col_left:, with col_mid:, dst) ...
+
+
+# ==========================================
+# BAGIAN EXCEPT (Ini WAJIB ada di PALING BAWAH dan sejajar dengan kata 'try' di atas)
+# ==========================================
+except Exception as e:
+    st.error("Gagal menarik data dari Google Sheets. Pastikan akses file masih diatur ke 'Anyone with the link'.")
+    st.error(f"Detail Error: {e}")
