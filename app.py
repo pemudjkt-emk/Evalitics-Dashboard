@@ -140,46 +140,22 @@ try:
 
     col_left, col_mid, col_right = st.columns([1.2, 1, 1.2], gap="large")
 
-    # ------------------------------------------
-    # KOLOM KIRI (Contoh Integrasi Scatter Plot Asli)
-    # ------------------------------------------
-    with col_left:
-        st.markdown("<h5 style='text-align: center;'>Korelasi Post-test & Kepuasan (Data Live)</h5>", unsafe_allow_html=True)
-        
-        # PENTING: Ganti 'Skor Post-test (X)' dan 'Skor Kepuasan (Y)' 
-        # sesuai dengan NAMA KOLOM ASLI di header Google Sheets Anda!
-        try:
-            fig_scatter_asli = px.scatter(
-                df, 
-                x="Skor Post-test (X)", 
-                y="Skor Kepuasan (Y)", 
-                trendline="ols", # Menambahkan garis regresi linier
-                title="Sebaran Titik Data Evaluasi"
-            )
-            st.plotly_chart(fig_scatter_asli, use_container_width=True)
-        except Exception as e_col:
-            st.warning(f"Grafik gagal dimuat. Pastikan nama kolom di skrip sama persis dengan di Google Sheets. Detail: {e_col}")
+    # FILTER DASHBOARD
+    # ==========================================
+    # Membagi layout menjadi 4 kolom (3 untuk filter, 1 untuk ruang kosong di kanan agar tidak terlalu lebar)
+    col_f1, col_f2, col_f3, _ = st.columns([2, 2, 2, 4]) 
+    
+    with col_f1:
+        # Mengambil nilai unik dari kolom untuk pilihan dropdown, ditambah opsi "Semua" di urutan pertama
+        opsi_bulan = ["Semua Bulan"] + list(df['Laporan Bulan'].dropna().unique())
+        filter_bulan = st.selectbox("Laporan Bulan", opsi_bulan)
 
-    # ------------------------------------------
-    # KOLOM TENGAH (Hitungan Dinamis)
-    # ------------------------------------------
-    with col_mid:
-        st.markdown("<h6 style='text-align: center;'>Status Rata-Rata</h6>", unsafe_allow_html=True)
-        
-        # Contoh menghitung rata-rata secara dinamis dari DataFrame (df)
-        try:
-            rata_kepuasan = df["Skor Kepuasan (Y)"].mean()
-            st.metric(label="Rata-Rata Kepuasan (Level 1)", value=round(rata_kepuasan, 2))
-        except:
-            st.metric(label="Rata-Rata Kepuasan (Level 1)", value="Data tidak valid")
+    with col_f2:
+        opsi_strategi = ["Semua Strategi"] + list(df['Strategi Pelaksanaan'].dropna().unique())
+        filter_strategi = st.selectbox("Strategi Pelaksanaan", opsi_strategi)
 
-    # ------------------------------------------
-    # KOLOM KANAN (Tempatkan Grafik Dummy Lainnya)
-    # ------------------------------------------
-    with col_right:
-        st.info("Visualisasi lain di sini dapat disesuaikan dengan kolom-kolom baru yang Anda tambahkan di Google Sheets nantinya.")
-        # Anda bisa memindahkan template bar chart / gauge chart dari skrip sebelumnya ke sini.
+    with col_f3:
+        opsi_validitas = ["Semua"] + list(df['% Valid'].dropna().unique())
+        filter_validitas = st.selectbox("Validitas", opsi_validitas)
 
-except Exception as e:
-    st.error("Gagal menarik data dari Google Sheets. Pastikan akses file masih diatur ke 'Anyone with the link'.")
-    st.error(f"Detail Error: {e}")
+    st.markdown("<br>", unsafe_allow_html=True) # Memberi sedikit jarak/spasi ke bawah
