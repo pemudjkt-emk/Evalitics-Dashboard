@@ -27,19 +27,43 @@ try:
     # ISI TAB 1: ANALISA KORELASI
     # ==========================================
     with tab_korelasi:
-        st.header("Analisis Hubungan Variabel")
-        
-        # Masukkan kode filter dan scatter plot Anda di sini
-        kolom_numeric = df.select_dtypes(include=['number']).columns
-        
-        c1, c2 = st.columns(2)
-        with c1:
-            var_x = st.selectbox("Pilih Variabel X", kolom_numeric, key="x_corr")
-        with c2:
-            var_y = st.selectbox("Pilih Variabel Y", kolom_numeric, key="y_corr")
-            
-        fig = px.scatter(df, x=var_x, y=var_y, trendline="ols")
-        st.plotly_chart(fig, use_container_width=True)
+    import streamlit as st
+import pandas as pd
+
+# Konfigurasi Halaman & Judul (Sesuaikan dengan milik Anda)
+st.set_page_config(page_title="Smart Evaluation Analytics", page_icon="⚡", layout="wide")
+
+col_logo, col_judul = st.columns([1, 8])
+with col_logo:
+    # Asumsi Anda menggunakan logo PLN lokal seperti langkah sebelumnya
+    st.image("logo_pln.png", width=80) 
+with col_judul:
+    st.title("Smart Evaluation Analytics")
+st.write("Dashboard interaktif untuk menganalisis korelasi data evaluasi pembelajaran.")
+st.markdown("---")
+
+# ==========================================
+# 1. MENAMBAHKAN TOMBOL REFRESH INTERNAL
+# ==========================================
+# Membuat kolom agar tombol tidak terlalu lebar
+col_button, col_empty = st.columns([2, 8])
+
+with col_button:
+    # Jika tombol diklik, Streamlit akan otomatis memuat ulang halaman
+    if st.button("🔄 Perbarui Data Sekarang", use_container_width=True):
+        st.toast("Menarik data terbaru dari Google Sheets...") # Memunculkan notifikasi pop-up kecil
+
+# ==========================================
+# 2. PENARIKAN DATA GOOGLE SHEETS
+# ==========================================
+sheet_id = '1RitrlhPmYvxAax2gmZHyhyLX5a8j4xEjwpytlBMxvs8'
+url = f'https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv'
+
+try:
+    df = pd.read_csv(url)
+    
+    st.subheader("📋 Data Evaluasi Mentah")
+    st.dataframe(df, use_container_width=True)
 
     # ==========================================
     # ISI TAB 2: DASHBOARD
