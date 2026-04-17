@@ -19,6 +19,14 @@ with col_judul:
 st.write("Dashboard interaktif untuk menganalisis data evaluasi pembelajaran.")
 st.markdown("---")
 
+# MENAMBAHKAN TOMBOL REFRESH INTERNAL
+col_button, col_empty = st.columns([2, 8])
+with col_button:
+    # Jika tombol diklik, Streamlit akan otomatis memuat ulang halaman
+    if st.button("🔄 Perbarui Data Sekarang", use_container_width=True):
+        st.toast("Menarik data terbaru dari Google Sheets...") # Memunculkan notifikasi pop-up kecil
+
+
 # 2. Menarik Data dari Google Sheets Anda
 # ID ini diambil dari link yang Anda berikan
 sheet_id = '1RitrlhPmYvxAax2gmZHyhyLX5a8j4xEjwpytlBMxvs8'
@@ -82,3 +90,5 @@ try:
 except Exception as e:
     st.error("Gagal memuat data. Pastikan akses Google Sheets sudah diubah menjadi 'Anyone with the link can view'.")
     st.error(f"Detail Error Teknis: {e}")
+
+# MENAMBAHKAN TOMBOL REFRESH INTERNAL
