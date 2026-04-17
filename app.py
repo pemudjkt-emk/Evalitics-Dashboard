@@ -157,5 +157,3 @@ try:
     with col_f3:
         opsi_validitas = ["Semua"] + list(df['% Valid'].dropna().unique())
         filter_validitas = st.selectbox("Validitas", opsi_validitas)
-
-    st.markdown("<br>", unsafe_allow_html=True) # Memberi sedikit jarak/spasi ke bawah
