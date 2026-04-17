@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from scipy import stats # Library baru untuk uji normalitas
+from scipy import stats
 
 # 1. Konfigurasi Halaman Dashboard
 st.set_page_config(page_title="Smart Evaluation Analytics UPDL Jakarta", page_icon="⚡", layout="wide")
@@ -11,6 +11,7 @@ st.set_page_config(page_title="Smart Evaluation Analytics UPDL Jakarta", page_ic
 col_logo, col_judul = st.columns([2, 8])
 
 with col_logo:
+    # GANTI URL/NAMA FILE dengan logo lokal Anda jika ada
     st.image("Logo PLN.png", width=260)
 
 with col_judul:
@@ -25,26 +26,27 @@ with col_button:
         st.toast("Menarik data terbaru dari Google Sheets...") 
 
 # ==========================================
-# 2. INISIALISASI TABS
+# MENARIK DATA (Global untuk semua tab)
 # ==========================================
-tab_statistik, tab_dashboard = st.tabs(["Analisa Statistik", "Dashboard"])
+sheet_id = '1RitrlhPmYvxAax2gmZHyhyLX5a8j4xEjwpytlBMxvs8'
+url = f'https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv'
 
-# ==========================================
-# 3. ISI TAB 1: ANALISA STATISTIK
-# ==========================================
-with tab_statistik:
-    
-    sheet_id = '1RitrlhPmYvxAax2gmZHyhyLX5a8j4xEjwpytlBMxvs8'
-    url = f'https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv'
+try:
+    df = pd.read_csv(url)
+    kolom_tersedia = df.columns.tolist()
 
-    try:
-        df = pd.read_csv(url)
-        
+    # ==========================================
+    # INISIALISASI TABS
+    # ==========================================
+    tab_statistik, tab_dashboard = st.tabs(["Analisa Statistik", "Dashboard"])
+
+    # ==========================================
+    # ISI TAB 1: ANALISA STATISTIK
+    # ==========================================
+    with tab_statistik:
         st.subheader("📋 Data Evaluasi Mentah")
         st.dataframe(df, use_container_width=True)
 
-        kolom_tersedia = df.columns.tolist()
-        
         st.markdown("### 🔍 Pengaturan Analisis Korelasi")
         col1, col2 = st.columns(2)
         with col1:
@@ -56,98 +58,93 @@ with tab_statistik:
 
         if pd.api.types.is_numeric_dtype(df[var_x]) and pd.api.types.is_numeric_dtype(df[var_y]):
             
-            # ==========================================
-            # FITUR BARU: PRA-PEMROSESAN & UJI ASUMSI
-            # ==========================================
             st.markdown("### 🛠️ Pra-Pemrosesan & Uji Asumsi")
-            
-            # Checkbox interaktif
             hapus_outlier = st.checkbox("🧹 Buang Data Pencilan (Outlier) menggunakan metode IQR")
             uji_normalitas = st.checkbox("⚖️ Uji Distribusi Normal (Shapiro-Wilk Test)")
             
-            # Membuat salinan dataframe agar data asli tidak rusak
             df_clean = df.copy()
 
-            # Logika Hapus Outlier
             if hapus_outlier:
-                # Hitung Batas IQR untuk Variabel X
                 Q1_x = df_clean[var_x].quantile(0.25)
                 Q3_x = df_clean[var_x].quantile(0.75)
                 IQR_x = Q3_x - Q1_x
                 batas_bawah_x = Q1_x - 1.5 * IQR_x
                 batas_atas_x = Q3_x + 1.5 * IQR_x
 
-                # Hitung Batas IQR untuk Variabel Y
                 Q1_y = df_clean[var_y].quantile(0.25)
                 Q3_y = df_clean[var_y].quantile(0.75)
                 IQR_y = Q3_y - Q1_y
                 batas_bawah_y = Q1_y - 1.5 * IQR_y
                 batas_atas_y = Q3_y + 1.5 * IQR_y
 
-                # Filter data yang masuk akal (bukan outlier)
                 df_clean = df_clean[(df_clean[var_x] >= batas_bawah_x) & (df_clean[var_x] <= batas_atas_x)]
                 df_clean = df_clean[(df_clean[var_y] >= batas_bawah_y) & (df_clean[var_y] <= batas_atas_y)]
-                
-                st.success(f"Berhasil! Tersisa **{len(df_clean)}** baris data dari total awal {len(df)} baris (Outlier telah dihapus).")
+                st.success(f"Tersisa **{len(df_clean)}** baris data setelah Outlier dihapus.")
 
-            # Logika Uji Normalitas
             if uji_normalitas:
-                # Drop NA agar perhitungan shapiro tidak error jika ada sel kosong
                 stat_x, p_value_x = stats.shapiro(df_clean[var_x].dropna())
                 stat_y, p_value_y = stats.shapiro(df_clean[var_y].dropna())
                 
-                st.write("**Hasil Uji Shapiro-Wilk (Syarat Normal p-value > 0.05):**")
                 col_n1, col_n2 = st.columns(2)
-                
                 with col_n1:
-                    if p_value_x > 0.05:
-                        st.info(f"✅ {var_x}: Berdistribusi Normal (p = {p_value_x:.3f})")
-                    else:
-                        st.error(f"❌ {var_x}: Tidak Normal (p = {p_value_x:.3f})")
-                        
+                    if p_value_x > 0.05: st.info(f"✅ {var_x}: Normal (p = {p_value_x:.3f})")
+                    else: st.error(f"❌ {var_x}: Tidak Normal (p = {p_value_x:.3f})")
                 with col_n2:
-                    if p_value_y > 0.05:
-                        st.info(f"✅ {var_y}: Berdistribusi Normal (p = {p_value_y:.3f})")
-                    else:
-                        st.error(f"❌ {var_y}: Tidak Normal (p = {p_value_y:.3f})")
+                    if p_value_y > 0.05: st.info(f"✅ {var_y}: Normal (p = {p_value_y:.3f})")
+                    else: st.error(f"❌ {var_y}: Tidak Normal (p = {p_value_y:.3f})")
             
             st.markdown("---")
-            st.markdown("### 📈 Hasil Analisis Korelasi")
-
-            # Analisis Korelasi Pearson (Menggunakan df_clean yang sudah dibersihkan)
             korelasi = df_clean[var_x].corr(df_clean[var_y])
             
             col3, col4 = st.columns([1, 2])
-            
             with col3:
                 st.metric(label="Koefisien Korelasi (r)", value=round(korelasi, 3))
-                
-                if korelasi > 0.7:
-                    st.success("Interpretasi: Hubungan Positif SANGAT KUAT.")
-                elif korelasi > 0.3:
-                    st.info("Interpretasi: Hubungan Positif MODERAT.")
-                elif korelasi > 0:
-                    st.info("Interpretasi: Hubungan Positif LEMAH.")
-                elif korelasi < -0.3:
-                    st.warning("Interpretasi: Hubungan Negatif.")
-                else:
-                    st.warning("Interpretasi: Tidak terdapat hubungan linier yang berarti.")
-                    
             with col4:
-                # Visualisasi Sebaran menggunakan data yang sudah bersih
                 st.write(f"**Sebaran Titik Data (Clean): {var_x} vs {var_y}**")
                 st.scatter_chart(data=df_clean, x=var_x, y=var_y)
-                
         else:
             st.error(f"⚠️ Analisis terhenti: Kolom bukan format angka.")
 
-    except Exception as e:
-        st.error("Gagal memuat atau memproses data.")
-        st.error(f"Detail Error: {e}")
+    # ==========================================
+    # ISI TAB 2: DASHBOARD
+    # ==========================================
+    with tab_dashboard:
+        st.subheader("📊 Dashboard Utama")
+        
+        # 1. Menarik pilihan unik langsung dari spreadsheet
+        opsi_bulan = ["Semua Bulan"] + list(df['Laporan Bulan'].dropna().unique())
+        opsi_strategi = ["Semua Strategi"] + list(df['Strategi Pelaksanaan'].dropna().unique())
+        opsi_valid = ["Semua Status"] + list(df['% Valid'].dropna().unique())
 
-# ==========================================
-# 4. ISI TAB 2: DASHBOARD
-# ==========================================
-with tab_dashboard:
-    st.subheader("📊 Dashboard Utama")
-    st.info("Ruang ini siap digunakan untuk elemen Dashboard visual Anda.")
+        # 2. Membuat layout 3 kolom sejajar, disisakan 1 kolom kosong di kanan agar merapat ke kiri
+        col_f1, col_f2, col_f3, col_kosong = st.columns([2, 2, 2, 4])
+
+        with col_f1:
+            filter_bulan = st.selectbox("Laporan Bulanan", opsi_bulan)
+        with col_f2:
+            filter_strategi = st.selectbox("Strategi Pelaksanaan", opsi_strategi)
+        with col_f3:
+            filter_valid = st.selectbox("Validitas", opsi_valid)
+
+        st.markdown("---")
+
+        # 3. Logika Filter Data
+        df_filtered = df.copy() # Gunakan data duplikat agar data asli tidak rusak
+
+        if filter_bulan != "Semua Bulan":
+            df_filtered = df_filtered[df_filtered['Laporan Bulan'] == filter_bulan]
+            
+        if filter_strategi != "Semua Strategi":
+            df_filtered = df_filtered[df_filtered['Strategi Pelaksanaan'] == filter_strategi]
+            
+        if filter_valid != "Semua Status":
+            df_filtered = df_filtered[df_filtered['% Valid'] == filter_valid]
+
+        # 4. Menampilkan hasil data yang sudah difilter sementara
+        st.success(f"Menampilkan **{len(df_filtered)}** baris data berdasarkan filter yang dipilih.")
+        st.dataframe(df_filtered, use_container_width=True)
+
+# PENTING: Penutup dari "try:" harus sejajar di sebelah kiri
+except Exception as e:
+    st.error("Gagal memuat atau memproses data. Pastikan nama kolom di skrip sama persis dengan di Sheets.")
+    st.error(f"Detail Error Teknis: {e}")
