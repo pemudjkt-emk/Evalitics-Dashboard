@@ -5,7 +5,7 @@ import pandas as pd
 st.set_page_config(page_title="Smart Evaluation Analytics UPDL Jakarta", page_icon="⚡", layout="wide")
 
 # Membuat 2 kolom dengan rasio lebar 1 : 8
-col_logo, col_judul = st.columns([1, 8])
+col_logo, col_judul = st.columns([0.5, 8])
 
 with col_logo:
    # GANTI URL dengan NAMA FILE lokal Anda. 
