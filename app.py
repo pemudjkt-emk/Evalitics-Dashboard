@@ -135,9 +135,28 @@ try:
         if filter_valid != "Semua Status":
             df_filtered = df_filtered[df_filtered['% Valid'] == filter_valid]
 
-        # ==========================================
+       # ==========================================
         # FITUR BARU: SCORECARD / KPI METRICS
         # ==========================================
         if not df_filtered.empty:
+            # BAGIAN INI HARUS MENJOROK KE DALAM (Tekan Tab 1x dari posisi 'if')
             # Mengagregasi angka dari data yang sudah difilter
-            # Gunakan .mean() untuk rata-rata skor, dan .sum() untuk
+            # Gunakan .mean() untuk rata-rata skor, dan .sum() untuk menjumlahkan indikator
+            skor_evaluasi = df_filtered['rata-rata keseluruhan'].mean()
+            ind_kurang = df_filtered['Jumlah Indikator dibawah 4.5'].sum()
+            ind_lebih = df_filtered['Jumlah Indikator diatas 4.5'].sum()
+
+            # Membuat 3 kolom sejajar untuk Scorecard
+            col_kpi1, col_kpi2, col_kpi3 = st.columns(3)
+            
+            with col_kpi1:
+                # BAGIAN INI MENJOROK LAGI (Tekan Tab di bawah 'with')
+                st.metric(label="🌟 Skor Evaluasi Level 1", value=f"{skor_evaluasi:.2f}")
+            with col_kpi2:
+                st.metric(label="⚠️ Indikator < 4.5", value=int(ind_kurang))
+            with col_kpi3:
+                st.metric(label="✅ Indikator > 4.5", value=int(ind_lebih))
+        
+        else:
+            # Posisi 'else' HARUS sejajar lurus ke atas dengan huruf 'i' pada 'if'
+            st.warning("⚠️ Tidak ada data yang cocok dengan kombinasi filter Anda.")
