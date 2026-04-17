@@ -92,3 +92,37 @@ try:
 except Exception as e:
     st.error("Gagal memuat data. Pastikan akses Google Sheets sudah diubah menjadi 'Anyone with the link can view'.")
     st.error(f"Detail Error Teknis: {e}")
+
+# ==========================================
+    # FILTER DASHBOARD (Pastikan posisinya menjorok ke dalam / di dalam try)
+    # ==========================================
+    col_f1, col_f2, col_f3, _ = st.columns([2, 2, 2, 4]) 
+    
+    with col_f1:
+        opsi_bulan = ["Semua Bulan"] + list(df['Laporan Bulan'].dropna().unique())
+        filter_bulan = st.selectbox("Laporan Bulan", opsi_bulan)
+
+    with col_f2:
+        opsi_strategi = ["Semua Strategi"] + list(df['Strategi Pelaksanaan'].dropna().unique())
+        filter_strategi = st.selectbox("Strategi Pelaksanaan", opsi_strategi)
+
+    with col_f3:
+        opsi_validitas = ["Semua"] + list(df['% Valid'].dropna().unique())
+        filter_validitas = st.selectbox("Validitas", opsi_validitas)
+
+    st.markdown("<br>", unsafe_allow_html=True) 
+
+    # ==========================================
+    # TATA LETAK GRAFIK BAWAHNYA
+    # ==========================================
+    col_left, col_mid, col_right = st.columns([1.2, 1, 1.2], gap="large")
+    
+    # ... (lanjutan kode with col_left:, with col_mid:, dst) ...
+
+
+# ==========================================
+# BAGIAN EXCEPT (Ini WAJIB ada di PALING BAWAH dan sejajar dengan kata 'try' di atas)
+# ==========================================
+except Exception as e:
+    st.error("Gagal menarik data dari Google Sheets. Pastikan akses file masih diatur ke 'Anyone with the link'.")
+    st.error(f"Detail Error: {e}")
