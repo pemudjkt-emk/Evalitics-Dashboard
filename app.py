@@ -142,7 +142,7 @@ try:
             # BAGIAN INI HARUS MENJOROK KE DALAM (Tekan Tab 1x dari posisi 'if')
             # Mengagregasi angka dari data yang sudah difilter
             # Gunakan .mean() untuk rata-rata skor, dan .sum() untuk menjumlahkan indikator
-            skor_evaluasi = df_filtered['rata-rata keseluruhan'].mean()
+            skor_evaluasi = df_filtered['RATA-RATA KESELURUHAN'].mean()
             ind_kurang = df_filtered['Jumlah Indikator dibawah 4.5'].sum()
             ind_lebih = df_filtered['Jumlah Indikator diatas 4.5'].sum()
 
