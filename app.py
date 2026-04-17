@@ -2,8 +2,20 @@ import streamlit as st
 import pandas as pd
 
 # 1. Konfigurasi Halaman Dashboard
-st.set_page_config(page_title="Smart Evaluation Analytics", layout="wide")
-st.title("📊 Smart Evaluation Analytics UPDL Jakarta")
+st.set_page_config(page_title="Smart Evaluation Analytics", page_icon="⚡", layout="wide")
+
+# Membuat 2 kolom dengan rasio lebar 1 : 8
+col_logo, col_judul = st.columns([1, 8])
+
+with col_logo:
+    # Menaruh logo di kolom pertama
+    url_logo_pln = "https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Logo_PLN.png/320px-Logo_PLN.png"
+    st.image(url_logo_pln, width=80)
+
+with col_judul:
+    # Menaruh judul di kolom kedua
+    st.title("Smart Evaluation Analytics UPDL JAKARTA")
+
 st.write("Dashboard interaktif untuk menganalisis data evaluasi pembelajaran.")
 st.markdown("---")
 
