@@ -10,7 +10,7 @@ col_logo, col_judul = st.columns([1, 8])
 with col_logo:
    # GANTI URL dengan NAMA FILE lokal Anda. 
     # Pastikan nama file dan ekstensinya (.png/.jpg) diketik persis sama.
-    st.image("Logo PLN.png", width=160)
+    st.image("Logo PLN.png", width=260)
 
 with col_judul:
     # Menaruh judul di kolom kedua
