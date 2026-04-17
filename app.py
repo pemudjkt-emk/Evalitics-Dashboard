@@ -114,8 +114,7 @@ st.markdown("""
 # 2. PENARIKAN DATA GOOGLE SHEETS (CACHED)
 # ==========================================
 # ID Spreadsheet Anda
-sheet_id = '1RitrlhPmYvxAax2gmZHyhyLX5a8j4xEjwpytlBMxvs8'
-url = f'https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv'
+sheet_id = 'https://docs.google.com/spreadsheets/d/1RitrlhPmYvxAax2gmZHyhyLX5a8j4xEjwpytlBMxvs8/edit?usp=sharing'
 
 # Fungsi untuk menarik data, di-cache selama 10 menit (600 detik)
 @st.cache_data(ttl=600)
