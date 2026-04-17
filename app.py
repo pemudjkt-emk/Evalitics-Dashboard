@@ -3,8 +3,8 @@ import pandas as pd
 
 # 1. Konfigurasi Halaman Dashboard
 st.set_page_config(page_title="Smart Evaluation Analytics", layout="wide")
-st.title("📊 Smart Evaluation Analytics")
-st.write("Dashboard interaktif untuk menganalisis korelasi data evaluasi pembelajaran.")
+st.title("📊 Smart Evaluation Analytics UPDL Jakarta")
+st.write("Dashboard interaktif untuk menganalisis data evaluasi pembelajaran.")
 st.markdown("---")
 
 # 2. Menarik Data dari Google Sheets Anda
