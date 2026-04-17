@@ -11,7 +11,6 @@ st.set_page_config(page_title="Smart Evaluation Analytics UPDL Jakarta", page_ic
 col_logo, col_judul = st.columns([2, 8])
 
 with col_logo:
-    # GANTI URL/NAMA FILE dengan logo lokal Anda jika ada
     st.image("Logo PLN.png", width=260)
 
 with col_judul:
@@ -26,7 +25,7 @@ with col_button:
         st.toast("Menarik data terbaru dari Google Sheets...") 
 
 # ==========================================
-# MENARIK DATA (Global untuk semua tab)
+# MENARIK DATA
 # ==========================================
 sheet_id = '1RitrlhPmYvxAax2gmZHyhyLX5a8j4xEjwpytlBMxvs8'
 url = f'https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv'
@@ -57,7 +56,6 @@ try:
         st.markdown("---")
 
         if pd.api.types.is_numeric_dtype(df[var_x]) and pd.api.types.is_numeric_dtype(df[var_y]):
-            
             st.markdown("### 🛠️ Pra-Pemrosesan & Uji Asumsi")
             hapus_outlier = st.checkbox("🧹 Buang Data Pencilan (Outlier) menggunakan metode IQR")
             uji_normalitas = st.checkbox("⚖️ Uji Distribusi Normal (Shapiro-Wilk Test)")
@@ -111,14 +109,13 @@ try:
     with tab_dashboard:
         st.subheader("📊 Dashboard Utama")
         
-        # 1. Menarik pilihan unik langsung dari spreadsheet
+        # 1. Pilihan Dropdown Filter
         opsi_bulan = ["Semua Bulan"] + list(df['Laporan Bulan'].dropna().unique())
         opsi_strategi = ["Semua Strategi"] + list(df['Strategi Pelaksanaan'].dropna().unique())
         opsi_valid = ["Semua Status"] + list(df['% Valid'].dropna().unique())
 
-        # 2. Membuat layout 3 kolom sejajar, disisakan 1 kolom kosong di kanan agar merapat ke kiri
+        # 2. Layout Tombol Filter
         col_f1, col_f2, col_f3, col_kosong = st.columns([2, 2, 2, 4])
-
         with col_f1:
             filter_bulan = st.selectbox("Laporan Bulanan", opsi_bulan)
         with col_f2:
@@ -128,23 +125,19 @@ try:
 
         st.markdown("---")
 
-        # 3. Logika Filter Data
-        df_filtered = df.copy() # Gunakan data duplikat agar data asli tidak rusak
+        # 3. Logika Memfilter Data
+        df_filtered = df.copy()
 
         if filter_bulan != "Semua Bulan":
             df_filtered = df_filtered[df_filtered['Laporan Bulan'] == filter_bulan]
-            
         if filter_strategi != "Semua Strategi":
             df_filtered = df_filtered[df_filtered['Strategi Pelaksanaan'] == filter_strategi]
-            
         if filter_valid != "Semua Status":
             df_filtered = df_filtered[df_filtered['% Valid'] == filter_valid]
 
-        # 4. Menampilkan hasil data yang sudah difilter sementara
-        st.success(f"Menampilkan **{len(df_filtered)}** baris data berdasarkan filter yang dipilih.")
-        st.dataframe(df_filtered, use_container_width=True)
-
-# PENTING: Penutup dari "try:" harus sejajar di sebelah kiri
-except Exception as e:
-    st.error("Gagal memuat atau memproses data. Pastikan nama kolom di skrip sama persis dengan di Sheets.")
-    st.error(f"Detail Error Teknis: {e}")
+        # ==========================================
+        # FITUR BARU: SCORECARD / KPI METRICS
+        # ==========================================
+        if not df_filtered.empty:
+            # Mengagregasi angka dari data yang sudah difilter
+            # Gunakan .mean() untuk rata-rata skor, dan .sum() untuk
