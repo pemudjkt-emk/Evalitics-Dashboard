@@ -44,7 +44,6 @@ model = load_gemini_model()
 col_logo, col_judul = st.columns([2, 8])
 
 with col_logo:
-    # Ganti "Logo PLN.png" dengan URL atau path lokal yang sesuai jika tidak muncul
     st.image("Logo PLN.png", width=200)
 
 with col_judul:
@@ -66,10 +65,9 @@ url = f'https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv'
 
 try:
     df = pd.read_csv(url)
-    kolom_tersedia = df.columns.tolist()
 
     # ==========================================
-    # FILTER GLOBAL (BERLAKU UNTUK SEMUA TAB)
+    # FILTER GLOBAL & PRA-PEMROSESAN (BERLAKU UNTUK SEMUA TAB)
     # ==========================================
     st.markdown("### 🎛️ Filter Data Global")
     
@@ -101,9 +99,31 @@ try:
     if filter_valid != "Semua Status":
         df_filtered = df_filtered[df_filtered['% Valid'] == filter_valid]
 
+    # -- [BARU] KONVERSI ANGKA DAN PENGGABUNGAN KATEGORI SECARA GLOBAL --
+    kolom_mentah = ['INS1', 'INS2', 'INS3', 'INS4', 'INS5', 'INS6', 'INS7', 'INS8',
+                    'MAT1', 'MAT2', 'MAT3', 'MAT4', 'MAT5', 'MAT6',
+                    'RATA DS', 'RATA SP', 'RATA-RATA KESELURUHAN']
+    
+    for col in kolom_mentah:
+        if col in df_filtered.columns:
+            df_filtered[col] = pd.to_numeric(df_filtered[col], errors='coerce')
+
+    # Membentuk Kategori Gabungan langsung di df_filtered
+    if not df_filtered.empty and 'INS1' in df_filtered.columns:
+        df_filtered['Engagement Instruktur'] = df_filtered[['INS1', 'INS2']].mean(axis=1)
+        df_filtered['Relevance Instruktur'] = df_filtered[['INS3', 'INS4']].mean(axis=1)
+        df_filtered['Satisfaction Instruktur'] = df_filtered[['INS5', 'INS6', 'INS7', 'INS8']].mean(axis=1)
+        df_filtered['Engagement Materi'] = df_filtered[['MAT1', 'MAT2']].mean(axis=1)
+        df_filtered['Relevance Materi'] = df_filtered[['MAT3', 'MAT4']].mean(axis=1)
+        df_filtered['Satisfaction Materi'] = df_filtered[['MAT5', 'MAT6']].mean(axis=1)
+        df_filtered['Satisfaction Sarana Digital'] = df_filtered['RATA DS']
+        df_filtered['Satisfaction Sarana In Class'] = df_filtered['RATA SP']
+
+    # Update kolom yang tersedia setelah penambahan kategori
+    kolom_tersedia = df_filtered.columns.tolist()
+
     st.success(f"Terdapat **{len(df_filtered)}** baris data yang sesuai dengan filter di atas.")
     st.markdown("---")
-
 
     # ==========================================
     # INISIALISASI TABS
@@ -186,28 +206,9 @@ try:
             st.write("Grafik ini memetakan 8 indikator utama berdasarkan **Kinerja** (Skor Rata-rata) dan **Kepentingan** (Korelasi dengan Skor Akhir). Fokuskan perbaikan pada indikator yang jatuh di **Kuadran 1 (Kiri Atas)**.")
 
             try:
-                kolom_ipa = ['INS1', 'INS2', 'INS3', 'INS4', 'INS5', 'INS6', 'INS7', 'INS8',
-                             'MAT1', 'MAT2', 'MAT3', 'MAT4', 'MAT5', 'MAT6',
-                             'RATA DS', 'RATA SP', 'RATA-RATA KESELURUHAN']
-                
-                df_ipa = df_filtered.copy()
-                
-                for col in kolom_ipa:
-                    if col in df_ipa.columns:
-                        df_ipa[col] = pd.to_numeric(df_ipa[col], errors='coerce')
-
-                df_ipa = df_ipa.dropna(subset=['RATA-RATA KESELURUHAN'])
+                df_ipa = df_filtered.dropna(subset=['RATA-RATA KESELURUHAN']).copy()
 
                 if len(df_ipa) > 2:
-                    df_ipa['Engagement Instruktur'] = df_ipa[['INS1', 'INS2']].mean(axis=1)
-                    df_ipa['Relevance Instruktur'] = df_ipa[['INS3', 'INS4']].mean(axis=1)
-                    df_ipa['Satisfaction Instruktur'] = df_ipa[['INS5', 'INS6', 'INS7', 'INS8']].mean(axis=1)
-                    df_ipa['Engagement Materi'] = df_ipa[['MAT1', 'MAT2']].mean(axis=1)
-                    df_ipa['Relevance Materi'] = df_ipa[['MAT3', 'MAT4']].mean(axis=1)
-                    df_ipa['Satisfaction Materi'] = df_ipa[['MAT5', 'MAT6']].mean(axis=1)
-                    df_ipa['Satisfaction Sarana Digital'] = df_ipa['RATA DS']
-                    df_ipa['Satisfaction Sarana In Class'] = df_ipa['RATA SP']
-
                     kategori_list = [
                         'Engagement Instruktur', 'Relevance Instruktur', 'Satisfaction Instruktur',
                         'Engagement Materi', 'Relevance Materi', 'Satisfaction Materi',
@@ -216,8 +217,12 @@ try:
 
                     kinerja, kepentingan = [], []
                     for kat in kategori_list:
-                        kinerja.append(df_ipa[kat].mean())
-                        kepentingan.append(df_ipa[kat].corr(df_ipa['RATA-RATA KESELURUHAN']))
+                        if kat in df_ipa.columns:
+                            kinerja.append(df_ipa[kat].mean())
+                            kepentingan.append(df_ipa[kat].corr(df_ipa['RATA-RATA KESELURUHAN']))
+                        else:
+                            kinerja.append(None)
+                            kepentingan.append(None)
 
                     df_plot_ipa = pd.DataFrame({'Kategori': kategori_list, 'Kinerja': kinerja, 'Kepentingan': kepentingan}).dropna()
 
@@ -260,40 +265,46 @@ try:
             st.markdown("### ⚖️ Analisis Komparatif (Uji Signifikansi)")
             st.write("Gunakan fitur ini untuk menguji apakah perbedaan skor antar metode/bulan benar-benar berbeda secara statistik (nyata), atau sekadar kebetulan.")
 
-            # Menentukan opsi dropdown secara dinamis
             opsi_grup = ['Strategi Pelaksanaan', 'Laporan Bulan']
             
-            # Mencari semua kolom yang bertipe angka untuk dijadikan opsi sumbu Y
-            opsi_skor_num = [col for col in df_filtered.columns if pd.api.types.is_numeric_dtype(df_filtered[col])]
-            # Memastikan 'RATA-RATA KESELURUHAN' ada di urutan paling atas jika ada
-            if 'RATA-RATA KESELURUHAN' in opsi_skor_num:
-                opsi_skor_num.insert(0, opsi_skor_num.pop(opsi_skor_num.index('RATA-RATA KESELURUHAN')))
+            # [UPDATE] Daftar opsi Skor Y yang disesuaikan secara khusus sesuai permintaan
+            opsi_skor_tersedia = [
+                'RATA-RATA KESELURUHAN',
+                'Engagement Instruktur', 'INS1', 'INS2',
+                'Relevance Instruktur', 'INS3', 'INS4',
+                'Satisfaction Instruktur', 'INS5', 'INS6', 'INS7', 'INS8',
+                'Engagement Materi', 'MAT1', 'MAT2',
+                'Relevance Materi', 'MAT3', 'MAT4',
+                'Satisfaction Materi', 'MAT5', 'MAT6',
+                'Satisfaction Sarana Digital', 'RATA DS',
+                'Satisfaction Sarana In Class', 'RATA SP'
+            ]
+            
+            # Memastikan hanya kolom yang benar-benar ada di dataframe yang dimunculkan di dropdown
+            opsi_skor_final = [col for col in opsi_skor_tersedia if col in df_filtered.columns]
 
             col_c1, col_c2 = st.columns(2)
             with col_c1:
                 var_grup = st.selectbox("Pilih Kategori Pembanding (Sumbu X):", opsi_grup)
             with col_c2:
-                var_skor = st.selectbox("Pilih Skor yang Dinilai (Sumbu Y):", opsi_skor_num)
+                var_skor = st.selectbox("Pilih Skor yang Dinilai (Sumbu Y):", opsi_skor_final)
 
-            # Membersihkan data dari baris yang kosong (NaN) agar mesin statistik tidak error
             df_comp = df_filtered.dropna(subset=[var_grup, var_skor])
 
             if len(df_comp) > 0:
                 grup_unik = df_comp[var_grup].unique()
                 data_grup = [df_comp[df_comp[var_grup] == grup][var_skor] for grup in grup_unik]
 
-                # Visualisasi Boxplot
                 fig_box = px.box(
                     df_comp, 
                     x=var_grup, 
                     y=var_skor, 
                     color=var_grup,
-                    points="all", # Memunculkan sebaran titik data peserta
+                    points="all", 
                     title=f"Distribusi {var_skor} berdasarkan {var_grup}"
                 )
                 fig_box.update_layout(height=400, showlegend=False, xaxis_title="", yaxis_title="Skor")
 
-                # Logika Pemilihan Uji Statistik
                 if len(grup_unik) < 2:
                     st.warning("⚠️ Tidak bisa melakukan uji komparasi statistik. Filter data Anda saat ini hanya menyisakan 1 kelompok.")
                     st.plotly_chart(fig_box, use_container_width=True)
@@ -304,7 +315,6 @@ try:
                     stat_val, p_value = stats.f_oneway(*data_grup)
                     jenis_uji = "One-Way ANOVA"
 
-                # Menampilkan Kesimpulan
                 if len(grup_unik) >= 2:
                     st.plotly_chart(fig_box, use_container_width=True)
                     st.write(f"**Hasil Uji Statistik ({jenis_uji}):** P-Value = {p_value:.4f}")
@@ -395,7 +405,6 @@ try:
             
             with st.chat_message("assistant"):
                 with st.spinner("Gemini sedang berpikir..."):
-                    # Mengirimkan context menggunakan data df_filtered
                     context = f"Data evaluasi UPDL Jakarta. Total Data: {len(df_filtered)} baris. Ringkasan data saat ini: {df_filtered.describe().to_string()}"
                     full_prompt = f"Konteks Data:\n{context}\n\nPertanyaan: {user_question}\n\nJawablah dengan ringkas, profesional, dan dalam Bahasa Indonesia."
                     
