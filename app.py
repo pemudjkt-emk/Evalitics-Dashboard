@@ -49,12 +49,12 @@ with col_logo:
 with col_judul:
     st.title("Smart Evaluation Analytics UPDL JAKARTA")
 
-st.write("Dashboard interaktif untuk menganalisis data evaluasi pembelajaran.")
+st.write("Dashboard interaktif untuk menganalisis data evaluasi pembelajaran di UPDL Jakarta.")
 st.markdown("---")
 
 col_button, col_empty = st.columns([0.5, 4])
 with col_button:
-    if st.button("🔄 Perbarui Data", use_container_width=True):
+    if st.button("🔄 Update Data", use_container_width=True):
         st.toast("Menarik data terbaru dari Google Sheets...") 
 
 # ==========================================
@@ -69,7 +69,7 @@ try:
     # ==========================================
     # FILTER GLOBAL & PRA-PEMROSESAN (BERLAKU UNTUK SEMUA TAB)
     # ==========================================
-    st.markdown("### 🎛️ Filter Data Global")
+    st.markdown("### 🎛️ FILTER DATA")
     
     opsi_bulan = list(df['Laporan Bulan'].dropna().unique())
     opsi_strategi = list(df['Strategi Pelaksanaan'].dropna().unique())
@@ -128,17 +128,17 @@ try:
     # ==========================================
     # INISIALISASI TABS
     # ==========================================
-    tab_statistik, tab_dashboard, tab_ai = st.tabs(["Analisa Statistik", "Dashboard", "🤖 Asisten AI"])
+    tab_statistik, tab_dashboard, tab_ai = st.tabs(["ANALYTICS", "DASHBOARD", "🤖 AI ASSISTANT"])
 
     # ==========================================
     # ISI TAB 1: ANALISA STATISTIK
     # ==========================================
     with tab_statistik:
         if not df_filtered.empty:
-            st.subheader("📋 Data Evaluasi Mentah")
+            st.subheader("📋 Raw Data")
             st.dataframe(df_filtered, use_container_width=True)
 
-            st.markdown("### 🔍 Pengaturan Analisis Korelasi")
+            st.markdown("### 🔍 Analisis Korelasi")
             col1, col2 = st.columns(2)
             with col1:
                 var_x = st.selectbox("Pilih Variabel Independen (X):", kolom_tersedia, index=0)
