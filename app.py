@@ -21,7 +21,7 @@ model = load_gemini_model()
 col_logo, col_judul = st.columns([2, 8])
 
 with col_logo:
-    st.image("Logo PLN.png", width=260)
+    st.image("Logo PLN.png", width=200)
 
 with col_judul:
     st.title("Smart Evaluation Analytics UPDL JAKARTA")
