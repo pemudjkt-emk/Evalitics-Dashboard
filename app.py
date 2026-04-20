@@ -1,9 +1,19 @@
 import streamlit as st
 import pandas as pd
 from scipy import stats
+import google.generativeai as genai  # Library Tambahan
 
 # 1. Konfigurasi Halaman Dashboard
 st.set_page_config(page_title="Smart Evaluation Analytics UPDL Jakarta", page_icon="⚡", layout="wide")
+
+# --- KONFIGURASI GEMINI ---
+# Ambil API Key dari st.secrets (Atur di Dashboard Streamlit Cloud > Settings > Secrets)
+# Jika running lokal, pastikan sudah set API Key atau ganti dengan string langsung (tidak disarankan)
+try:
+    genai.configure(api_key=st.secrets["AIzaSyBDDEP8i_OXt6Ray2z_q11AVRsysL1QMNI"])
+    model = genai.GenerativeModel('gemini-1.5-flash')
+except:
+    st.sidebar.error("⚠️ API Key Gemini belum terpasang di Secrets.")
 
 # ==========================================
 # HEADER GLOBAL
@@ -37,7 +47,7 @@ try:
     # ==========================================
     # INISIALISASI TABS
     # ==========================================
-    tab_statistik, tab_dashboard = st.tabs(["Analisa Statistik", "Dashboard"])
+    tab_statistik, tab_dashboard, tab_ai = st.tabs(["Analisa Statistik", "Dashboard", "🤖 Asisten AI"])
 
     # ==========================================
     # ISI TAB 1: ANALISA STATISTIK
@@ -160,6 +170,31 @@ try:
         else:
             # Posisi 'else' HARUS sejajar lurus ke atas dengan huruf 'i' pada 'if'
             st.warning("⚠️ Tidak ada data yang cocok dengan kombinasi filter Anda.")
+
+# --- ISI TAB 3: ASISTEN AI (FITUR BARU) ---
+    with tab_ai:
+        st.subheader("🤖 Tanya Asisten EVALYTICS")
+        st.write("Gunakan AI untuk menganalisis tren atau meminta saran perbaikan program.")
+        
+        # Kotak input pertanyaan
+        user_question = st.chat_input("Tanya sesuatu tentang data evaluasi Anda...")
+        
+        if user_question:
+            with st.chat_message("user"):
+                st.write(user_question)
+            
+            with st.chat_message("assistant"):
+                with st.spinner("Gemini sedang berpikir..."):
+                    # Memberikan konteks data agar Gemini tahu apa yang dianalisis
+                    # Kita kirimkan ringkasan data (5 baris pertama) sebagai konteks
+                    context = f"Data ini adalah hasil evaluasi UPDL Jakarta. Kolom yang tersedia: {kolom_tersedia}. Ringkasan data: {df.describe().to_string()}"
+                    full_prompt = f"Konteks: {context}\n\nPertanyaan: {user_question}"
+                    
+                    try:
+                        response = model.generate_content(full_prompt)
+                        st.markdown(response.text)
+                    except Exception as ai_err:
+                        st.error(f"Gagal mendapatkan respon AI: {ai_err}")
 # ==========================================
 # PENUTUP TRY-EXCEPT (WAJIB ADA DI PALING BAWAH & RATA KIRI)
 # ==========================================
