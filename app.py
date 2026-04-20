@@ -6,14 +6,15 @@ import google.generativeai as genai  # Library Tambahan
 # 1. Konfigurasi Halaman Dashboard
 st.set_page_config(page_title="Smart Evaluation Analytics UPDL Jakarta", page_icon="⚡", layout="wide")
 
-# --- KONFIGURASI GEMINI ---
-# Ambil API Key dari st.secrets (Atur di Dashboard Streamlit Cloud > Settings > Secrets)
-# Jika running lokal, pastikan sudah set API Key atau ganti dengan string langsung (tidak disarankan)
+# --- KONFIGURASI GEMINI (YANG BENAR) ---
 try:
-    genai.configure(api_key=st.secrets["AIzaSyB9-Fay0eLvnyh3BxZwCQUT8-l_aRbMnOc"])
+    # Kita memanggil label "GEMINI_API_KEY" yang sudah Anda buat di menu Secrets
+    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
     model = genai.GenerativeModel('gemini-1.5-flash')
-except:
-    st.sidebar.error("⚠️ API Key Gemini belum terpasang di Secrets.")
+    # Opsional: Munculkan pesan sukses di sidebar untuk memastikan sudah konek
+    st.sidebar.success("✅ Gemini Berhasil Terhubung!")
+except Exception as e:
+    st.sidebar.error(f"⚠️ API Key Gemini belum terpasang atau salah: {e}")
 
 # ==========================================
 # HEADER GLOBAL
