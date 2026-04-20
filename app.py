@@ -140,6 +140,119 @@ try:
             st.error(f"⚠️ Analisis terhenti: Kolom bukan format angka.")
 
     # ==========================================
+        # FITUR BARU: IMPORTANCE-PERFORMANCE ANALYSIS (IPA)
+        # ==========================================
+        st.markdown("---")
+        st.markdown("### 🎯 Analisis Kuadran Strategi (Importance-Performance Analysis)")
+        st.write("Grafik ini memetakan 8 indikator utama berdasarkan **Kinerja** (Skor Rata-rata) dan **Kepentingan** (Korelasi dengan Skor Akhir). Fokuskan perbaikan pada indikator yang jatuh di **Kuadran 1 (Kiri Atas)**.")
+
+        try:
+            # 1. Persiapan & Pembersihan Data (Memastikan format angka)
+            kolom_ipa = ['INS1', 'INS2', 'INS3', 'INS4', 'INS5', 'INS6', 'INS7', 'INS8',
+                         'MAT1', 'MAT2', 'MAT3', 'MAT4', 'MAT5', 'MAT6',
+                         'Rata DS', 'Rata SP', 'RATA-RATA KESELURUHAN']
+            
+            # Buat copy data khusus untuk IPA
+            df_ipa = df.copy()
+            
+            # Paksa konversi ke angka (jika ada spasi/teks tidak sengaja di Sheets, akan diubah jadi NaN)
+            for col in kolom_ipa:
+                if col in df_ipa.columns:
+                    df_ipa[col] = pd.to_numeric(df_ipa[col], errors='coerce')
+
+            # Hapus baris yang nilai akhirnya kosong agar hitungan korelasi tidak error
+            df_ipa = df_ipa.dropna(subset=['RATA-RATA KESELURUHAN'])
+
+            # 2. Menggabungkan Menjadi 8 Kategori Utama
+            df_ipa['Engagement Instruktur'] = df_ipa[['INS1', 'INS2']].mean(axis=1)
+            df_ipa['Relevance Instruktur'] = df_ipa[['INS3', 'INS4']].mean(axis=1)
+            df_ipa['Satisfaction Instruktur'] = df_ipa[['INS5', 'INS6', 'INS7', 'INS8']].mean(axis=1)
+            df_ipa['Engagement Materi'] = df_ipa[['MAT1', 'MAT2']].mean(axis=1)
+            df_ipa['Relevance Materi'] = df_ipa[['MAT3', 'MAT4']].mean(axis=1)
+            df_ipa['Satisfaction Materi'] = df_ipa[['MAT5', 'MAT6']].mean(axis=1)
+            df_ipa['Satisfaction Sarana Digital'] = df_ipa['Rata DS']
+            df_ipa['Satisfaction Sarana In Class'] = df_ipa['Rata SP']
+
+            kategori_list = [
+                'Engagement Instruktur', 'Relevance Instruktur', 'Satisfaction Instruktur',
+                'Engagement Materi', 'Relevance Materi', 'Satisfaction Materi',
+                'Satisfaction Sarana Digital', 'Satisfaction Sarana In Class'
+            ]
+
+            # 3. Menghitung X (Kinerja) dan Y (Kepentingan)
+            kinerja = []
+            kepentingan = []
+
+            for kat in kategori_list:
+                # Sumbu X: Rata-rata Skor dari tiap kategori
+                kinerja.append(df_ipa[kat].mean())
+                # Sumbu Y: Korelasi kategori tersebut dengan Skor Keseluruhan
+                kepentingan.append(df_ipa[kat].corr(df_ipa['RATA-RATA KESELURUHAN']))
+
+            # Memasukkan ke dalam DataFrame khusus untuk grafik
+            df_plot_ipa = pd.DataFrame({
+                'Kategori': kategori_list,
+                'Kinerja': kinerja,
+                'Kepentingan': kepentingan
+            })
+
+            # Menghapus data jika ada perhitungan yang gagal (NaN)
+            df_plot_ipa = df_plot_ipa.dropna()
+
+            # Menghitung Garis Potong Tengah (Crosshair) dari nilai rata-rata X dan Y
+            x_cross = df_plot_ipa['Kinerja'].mean()
+            y_cross = df_plot_ipa['Kepentingan'].mean()
+
+            # 4. Visualisasi Scatter Plot 4 Kuadran dengan Plotly
+            import plotly.express as px
+
+            fig_ipa = px.scatter(
+                df_plot_ipa,
+                x='Kinerja',
+                y='Kepentingan',
+                text='Kategori', # Memunculkan nama kategori di titik
+                size_max=60
+            )
+
+            # Mempercantik titik dan posisi teks agar tidak menimpa titik
+            fig_ipa.update_traces(
+                textposition='top center',
+                marker=dict(size=14, color='#005b9f', line=dict(width=2, color='DarkSlateGrey'))
+            )
+
+            # Menambahkan Garis Silang Pembagi Kuadran
+            fig_ipa.add_hline(y=y_cross, line_dash="dash", line_color="#FFC000")
+            fig_ipa.add_vline(x=x_cross, line_dash="dash", line_color="#FFC000")
+
+            # Menambahkan Label Kuadran Statis di Sudut-sudut Grafik
+            fig_ipa.add_annotation(xref="paper", yref="paper", x=0.01, y=0.99, text="<b>KUADRAN 1</b><br>🚨 Prioritas Utama", showarrow=False, font=dict(color="#d32f2f", size=14), align="left")
+            fig_ipa.add_annotation(xref="paper", yref="paper", x=0.99, y=0.99, text="<b>KUADRAN 2</b><br>🌟 Pertahankan", showarrow=False, font=dict(color="#2e7d32", size=14), align="right")
+            fig_ipa.add_annotation(xref="paper", yref="paper", x=0.01, y=0.01, text="<b>KUADRAN 3</b><br>📉 Prioritas Rendah", showarrow=False, font=dict(color="#757575", size=14), align="left")
+            fig_ipa.add_annotation(xref="paper", yref="paper", x=0.99, y=0.01, text="<b>KUADRAN 4</b><br>⚠️ Berlebihan", showarrow=False, font=dict(color="#f57c00", size=14), align="right")
+
+            # Merapikan sumbu grafik agar proporsional
+            fig_ipa.update_layout(
+                xaxis_title="Kinerja (Sumbu X) →",
+                yaxis_title="Kepentingan / Korelasi (Sumbu Y) ↑",
+                height=600,
+                margin=dict(t=40, b=40, l=40, r=40)
+            )
+
+            # Menampilkan Grafik
+            st.plotly_chart(fig_ipa, use_container_width=True)
+            
+            # Membuat Insight Teks Otomatis di bawah grafik
+            q1_items = df_plot_ipa[(df_plot_ipa['Kinerja'] < x_cross) & (df_plot_ipa['Kepentingan'] > y_cross)]['Kategori'].tolist()
+            
+            if q1_items:
+                st.error(f"**Rekomendasi Manajemen:** Indikator **{', '.join(q1_items)}** jatuh di Kuadran 1. Ini sangat penting bagi peserta namun kinerjanya masih di bawah rata-rata. Fokuskan perbaikan bulan ini di area tersebut!")
+            else:
+                st.success("**Rekomendasi Manajemen:** Saat ini tidak ada indikator yang jatuh di Kuadran 1 (Prioritas Utama). Pertahankan kinerja yang sudah ada!")
+
+        except Exception as e:
+            st.error(f"⚠️ Gagal memproses data IPA. Pastikan ejaan nama kolom (INS1, MAT1, dll) persis sama dengan di Sheets. Detail Error: {e}")
+
+    # ==========================================
     # ISI TAB 2: DASHBOARD
     # ==========================================
     with tab_dashboard:
