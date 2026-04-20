@@ -204,8 +204,9 @@ try:
            # --- BAGIAN GRAFIK RATA-RATA ---
             st.markdown("### 📈 Skor Evaluasi L1 Berdasarkan Strategi Pelaksanaan")
             
-            # Menggunakan st.columns untuk mempersempit lebar grafik agar tidak terlalu besar
-            col_kiri, col_chart, col_kanan = st.columns([1, 2, 1]) 
+            # UPDATE: Ubah perbandingan kolom menjadi [2, 1] 
+            # Kolom pertama (col_chart) untuk grafik, kolom kedua (col_spacer) dibiarkan kosong di kanan
+            col_chart, col_spacer = st.columns([2, 1])
 
             with col_chart:
                 # Mengelompokkan data berdasarkan strategi, lalu menghitung rata-ratanya
