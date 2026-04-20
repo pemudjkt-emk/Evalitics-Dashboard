@@ -3,9 +3,35 @@ import pandas as pd
 from scipy import stats
 import google.generativeai as genai  # Library Tambahan
 import plotly.express as px
+import streamlit as st
 
 # 1. Konfigurasi Halaman Dashboard
 st.set_page_config(page_title="Smart Evaluation Analytics UPDL Jakarta", page_icon="⚡", layout="wide")
+# Kode CSS untuk memodifikasi Tab
+st.markdown("""
+    <style>
+    /* Mengubah ukuran font dan warna teks tab secara umum */
+    .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {
+        font-size: 20px; /* Ubah ukuran sesuai keinginan */
+        font-weight: bold;
+    }
+
+    /* Mengatur warna teks tab yang sedang tidak aktif */
+    .stTabs [data-baseweb="tab"] {
+        color: #666666; /* Abu-abu */
+    }
+
+    /* Mengatur warna teks tab yang sedang AKTIF */
+    .stTabs [data-baseweb="tab"][aria-selected="true"] {
+        color: #005b9f !important; /* Biru PLN */
+    }
+
+    /* Mengatur warna garis bawah tab yang sedang AKTIF */
+    .stTabs [data-baseweb="tab-highlight"] {
+        background-color: #005b9f !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
 # --- KONFIGURASI GEMINI (YANG BENAR) ---
 @st.cache_resource
