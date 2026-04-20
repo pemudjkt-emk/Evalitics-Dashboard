@@ -201,38 +201,44 @@ try:
             
             st.markdown("---")
 
-            # --- BAGIAN GRAFIK RATA-RATA ---
+           # --- BAGIAN GRAFIK RATA-RATA ---
             st.markdown("### 📈 Skor Evaluasi L1 Berdasarkan Strategi Pelaksanaan")
             
-            # Mengelompokkan data berdasarkan strategi, lalu menghitung rata-ratanya
-            df_grafik = df_filtered.groupby('Strategi Pelaksanaan')['RATA-RATA KESELURUHAN'].mean().reset_index()
+            # Menggunakan st.columns untuk mempersempit lebar grafik agar tidak terlalu besar
+            col_kiri, col_chart, col_kanan = st.columns([1, 2, 1]) 
 
-            # Membuat Bar Chart
-            fig = px.bar(
-                df_grafik, 
-                x='Strategi Pelaksanaan', 
-                y='RATA-RATA KESELURUHAN',
-                text='RATA-RATA KESELURUHAN', # Memunculkan angka di dalam chart
-                color_discrete_sequence=['#005b9f'] # Warna Biru khas BUMN/PLN
-            )
+            with col_chart:
+                # Mengelompokkan data berdasarkan strategi, lalu menghitung rata-ratanya
+                df_grafik = df_filtered.groupby('Strategi Pelaksanaan')['RATA-RATA KESELURUHAN'].mean().reset_index()
 
-            # Modifikasi tampilan teks angka dan garis standar
-            fig.update_traces(texttemplate='%{text:.2f}', textposition='outside')
-            
-            # Menambahkan garis horizontal (Standar TMP) -> Sesuaikan angkanya jika bukan 4.5
-            fig.add_hline(y=4.5, line_dash="dash", line_color="#FFC000", 
-                          annotation_text="Standar TMP (4.5)", annotation_position="top left")
+                # Membuat Bar Chart
+                fig = px.bar(
+                    df_grafik, 
+                    x='Strategi Pelaksanaan', 
+                    y='RATA-RATA KESELURUHAN',
+                    text='RATA-RATA KESELURUHAN', # Memunculkan angka di atas bar
+                    color_discrete_sequence=['#005b9f'] # Warna Biru khas BUMN/PLN
+                )
 
-            # Merapikan sumbu Y agar skalanya wajar (0 sampai 5)
-            fig.update_layout(
-                yaxis_range=[0, 5],
-                yaxis_title="Rata-rata Skor",
-                xaxis_title="",
-                margin=dict(t=40, b=0, l=0, r=0) # Mengurangi margin berlebih
-            )
+                # Modifikasi tampilan teks angka dan letaknya
+                fig.update_traces(texttemplate='%{text:.2f}', textposition='outside')
+                
+                # Menambahkan garis horizontal (Standar TMP) -> Sesuaikan angkanya jika bukan 4.5
+                fig.add_hline(y=4.5, line_dash="dash", line_color="#FFC000", 
+                              annotation_text="Standar TMP (4.5)", annotation_position="top left")
 
-            # Menampilkan grafik ke layar
-            st.plotly_chart(fig, use_container_width=True)
+                # Merapikan sumbu Y, memperpendek tinggi grafik, dan menipiskan batang
+                fig.update_layout(
+                    height=350,       # [BARU] Memperpendek tinggi grafik menjadi 350 pixel
+                    bargap=0.5,       # [BARU] Menipiskan ukuran batang (0.5 = 50% jarak antar batang)
+                    yaxis_range=[0, 5],
+                    yaxis_title="Rata-rata Skor",
+                    xaxis_title="",
+                    margin=dict(t=40, b=0, l=0, r=0) # Mengurangi margin berlebih
+                )
+
+                # Menampilkan grafik ke layar (di dalam batas kolom tengah)
+                st.plotly_chart(fig, use_container_width=True)
 
             st.markdown("---")
             
@@ -241,6 +247,7 @@ try:
             st.dataframe(df_filtered, use_container_width=True)
 
         else:
+            # Posisi 'else' sejajar lurus ke atas dengan 'if not df_filtered.empty:'
             st.warning("⚠️ Tidak ada data yang ditampilkan. Silakan pilih minimal satu opsi pada filter di atas.")
 
 # --- ISI TAB 3: ASISTEN AI (FITUR BARU) ---
