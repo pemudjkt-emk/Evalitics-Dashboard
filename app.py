@@ -252,6 +252,70 @@ try:
 
             except Exception as e:
                 st.error(f"⚠️ Gagal memproses data IPA. Pastikan ejaan nama kolom (INS1, dll) sesuai. Detail Error: {e}")
+
+            # ==========================================
+            # FITUR BARU: ANALISIS KOMPARATIF (ANOVA / T-TEST)
+            # ==========================================
+            st.markdown("---")
+            st.markdown("### ⚖️ Analisis Komparatif (Uji Signifikansi)")
+            st.write("Gunakan fitur ini untuk menguji apakah perbedaan skor antar metode/bulan benar-benar berbeda secara statistik (nyata), atau sekadar kebetulan.")
+
+            # Menentukan opsi dropdown secara dinamis
+            opsi_grup = ['Strategi Pelaksanaan', 'Laporan Bulan']
+            
+            # Mencari semua kolom yang bertipe angka untuk dijadikan opsi sumbu Y
+            opsi_skor_num = [col for col in df_filtered.columns if pd.api.types.is_numeric_dtype(df_filtered[col])]
+            # Memastikan 'RATA-RATA KESELURUHAN' ada di urutan paling atas jika ada
+            if 'RATA-RATA KESELURUHAN' in opsi_skor_num:
+                opsi_skor_num.insert(0, opsi_skor_num.pop(opsi_skor_num.index('RATA-RATA KESELURUHAN')))
+
+            col_c1, col_c2 = st.columns(2)
+            with col_c1:
+                var_grup = st.selectbox("Pilih Kategori Pembanding (Sumbu X):", opsi_grup)
+            with col_c2:
+                var_skor = st.selectbox("Pilih Skor yang Dinilai (Sumbu Y):", opsi_skor_num)
+
+            # Membersihkan data dari baris yang kosong (NaN) agar mesin statistik tidak error
+            df_comp = df_filtered.dropna(subset=[var_grup, var_skor])
+
+            if len(df_comp) > 0:
+                grup_unik = df_comp[var_grup].unique()
+                data_grup = [df_comp[df_comp[var_grup] == grup][var_skor] for grup in grup_unik]
+
+                # Visualisasi Boxplot
+                fig_box = px.box(
+                    df_comp, 
+                    x=var_grup, 
+                    y=var_skor, 
+                    color=var_grup,
+                    points="all", # Memunculkan sebaran titik data peserta
+                    title=f"Distribusi {var_skor} berdasarkan {var_grup}"
+                )
+                fig_box.update_layout(height=400, showlegend=False, xaxis_title="", yaxis_title="Skor")
+
+                # Logika Pemilihan Uji Statistik
+                if len(grup_unik) < 2:
+                    st.warning("⚠️ Tidak bisa melakukan uji komparasi statistik. Filter data Anda saat ini hanya menyisakan 1 kelompok.")
+                    st.plotly_chart(fig_box, use_container_width=True)
+                elif len(grup_unik) == 2:
+                    stat_val, p_value = stats.ttest_ind(data_grup[0], data_grup[1], nan_policy='omit')
+                    jenis_uji = "Independent T-Test"
+                else:
+                    stat_val, p_value = stats.f_oneway(*data_grup)
+                    jenis_uji = "One-Way ANOVA"
+
+                # Menampilkan Kesimpulan
+                if len(grup_unik) >= 2:
+                    st.plotly_chart(fig_box, use_container_width=True)
+                    st.write(f"**Hasil Uji Statistik ({jenis_uji}):** P-Value = {p_value:.4f}")
+                    
+                    if p_value < 0.05:
+                        st.success(f"**Kesimpulan:** Terdapat **PERBEDAAN SIGNIFIKAN** pada {var_skor} antar kelompok di {var_grup}. Perbedaan rata-rata yang terlihat pada grafik bukanlah sebuah kebetulan.")
+                    else:
+                        st.info(f"**Kesimpulan:** **TIDAK ADA PERBEDAAN SIGNIFIKAN** pada {var_skor} antar kelompok di {var_grup}. Secara statistik, performa antar kelompok tersebut dianggap sama (perbedaan angka rata-rata diakibatkan oleh sebaran data yang wajar).")
+            else:
+                st.warning("Data tidak cukup untuk melakukan komparasi.")
+
         else:
             st.warning("⚠️ Tidak ada data untuk dianalisis. Silakan sesuaikan filter Anda.")
 
