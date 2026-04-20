@@ -12,7 +12,7 @@ st.markdown("""
     <style>
     /* Mengubah ukuran font dan warna teks tab secara umum */
     .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {
-        font-size: 40px; /* Ubah ukuran sesuai keinginan */
+        font-size: 30px; /* Ubah ukuran sesuai keinginan */
         font-weight: bold;
     }
 
