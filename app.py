@@ -10,7 +10,7 @@ st.set_page_config(page_title="Smart Evaluation Analytics UPDL Jakarta", page_ic
 try:
     # Kita memanggil label "GEMINI_API_KEY" yang sudah Anda buat di menu Secrets
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('gemini-2.0-flash-latest')
     # Opsional: Munculkan pesan sukses di sidebar untuk memastikan sudah konek
     st.sidebar.success("✅ Gemini Berhasil Terhubung!")
 except Exception as e:
