@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from scipy import stats
 import google.generativeai as genai  # Library Tambahan
+import plotly.express as px
 
 # 1. Konfigurasi Halaman Dashboard
 st.set_page_config(page_title="Smart Evaluation Analytics UPDL Jakarta", page_icon="⚡", layout="wide")
@@ -118,57 +119,103 @@ try:
     with tab_dashboard:
         st.subheader("📊 Dashboard Utama")
         
-        # 1. Pilihan Dropdown Filter
-        opsi_bulan = ["Semua Bulan"] + list(df['Laporan Bulan'].dropna().unique())
-        opsi_strategi = ["Semua Strategi"] + list(df['Strategi Pelaksanaan'].dropna().unique())
+        # 1. Pilihan Filter (Ambil nilai unik asli dari dataset)
+        opsi_bulan = list(df['Laporan Bulan'].dropna().unique())
+        opsi_strategi = list(df['Strategi Pelaksanaan'].dropna().unique())
         opsi_valid = ["Semua Status"] + list(df['% Valid'].dropna().unique())
 
         # 2. Layout Tombol Filter
-        col_f1, col_f2, col_f3, col_kosong = st.columns([2, 2, 2, 4])
+        col_f1, col_f2, col_f3 = st.columns(3)
         with col_f1:
-            filter_bulan = st.selectbox("Laporan Bulanan", opsi_bulan)
+            # Menggunakan multiselect, defaultnya semua bulan terpilih
+            filter_bulan = st.multiselect("Laporan Bulanan", options=opsi_bulan, default=opsi_bulan)
         with col_f2:
-            filter_strategi = st.selectbox("Strategi Pelaksanaan", opsi_strategi)
+            # Menggunakan multiselect, defaultnya semua strategi terpilih
+            filter_strategi = st.multiselect("Strategi Pelaksanaan", options=opsi_strategi, default=opsi_strategi)
         with col_f3:
             filter_valid = st.selectbox("Validitas", opsi_valid)
 
         st.markdown("---")
 
-        # 3. Logika Memfilter Data
+        # 3. Logika Memfilter Data (Disesuaikan untuk Multiselect)
         df_filtered = df.copy()
 
-        if filter_bulan != "Semua Bulan":
-            df_filtered = df_filtered[df_filtered['Laporan Bulan'] == filter_bulan]
-        if filter_strategi != "Semua Strategi":
-            df_filtered = df_filtered[df_filtered['Strategi Pelaksanaan'] == filter_strategi]
+        # Gunakan fungsi .isin() untuk mengecek apakah data ada di dalam daftar pilihan
+        if filter_bulan:
+            df_filtered = df_filtered[df_filtered['Laporan Bulan'].isin(filter_bulan)]
+        else:
+            # Jika user menghapus semua pilihan (kosong), tabel dibuat kosong sementara
+            df_filtered = pd.DataFrame(columns=df.columns) 
+
+        if filter_strategi:
+            df_filtered = df_filtered[df_filtered['Strategi Pelaksanaan'].isin(filter_strategi)]
+        else:
+            df_filtered = pd.DataFrame(columns=df.columns)
+
         if filter_valid != "Semua Status":
             df_filtered = df_filtered[df_filtered['% Valid'] == filter_valid]
 
-       # ==========================================
-        # FITUR BARU: SCORECARD / KPI METRICS
+        # ==========================================
+        # SCORECARD & GRAFIK
         # ==========================================
         if not df_filtered.empty:
-            # BAGIAN INI HARUS MENJOROK KE DALAM (Tekan Tab 1x dari posisi 'if')
-            # Mengagregasi angka dari data yang sudah difilter
-            # Gunakan .mean() untuk rata-rata skor, dan .sum() untuk menjumlahkan indikator
+            
+            # --- BAGIAN SCORECARD ---
             skor_evaluasi = df_filtered['RATA-RATA KESELURUHAN'].mean()
             ind_kurang = df_filtered['Jumlah Indikator dibawah 4.5'].sum()
             ind_lebih = df_filtered['Jumlah Indikator diatas 4.5'].sum()
 
-            # Membuat 3 kolom sejajar untuk Scorecard
             col_kpi1, col_kpi2, col_kpi3 = st.columns(3)
-            
             with col_kpi1:
-                # BAGIAN INI MENJOROK LAGI (Tekan Tab di bawah 'with')
                 st.metric(label="🌟 Skor Evaluasi Level 1", value=f"{skor_evaluasi:.2f}")
             with col_kpi2:
                 st.metric(label="⚠️ Indikator < 4.5", value=int(ind_kurang))
             with col_kpi3:
                 st.metric(label="✅ Indikator > 4.5", value=int(ind_lebih))
-        
+            
+            st.markdown("---")
+
+            # --- BAGIAN GRAFIK RATA-RATA ---
+            st.markdown("### 📈 Skor Evaluasi L1 Berdasarkan Strategi Pelaksanaan")
+            
+            # Mengelompokkan data berdasarkan strategi, lalu menghitung rata-ratanya
+            df_grafik = df_filtered.groupby('Strategi Pelaksanaan')['RATA-RATA KESELURUHAN'].mean().reset_index()
+
+            # Membuat Bar Chart
+            fig = px.bar(
+                df_grafik, 
+                x='Strategi Pelaksanaan', 
+                y='RATA-RATA KESELURUHAN',
+                text='RATA-RATA KESELURUHAN', # Memunculkan angka di dalam chart
+                color_discrete_sequence=['#005b9f'] # Warna Biru khas BUMN/PLN
+            )
+
+            # Modifikasi tampilan teks angka dan garis standar
+            fig.update_traces(texttemplate='%{text:.2f}', textposition='outside')
+            
+            # Menambahkan garis horizontal (Standar TMP) -> Sesuaikan angkanya jika bukan 4.5
+            fig.add_hline(y=4.5, line_dash="dash", line_color="#FFC000", 
+                          annotation_text="Standar TMP (4.5)", annotation_position="top left")
+
+            # Merapikan sumbu Y agar skalanya wajar (0 sampai 5)
+            fig.update_layout(
+                yaxis_range=[0, 5],
+                yaxis_title="Rata-rata Skor",
+                xaxis_title="",
+                margin=dict(t=40, b=0, l=0, r=0) # Mengurangi margin berlebih
+            )
+
+            # Menampilkan grafik ke layar
+            st.plotly_chart(fig, use_container_width=True)
+
+            st.markdown("---")
+            
+            # --- TABEL DETAIL ---
+            st.write(f"**Menampilkan detail dari {len(df_filtered)} baris data:**")
+            st.dataframe(df_filtered, use_container_width=True)
+
         else:
-            # Posisi 'else' HARUS sejajar lurus ke atas dengan huruf 'i' pada 'if'
-            st.warning("⚠️ Tidak ada data yang cocok dengan kombinasi filter Anda.")
+            st.warning("⚠️ Tidak ada data yang ditampilkan. Silakan pilih minimal satu opsi pada filter di atas.")
 
 # --- ISI TAB 3: ASISTEN AI (FITUR BARU) ---
     with tab_ai:
