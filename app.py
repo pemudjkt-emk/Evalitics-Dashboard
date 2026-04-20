@@ -150,7 +150,7 @@ try:
             # 1. Persiapan & Pembersihan Data (Memastikan format angka)
             kolom_ipa = ['INS1', 'INS2', 'INS3', 'INS4', 'INS5', 'INS6', 'INS7', 'INS8',
                          'MAT1', 'MAT2', 'MAT3', 'MAT4', 'MAT5', 'MAT6',
-                         'Rata DS', 'Rata SP', 'RATA-RATA KESELURUHAN']
+                         'RATA DS', 'RATA SP', 'RATA-RATA KESELURUHAN']
             
             # Buat copy data khusus untuk IPA
             df_ipa = df.copy()
@@ -170,8 +170,8 @@ try:
             df_ipa['Engagement Materi'] = df_ipa[['MAT1', 'MAT2']].mean(axis=1)
             df_ipa['Relevance Materi'] = df_ipa[['MAT3', 'MAT4']].mean(axis=1)
             df_ipa['Satisfaction Materi'] = df_ipa[['MAT5', 'MAT6']].mean(axis=1)
-            df_ipa['Satisfaction Sarana Digital'] = df_ipa['Rata DS']
-            df_ipa['Satisfaction Sarana In Class'] = df_ipa['Rata SP']
+            df_ipa['Satisfaction Sarana Digital'] = df_ipa['RATA DS']
+            df_ipa['Satisfaction Sarana In Class'] = df_ipa['RATA SP']
 
             kategori_list = [
                 'Engagement Instruktur', 'Relevance Instruktur', 'Satisfaction Instruktur',
