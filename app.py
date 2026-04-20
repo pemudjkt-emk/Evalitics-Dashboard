@@ -10,7 +10,7 @@ st.set_page_config(page_title="Smart Evaluation Analytics UPDL Jakarta", page_ic
 # Ambil API Key dari st.secrets (Atur di Dashboard Streamlit Cloud > Settings > Secrets)
 # Jika running lokal, pastikan sudah set API Key atau ganti dengan string langsung (tidak disarankan)
 try:
-    genai.configure(api_key=st.secrets["AIzaSyBDDEP8i_OXt6Ray2z_q11AVRsysL1QMNI"])
+    genai.configure(api_key=st.secrets["AIzaSyB9-Fay0eLvnyh3BxZwCQUT8-l_aRbMnOc"])
     model = genai.GenerativeModel('gemini-1.5-flash')
 except:
     st.sidebar.error("⚠️ API Key Gemini belum terpasang di Secrets.")
