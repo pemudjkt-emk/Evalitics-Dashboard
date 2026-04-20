@@ -7,14 +7,12 @@ import google.generativeai as genai  # Library Tambahan
 st.set_page_config(page_title="Smart Evaluation Analytics UPDL Jakarta", page_icon="⚡", layout="wide")
 
 # --- KONFIGURASI GEMINI (YANG BENAR) ---
-try:
-    # Kita memanggil label "GEMINI_API_KEY" yang sudah Anda buat di menu Secrets
+@st.cache_resource
+def load_gemini_model():
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-    model = genai.GenerativeModel('gemini-2.0-flash')
-    # Opsional: Munculkan pesan sukses di sidebar untuk memastikan sudah konek
-    st.sidebar.success("✅ Gemini Berhasil Terhubung!")
-except Exception as e:
-    st.sidebar.error(f"⚠️ API Key Gemini belum terpasang atau salah: {e}")
+    return genai.GenerativeModel('gemini-2.0-flash')
+
+model = load_gemini_model()
 
 # ==========================================
 # HEADER GLOBAL
