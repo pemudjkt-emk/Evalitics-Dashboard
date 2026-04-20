@@ -10,7 +10,7 @@ st.set_page_config(page_title="Smart Evaluation Analytics UPDL Jakarta", page_ic
 @st.cache_resource
 def load_gemini_model():
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-    return genai.GenerativeModel('gemini-2.0-flash')
+    return genai.GenerativeModel('gemini-1.5-flash')
 
 model = load_gemini_model()
 
