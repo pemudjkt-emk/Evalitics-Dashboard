@@ -51,15 +51,11 @@ def get_base64_logo(file_path):
     return ""
 
 bin_pln       = get_base64_logo("Logo PLN.png")
-bin_danantara = get_base64_logo("logo_danantara.png")
 img_pln       = f'<img src="data:image/png;base64,{bin_pln}" style="height:85px;object-fit:contain;">' if bin_pln else ""
-img_danantara = f'<img src="data:image/png;base64,{bin_danantara}" style="height:40px;object-fit:contain;background:white;padding:4px;border-radius:6px;">' if bin_danantara else ""
 
-st.markdown(f"""
 <div style="display:flex;align-items:center;justify-content:space-between;
     background:linear-gradient(90deg,#003366,#0055A4);padding:10px 30px;
     border-radius:12px;color:white;margin-bottom:25px;box-shadow:0px 4px 10px rgba(0,0,0,0.1);">
-    <div style="flex:1;display:flex;align-items:center;gap:15px;">{img_danantara}</div>
     <div style="flex:2;text-align:center;">
         <h1 style="margin:0;font-size:1.6em;color:white !important;font-weight:bold;line-height:1.2;">
             &#9889; Smart Evaluation Analytics
