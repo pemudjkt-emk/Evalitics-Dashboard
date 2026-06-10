@@ -1,5 +1,9 @@
 streamlit
 pandas
+numpy
+gspread
+oauth2client
+openpyxl
 plotly
 scipy
 google-generativeai
