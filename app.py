@@ -435,7 +435,78 @@ try:
                     # Buat DataFrame untuk Plotting
                     df_plot_ipa = pd.DataFrame({'Kategori': nama_tampil, 'Kinerja': kinerja, 'Kepentingan': kepentingan})
                     
-                    # --- 4. MITIGASI ERROR NaN (Zero
+                    # --- 4. MITIGASI ERROR NaN (Zero Variance) ---
+                    mean_kepentingan = df_plot_ipa['Kepentingan'].mean()
+                    if pd.isna(mean_kepentingan): 
+                        mean_kepentingan = 0.5 # Nilai default jika semua perhitungan korelasi gagal
+                        
+                    df_plot_ipa['Kepentingan'] = df_plot_ipa['Kepentingan'].fillna(mean_kepentingan)
+                    df_plot_ipa = df_plot_ipa.dropna(subset=['Kinerja']) # Hapus baris yang tidak ada data kinerjanya
+
+                    # --- 5. PEMBUATAN GRAFIK PLOTLY ---
+                    if not df_plot_ipa.empty:
+                        # Fiksasi Sumbu X di 4.5 (Standar TMP PLN)
+                        x_cross = 4.5  
+                        y_cross = df_plot_ipa['Kepentingan'].mean() 
+                        
+                        # Plot Scatter
+                        fig_ipa = px.scatter(df_plot_ipa, x='Kinerja', y='Kepentingan', text='Kategori')
+                        
+                        # Atur Ukuran Teks agar tidak menumpuk saat mode Mikro
+                        ukuran_teks = 10 if level_ipa == "🔎 Mikro (Sub-Indikator Detail)" else 13
+                        
+                        fig_ipa.update_traces(
+                            textposition='top center', 
+                            textfont_size=ukuran_teks,
+                            marker=dict(size=12, color='#005b9f', line=dict(width=1,color='DarkSlateGrey'))
+                        )
+                        
+                        # Penambahan Garis Batas Kuadran
+                        fig_ipa.add_hline(y=y_cross, line_dash="dash", line_color="#FFC000")
+                        fig_ipa.add_vline(x=x_cross, line_dash="dash", line_color="#FFC000", 
+                                          annotation_text="Standar TMP (4.5)", annotation_position="top left")
+                        
+                        # Label 4 Kuadran
+                        for ax, ay, txt, col, algn in [
+                            (0.01, 0.99, "<b>KUADRAN 1</b><br>🚨 Prioritas Utama", "#d32f2f", "left"),
+                            (0.99, 0.99, "<b>KUADRAN 2</b><br>🌟 Pertahankan", "#2e7d32", "right"),
+                            (0.01, 0.01, "<b>KUADRAN 3</b><br>📉 Prioritas Rendah", "#757575", "left"),
+                            (0.99, 0.01, "<b>KUADRAN 4</b><br>⚠️ Berlebihan", "#f57c00", "right"),
+                        ]:
+                            fig_ipa.add_annotation(xref="paper", yref="paper", x=ax, y=ay, text=txt,
+                                                   showarrow=False, font=dict(color=col, size=13), align=algn)
+                        
+                        # Fiksasi batas skala grafik agar tampilan selalu rapi
+                        min_x = min(4.0, df_plot_ipa['Kinerja'].min() - 0.1) if not df_plot_ipa['Kinerja'].empty else 4.0
+                        min_y = min(-0.1, df_plot_ipa['Kepentingan'].min() - 0.1) if not df_plot_ipa['Kepentingan'].empty else -0.1
+                        max_y = max(1.1, df_plot_ipa['Kepentingan'].max() + 0.1) if not df_plot_ipa['Kepentingan'].empty else 1.1
+                        
+                        fig_ipa.update_layout(
+                            height=600 if level_ipa == "📊 Makro (Kategori Utama)" else 700, 
+                            margin=dict(t=40,b=40,l=40,r=40),
+                            xaxis_range=[min_x, 5.1], yaxis_range=[min_y, max_y],
+                            xaxis_title="Kinerja (Rata-rata Skor Kepuasan)", 
+                            yaxis_title="Kepentingan (Korelasi terhadap Total Skor)"
+                        )
+                        
+                        st.plotly_chart(fig_ipa, use_container_width=True)
+                        
+                        # --- 6. AUTO-DIAGNOSIS (KESIMPULAN OTOMATIS) ---
+                        # Cari item yang Kinerjanya < 4.5 DAN Kepentingannya > Rata-rata
+                        q1_items = df_plot_ipa[(df_plot_ipa['Kinerja'] < x_cross) & (df_plot_ipa['Kepentingan'] > y_cross)]['Kategori'].tolist()
+                        
+                        st.markdown("#### 💡 Diagnosis Sistem")
+                        if q1_items: 
+                            if level_ipa == "📊 Makro (Kategori Utama)":
+                                st.error(f"🚨 **Peringatan Area Kritis:** Kategori **{', '.join(q1_items)}** berada di Kuadran 1. Beralih ke **Mode Mikro** untuk melihat sub-indikator spesifik yang menjadi akar masalah.")
+                            else:
+                                st.error(f"🎯 **Rekomendasi Tindakan (Akar Masalah):** Segera perbaiki butir indikator **{', '.join(q1_items)}**. Indikator ini sangat memengaruhi kepuasan total peserta, namun kinerjanya masih di bawah standar 4.5.")
+                        else:  
+                            st.success("🎉 **Luar Biasa!** Tidak ada indikator/kategori krusial di Kuadran 1 pada periode/filter ini. Terus pertahankan kualitas pelayanan Anda!")
+                else:
+                    st.warning("⚠️ Data terlalu sedikit (kurang dari 3 baris yang valid) untuk memproses Analisis Kuadran (IPA).")
+            except Exception as e:
+                st.error(f"Gagal memuat visualisasi IPA: {e}")
 
             # Analisis Komparatif
             st.markdown("---")
