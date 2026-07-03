@@ -553,7 +553,7 @@ try:
                     st.write("Pilih salah satu indikator di bawah ini untuk melihat 'perjalanan' posisinya dari bulan ke bulan. Fitur ini berfungsi mengevaluasi apakah tindak lanjut yang telah dilakukan efektif menaikkan kinerja.")
                     
                     # Ambil daftar bulan yang tersedia untuk mengurutkan histori secara kronologis
-                    URUTAN_BULAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember']
+                    URUTAN_BULAN = ['Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember']
                     
                     # Dropdown pilihan indikator yang ingin dilacak historinya
                     list_pelacakan = kategori_list
