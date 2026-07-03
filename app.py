@@ -490,20 +490,56 @@ try:
                         )
                         
                         st.plotly_chart(fig_ipa, use_container_width=True)
-                        
-                        # --- 6. AUTO-DIAGNOSIS (KESIMPULAN OTOMATIS) ---
+
+                        # --- 6. AUTO-DIAGNOSIS (KESIMPULAN OTOMATIS) DENGAN UI PLN ---
                         # Cari item yang Kinerjanya < 4.5 DAN Kepentingannya > Rata-rata
                         q1_items = df_plot_ipa[(df_plot_ipa['Kinerja'] < x_cross) & (df_plot_ipa['Kepentingan'] > y_cross)]['Kategori'].tolist()
                         
-                        st.markdown("#### 💡 Diagnosis Sistem")
-                        if q1_items: 
+                        st.markdown("<h4 style='color: #003366; margin-top: 30px;'>💡 Executive Diagnosis</h4>", unsafe_allow_html=True)
+                        
+                        if q1_items:
+                            # Format list item menjadi HTML bullet point agar rapi & mudah dibaca
+                            list_html = "".join([f"<li style='margin-bottom: 5px;'><b>{item}</b></li>" for item in q1_items])
+                            
+                            # Teks Rekomendasi dinamis berdasarkan pilihan Makro/Mikro
                             if level_ipa == "📊 Makro (Kategori Utama)":
-                                st.error(f"🚨 **Peringatan Area Kritis:** Kategori **{', '.join(q1_items)}** berada di Kuadran 1. Beralih ke **Mode Mikro** untuk melihat sub-indikator spesifik yang menjadi akar masalah.")
+                                rek_text = "Beralih ke <b>Mode Mikro</b> di pengaturan atas untuk melihat rincian sub-indikator spesifik yang menjadi akar masalah."
                             else:
-                                st.error(f"🎯 **Rekomendasi Tindakan (Akar Masalah):** Segera perbaiki butir indikator **{', '.join(q1_items)}**. Indikator ini sangat memengaruhi kepuasan total peserta, namun kinerjanya masih di bawah standar 4.5.")
+                                rek_text = "Segera susun rencana perbaikan operasional untuk indikator di atas. Elevasi di area ini akan memberikan dampak paling masif terhadap lonjakan total skor evaluasi."
+                            
+                            # Kartu UI Peringatan (Warna Putih bersih dengan border Merah Kritis)
+                            alert_html = f"""
+                            <div style="padding: 20px; border-radius: 10px; border-left: 8px solid #d32f2f; background-color: #fdf5f5; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px;">
+                                <div style="display: flex; align-items: flex-start; gap: 15px;">
+                                    <div style="font-size: 32px; margin-top: 2px;">🚨</div>
+                                    <div style="width: 100%;">
+                                        <h4 style="margin: 0 0 8px 0; color: #d32f2f; font-size: 18px;">Peringatan Area Kritis (Kuadran 1)</h4>
+                                        <p style="margin: 0 0 10px 0; color: #444; font-size: 15px;">Ditemukan indikator yang <b>sangat memengaruhi kepuasan peserta</b>, namun kinerjanya <b>di bawah standar PLN (4.5)</b>:</p>
+                                        <ul style="margin: 0 0 15px 0; padding-left: 20px; color: #b71c1c; font-size: 15px;">
+                                            {list_html}
+                                        </ul>
+                                        <div style="padding: 10px 15px; background-color: rgba(0, 85, 164, 0.08); border-radius: 6px; border-left: 4px solid #0055A4;">
+                                            <p style="margin: 0; font-size: 14px; color: #003366;"><b>Tindak Lanjut:</b> {rek_text}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            """
+                            st.markdown(alert_html, unsafe_allow_html=True)
+                            
                         else:  
-                            st.success("🎉 **Luar Biasa!** Tidak ada indikator/kategori krusial di Kuadran 1 pada periode/filter ini. Terus pertahankan kualitas pelayanan Anda!")
-
+                            # Kartu UI Sukses (Gradien Biru PLN & Kuning Emas)
+                            success_html = """
+                            <div style="padding: 25px; border-radius: 10px; background: linear-gradient(135deg, #003366, #0055A4); box-shadow: 0 4px 10px rgba(0,0,0,0.15); margin-bottom: 20px; border-left: 8px solid #ffc107; display: flex; align-items: center; gap: 20px;">
+                                <div style="font-size: 45px; background: rgba(255,255,255,0.1); padding: 10px 15px; border-radius: 50%;">🏆</div>
+                                <div>
+                                    <h4 style="margin: 0 0 5px 0; color: #ffc107; font-size: 20px;">Kinerja Prima Luar Biasa!</h4>
+                                    <p style="margin: 0; color: #ffffff; font-size: 15px; line-height: 1.5; opacity: 0.9;">Tidak ada indikator krusial yang jatuh di Kuadran 1 pada periode evaluasi ini. Terus pertahankan kualitas pelayanan dan materi Anda sesuai standar ekselensi UPDL Jakarta.</p>
+                                </div>
+                            </div>
+                            """
+                            st.markdown(success_html, unsafe_allow_html=True)
+                    
                     # ==============================================================================
                     # 📜 FITUR TAMBAHAN: HISTORI PERGERAKAN INDIKATOR (EVALUASI TINDAK LANJUT)
                     # ==============================================================================
