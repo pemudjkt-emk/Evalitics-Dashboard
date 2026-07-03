@@ -347,15 +347,16 @@ try:
             else:
                 st.error("⚠️ Kolom yang dipilih bukan format angka.")
 
-            # IPA
+           # IPA
             st.markdown("---")
             st.markdown("### 🎯 Importance-Performance Analysis (IPA)")
             try:
+                # Copy data agar tidak merusak dataframe asli
                 df_ipa = df_filtered.dropna(subset=['RATA-RATA KESELURUHAN']).copy()
                 
-                # --- 1. SYARAT MINIMAL UKURAN SAMPEL (40%) ---
+                # --- 1. SYARAT MINIMAL UKURAN SAMPEL (RESPONSE RATE 40%) ---
                 if '% Pengisian' in df_ipa.columns:
-                    # FIX ERROR STRING: Hapus tanda '%' dan paksa ubah teks menjadi angka (numerik)
+                    # FIX ERROR STRING: Hapus tanda '%' dan paksa ubah teks menjadi angka
                     df_ipa['Pengisian_Clean'] = pd.to_numeric(df_ipa['% Pengisian'].astype(str).str.replace('%', '', regex=False), errors='coerce')
                     rata_pengisian = df_ipa['Pengisian_Clean'].mean()
                     
@@ -363,83 +364,78 @@ try:
                     if pd.notna(rata_pengisian) and rata_pengisian > 1:
                         rata_pengisian = rata_pengisian / 100
                         
+                    # Tampilkan Peringatan Jika Response Rate < 40%
                     if pd.notna(rata_pengisian) and rata_pengisian < 0.40:
                         st.warning(f"⚠️ **Peringatan Sampel:** Rata-rata tingkat pengisian (Response Rate) pada data ini hanya **{rata_pengisian*100:.1f}%** (di bawah standar validitas 40%). Titik kuadran mungkin dipengaruhi anomali karena sampel terlalu sedikit.")
                 
-                # Syarat minimal baris untuk korelasi
+                # --- 2. PILIHAN LEVEL KEDALAMAN (TOGGLE MAKRO/MIKRO) ---
+                level_ipa = st.radio(
+                    "🔍 Pilih Kedalaman Analisis Akar Masalah (Drill-down):", 
+                    ["📊 Makro (Kategori Utama)", "🔎 Mikro (Sub-Indikator Detail)"], 
+                    horizontal=True
+                )
+
+                # Syarat minimal baris untuk bisa menghitung korelasi adalah 3 baris
                 if len(df_ipa) > 2:
-                    kategori_list = ['Engagement Instruktur','Relevance Instruktur','Satisfaction Instruktur',
-                                     'Engagement Materi','Relevance Materi','Satisfaction Materi',
-                                     'Satisfaction Sarana Digital','Satisfaction Sarana In Class']
+                    
+                    if level_ipa == "📊 Makro (Kategori Utama)":
+                        # Kategori Level Makro
+                        kategori_list = [
+                            'Engagement Instruktur', 'Relevance Instruktur', 'Satisfaction Instruktur',
+                            'Engagement Materi', 'Relevance Materi', 'Satisfaction Materi',
+                            'Satisfaction Sarana Digital', 'Satisfaction Sarana In Class'
+                        ]
+                        nama_tampil = kategori_list
+                        
+                    else:
+                        # Kategori Level Mikro (Kolom Indikator Mentah)
+                        kategori_list = [
+                            'INS1','INS2','INS3','INS4','INS5','INS6','INS7','INS8',
+                            'MAT1','MAT2','MAT3','MAT4','MAT5','MAT6',
+                            'SP1','SP2','SP3','SP4','SP5',
+                            'DS1','DS2','DS3','DS4','DS5'
+                        ]
+                        
+                        # --- KAMUS PERTANYAAN (Sesuaikan teks ini dengan kuesioner asli PLN Anda) ---
+                        kamus_nama = {
+                            'INS1': 'INS1: Kejelasan Penjelasan', 'INS2': 'INS2: Penguasaan Materi',
+                            'INS3': 'INS3: Relevansi Kasus',      'INS4': 'INS4: Interaksi Peserta',
+                            'INS5': 'INS5: Sistematika',          'INS6': 'INS6: Manajemen Waktu',
+                            'INS7': 'INS7: Cara Menjawab',        'INS8': 'INS8: Empati & Etika',
+                            'MAT1': 'MAT1: Desain Modul',         'MAT2': 'MAT2: Update Materi',
+                            'MAT3': 'MAT3: Sesuai Pekerjaan',     'MAT4': 'MAT4: Mudah Dipahami',
+                            'MAT5': 'MAT5: Kelengkapan',          'MAT6': 'MAT6: Studi Kasus',
+                            'SP1':  'SP1: Kenyamanan Kelas',      'SP2':  'SP2: Kebersihan Kelas',
+                            'SP3':  'SP3: Kualitas Konsumsi',     'SP4':  'SP4: Kebersihan Toilet', 
+                            'SP5':  'SP5: Proyektor & Audio',
+                            'DS1':  'DS1: Kemudahan Aplikasi',    'DS2':  'DS2: Kecepatan Akses',
+                            'DS3':  'DS3: UI/UX Platform',        'DS4':  'DS4: Kelengkapan Data', 
+                            'DS5':  'DS5: Keamanan & Privasi'
+                        }
+                        # Translate kode kolom menjadi nama manusiawi
+                        nama_tampil = [kamus_nama.get(k, k) for k in kategori_list]
+
                     kinerja, kepentingan = [], []
                     
+                    # --- 3. KALKULASI STATISTIK (KINERJA & KORELASI) ---
                     for kat in kategori_list:
                         if kat in df_ipa.columns:
-                            # Lapis keamanan ekstra: paksa kolom kategori menjadi angka jika ada karakter nyasar
+                            # Lapis keamanan ekstra: paksa ubah teks menjadi angka
                             df_ipa[kat] = pd.to_numeric(df_ipa[kat], errors='coerce')
                             
+                            # Hitung Kinerja (Mean)
                             kinerja.append(df_ipa[kat].mean())
-                            # Kalkulasi Korelasi Pearson (Kepentingan)
+                            
+                            # Hitung Kepentingan (Korelasi Pearson)
                             corr_val = df_ipa[kat].corr(pd.to_numeric(df_ipa['RATA-RATA KESELURUHAN'], errors='coerce'))
                             kepentingan.append(corr_val)
                         else:
                             kinerja.append(None); kepentingan.append(None)
 
-                    df_plot_ipa = pd.DataFrame({'Kategori':kategori_list,'Kinerja':kinerja,'Kepentingan':kepentingan})
+                    # Buat DataFrame untuk Plotting
+                    df_plot_ipa = pd.DataFrame({'Kategori': nama_tampil, 'Kinerja': kinerja, 'Kepentingan': kepentingan})
                     
-                    # --- 2. MITIGASI ERROR NaN (Zero Variance) ---
-                    mean_kepentingan = df_plot_ipa['Kepentingan'].mean()
-                    if pd.isna(mean_kepentingan): 
-                        mean_kepentingan = 0.5 # Nilai default jika semua perhitungan korelasi gagal
-                        
-                    df_plot_ipa['Kepentingan'] = df_plot_ipa['Kepentingan'].fillna(mean_kepentingan)
-                    df_plot_ipa = df_plot_ipa.dropna(subset=['Kinerja']) 
-
-                    if not df_plot_ipa.empty:
-                        # --- 3. FIKSASI CROSSHAIR (Standar Kinerja PLN) ---
-                        x_cross = 4.5  
-                        y_cross = df_plot_ipa['Kepentingan'].mean() 
-                        
-                        # Pembuatan Grafik
-                        fig_ipa = px.scatter(df_plot_ipa, x='Kinerja', y='Kepentingan', text='Kategori')
-                        fig_ipa.update_traces(textposition='top center', 
-                                              marker=dict(size=14, color='#005b9f', line=dict(width=2,color='DarkSlateGrey')))
-                        
-                        # Penambahan Garis Batas Kuadran
-                        fig_ipa.add_hline(y=y_cross, line_dash="dash", line_color="#FFC000")
-                        fig_ipa.add_vline(x=x_cross, line_dash="dash", line_color="#FFC000", 
-                                          annotation_text="Standar TMP (4.5)", annotation_position="top left")
-                        
-                        for ax, ay, txt, col, algn in [
-                            (0.01,0.99,"<b>KUADRAN 1</b><br>🚨 Prioritas Utama","#d32f2f","left"),
-                            (0.99,0.99,"<b>KUADRAN 2</b><br>🌟 Pertahankan","#2e7d32","right"),
-                            (0.01,0.01,"<b>KUADRAN 3</b><br>📉 Prioritas Rendah","#757575","left"),
-                            (0.99,0.01,"<b>KUADRAN 4</b><br>⚠️ Berlebihan","#f57c00","right"),
-                        ]:
-                            fig_ipa.add_annotation(xref="paper",yref="paper",x=ax,y=ay,text=txt,
-                                                   showarrow=False,font=dict(color=col,size=13),align=algn)
-                        
-                        # Fiksasi batas skala grafik agar tampilan selalu rapi
-                        min_x = min(4.0, df_plot_ipa['Kinerja'].min() - 0.1) if not df_plot_ipa['Kinerja'].empty else 4.0
-                        min_y = min(-0.1, df_plot_ipa['Kepentingan'].min() - 0.1) if not df_plot_ipa['Kepentingan'].empty else -0.1
-                        max_y = max(1.1, df_plot_ipa['Kepentingan'].max() + 0.1) if not df_plot_ipa['Kepentingan'].empty else 1.1
-                        
-                        fig_ipa.update_layout(height=600, margin=dict(t=40,b=40,l=40,r=40),
-                                              xaxis_range=[min_x, 5.1], yaxis_range=[min_y, max_y],
-                                              xaxis_title="Kinerja (Rata-rata Skor)", yaxis_title="Kepentingan (Korelasi)")
-                        
-                        st.plotly_chart(fig_ipa, use_container_width=True)
-                        
-                        # Logika Kesimpulan
-                        q1 = df_plot_ipa[(df_plot_ipa['Kinerja'] < x_cross) & (df_plot_ipa['Kepentingan'] > y_cross)]['Kategori'].tolist()
-                        if q1: 
-                            st.error(f"**Tindakan Korektif:** Indikator **{', '.join(q1)}** berada di Kuadran 1 — Prioritaskan evaluasi dan perbaikan karena elemen ini sangat krusial bagi kepuasan peserta!")
-                        else:  
-                            st.success("🎉 Luar Biasa! Tidak ada indikator krusial di Kuadran 1 bulan ini. Pertahankan kualitas pelayanan dan materi Anda!")
-                else:
-                    st.warning("⚠️ Data terlalu sedikit (kurang dari 3 baris) untuk memproses Analisis Kuadran (IPA).")
-            except Exception as e:
-                st.error(f"Gagal memuat IPA: {e}")
+                    # --- 4. MITIGASI ERROR NaN (Zero
 
             # Analisis Komparatif
             st.markdown("---")
