@@ -508,6 +508,113 @@ try:
             except Exception as e:
                 st.error(f"Gagal memuat visualisasi IPA: {e}")
 
+    # ==============================================================================
+                        # 📜 FITUR TAMBAHAN: HISTORI PERGERAKAN INDIKATOR (EVALUASI TINDAK LANJUT)
+                        # ==============================================================================
+                        st.markdown("---")
+                        st.markdown("### 📜 Histori & Evaluasi Dampak Tindak Lanjut (Tren Antar Bulan)")
+                        st.write("Pilih salah satu indikator di bawah ini untuk melihat 'perjalanan' posisinya dari bulan ke bulan. Fitur ini berfungsi mengevaluasi apakah tindak lanjut yang telah dilakukan efektif menaikkan kinerja.")
+                        
+                        # Ambil daftar bulan yang tersedia untuk mengurutkan histori secara kronologis
+                        URUTAN_BULAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember']
+                        
+                        # Dropdown pilihan indikator yang ingin dilacak historinya
+                        list_pelacakan = kategori_list
+                        indikator_dipilih = st.selectbox("🎯 Pilih Indikator yang Ingin Dilacak Historinya:", list_pelacakan, key="sb_history_ipa")
+                        
+                        # Ambil kembali key asli kolom (jika mode mikro menggunakan kamus, kita cari key-nya)
+                        col_key_asli = indikator_dipilih
+                        if level_ipa == "🔎 Mikro (Sub-Indikator Detail)":
+                            # Cari key berdasarkan value di kamus_nama
+                            for k, v in kamus_nama.items():
+                                if v == indikator_dipilih:
+                                    col_key_asli = k
+                                    break
+                        
+                        # Kumpulkan data per bulan untuk indikator terpilih
+                        histori_bulan, histori_kinerja, histori_kepentingan = [], [], []
+                        
+                        # Gunakan data awal sebelum filter bulan agar historinya lengkap setahun
+                        df_global_ctx = df.copy() 
+                        
+                        # Bersihkan data global dari % dan pastikan numerik
+                        if '% Pengisian' in df_global_ctx.columns:
+                            df_global_ctx['Pengisian_Clean'] = pd.to_numeric(df_global_ctx['% Pengisian'].astype(str).str.replace('%', '', regex=False), errors='coerce')
+                        for k_item in kategori_list:
+                            k_key = k_item
+                            if level_ipa == "🔎 Mikro (Sub-Indikator Detail)":
+                                for kk, vv in kamus_nama.items():
+                                    if vv == k_item: k_key = kk; break
+                            if k_key in df_global_ctx.columns:
+                                df_global_ctx[k_key] = pd.to_numeric(df_global_ctx[k_key], errors='coerce')
+                        df_global_ctx['RATA-RATA KESELURUHAN'] = pd.to_numeric(df_global_ctx['RATA-RATA KESELURUHAN'], errors='coerce')
+
+                        # Filter berdasarkan urutan kronologis bulan yang ada di dataset
+                        bulan_tersedia_di_data = [b for b in URUTAN_BULAN if b in df_global_ctx['Laporan Bulan'].unique()]
+                        
+                        for bln in bulan_tersedia_di_data:
+                            df_bln = df_global_ctx[df_global_ctx['Laporan Bulan'] == bln]
+                            if len(df_bln) > 1 and col_key_asli in df_bln.columns:
+                                mean_kinerja = df_bln[col_key_asli].mean()
+                                corr_kepentingan = df_bln[col_key_asli].corr(df_bln['RATA-RATA KESELURUHAN'])
+                                
+                                if pd.notna(mean_kinerja):
+                                    histori_bulan.append(bln)
+                                    histori_kinerja.append(mean_kinerja)
+                                    histori_kepentingan.append(corr_kepentingan if pd.notna(corr_kepentingan) else 0.5)
+                        
+                        if len(histori_bulan) >= 2:
+                            df_histori_plot = pd.DataFrame({
+                                'Bulan': histori_bulan,
+                                'Kinerja': histori_kinerja,
+                                'Kepentingan': histori_kepentingan
+                            })
+                            
+                            # Membuat Grafik Garis Perjalanan (Trajectory Plot)
+                            fig_track = px.line(df_histori_plot, x='Kinerja', y='Kepentingan', text='Bulan', markers=True,
+                                                title=f"Rekam Jejak Pergeseran Posisi Kuadran: {indikator_dipilih}")
+                            
+                            fig_track.update_traces(textposition='top center', line=dict(width=3, color='#ffc107'),
+                                                    marker=dict(size=10, color='#005b9f'))
+                            
+                            # Tambahkan crosshair standar baku 4.5
+                            fig_track.add_vline(x=4.5, line_dash="dash", line_color="#FFC000")
+                            fig_track.add_hline(y=df_histori_plot['Kepentingan'].mean(), line_dash="dash", line_color="#FFC000")
+                            
+                            fig_track.update_layout(
+                                height=450, xaxis_range=[3.8, 5.1],
+                                xaxis_title="Kinerja (Skor Kepuasan)", yaxis_title="Kepentingan (Korelasi)"
+                            )
+                            st.plotly_chart(fig_track, use_container_width=True)
+                            
+                            # --- TABEL MONITORING EKSEKUSI TINDAK LANJUT ---
+                            st.markdown("#### 📝 Log Evaluasi & Efektivitas Tindak Lanjut")
+                            
+                            # Generate tabel analisa otomatis sebelum vs sesudah
+                            b_awal, b_akhir = histori_bulan[0], histori_bulan[-1]
+                            k_awal, k_akhir = histori_kinerja[0], histori_kinerja[-1]
+                            selisih = k_akhir - k_awal
+                            
+                            status_efektivitas = "🟢 BERHASIL (Kinerja Naik)" if selisih > 0 else "🔴 BELUM EFEKTIF (Kinerja Stagnan/Turun)"
+                            if abs(selisih) < 0.05: status_efektivitas = "🟡 BERTAHAN (Perubahan Minimal)"
+                            
+                            col_t1, col_t2, col_t3 = st.columns(3)
+                            col_t1.metric(f"Skor Awal ({b_awal})", f"{k_awal:.2f}")
+                            col_t2.metric(f"Skor Akhir ({b_akhir})", f"{k_akhir:.2f}", delta=f"{selisih:+.2f}")
+                            col_t3.metric("Kesimpulan Dampak", "Efektif" if selisih > 0 else "Evaluasi Ulang", delta=status_efektivitas, delta_color="normal" if selisih > 0 else "inverse")
+                            
+                            # Menampilkan contoh format pelaporan formal untuk manajemen
+                            st.caption("**Rekomendasi Format Dokumen Tindak Lanjut (Form Evaluasi Mutu):**")
+                            df_log_manual = pd.DataFrame({
+                                'Periode': [f"{b_awal} s.d {b_akhir}"],
+                                'Indikator Masalah': [indikator_dipilih],
+                                'Akar Masalah (Kondisi Awal)': [f"Berada di Kuadran 1 pada bulan {b_awal} dengan skor {k_awal:.2f}"],
+                                'Tindakan Korektif yang Telah Dilaksanakan': ["(Tulis tindakan nyata, misal: Refreshment Instruktur / Upgrade Bandwidth Wifi)"],
+                                'Hasil Check Akhir': [f"Skor naik menjadi {k_akhir:.2f} ({status_efektivitas})"]
+                            })
+                            st.dataframe(df_log_manual, use_container_width=True, hide_index=True)
+                        else:
+                            st.info("ℹ️ Data histori bulanan belum mencukupi (minimal dibutuhkan data dari 2 bulan berbeda) untuk menggambar garis trajektori pergeseran tindakan.")
             # Analisis Komparatif
             st.markdown("---")
             st.markdown("### ⚖️ Analisis Komparatif")
