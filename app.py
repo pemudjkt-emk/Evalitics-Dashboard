@@ -354,9 +354,15 @@ try:
                 df_ipa = df_filtered.dropna(subset=['RATA-RATA KESELURUHAN']).copy()
                 
                 # --- 1. SYARAT MINIMAL UKURAN SAMPEL (40%) ---
-                # Mengecek apakah rata-rata tingkat partisipasi (Response Rate) >= 40%
                 if '% Pengisian' in df_ipa.columns:
-                    rata_pengisian = df_ipa['% Pengisian'].mean()
+                    # FIX ERROR STRING: Hapus tanda '%' dan paksa ubah teks menjadi angka (numerik)
+                    df_ipa['Pengisian_Clean'] = pd.to_numeric(df_ipa['% Pengisian'].astype(str).str.replace('%', '', regex=False), errors='coerce')
+                    rata_pengisian = df_ipa['Pengisian_Clean'].mean()
+                    
+                    # Jika data dari GSheets terbaca puluhan (misal 80, bukan 0.8), bagi dengan 100
+                    if pd.notna(rata_pengisian) and rata_pengisian > 1:
+                        rata_pengisian = rata_pengisian / 100
+                        
                     if pd.notna(rata_pengisian) and rata_pengisian < 0.40:
                         st.warning(f"⚠️ **Peringatan Sampel:** Rata-rata tingkat pengisian (Response Rate) pada data ini hanya **{rata_pengisian*100:.1f}%** (di bawah standar validitas 40%). Titik kuadran mungkin dipengaruhi anomali karena sampel terlalu sedikit.")
                 
@@ -369,9 +375,12 @@ try:
                     
                     for kat in kategori_list:
                         if kat in df_ipa.columns:
+                            # Lapis keamanan ekstra: paksa kolom kategori menjadi angka jika ada karakter nyasar
+                            df_ipa[kat] = pd.to_numeric(df_ipa[kat], errors='coerce')
+                            
                             kinerja.append(df_ipa[kat].mean())
                             # Kalkulasi Korelasi Pearson (Kepentingan)
-                            corr_val = df_ipa[kat].corr(df_ipa['RATA-RATA KESELURUHAN'])
+                            corr_val = df_ipa[kat].corr(pd.to_numeric(df_ipa['RATA-RATA KESELURUHAN'], errors='coerce'))
                             kepentingan.append(corr_val)
                         else:
                             kinerja.append(None); kepentingan.append(None)
@@ -379,19 +388,17 @@ try:
                     df_plot_ipa = pd.DataFrame({'Kategori':kategori_list,'Kinerja':kinerja,'Kepentingan':kepentingan})
                     
                     # --- 2. MITIGASI ERROR NaN (Zero Variance) ---
-                    # Jika nilai korelasi NaN (karena semua peserta memberi skor persis sama / varian 0)
                     mean_kepentingan = df_plot_ipa['Kepentingan'].mean()
                     if pd.isna(mean_kepentingan): 
                         mean_kepentingan = 0.5 # Nilai default jika semua perhitungan korelasi gagal
                         
-                    # Ganti nilai NaN dengan nilai rata-rata kepentingan
                     df_plot_ipa['Kepentingan'] = df_plot_ipa['Kepentingan'].fillna(mean_kepentingan)
-                    df_plot_ipa = df_plot_ipa.dropna(subset=['Kinerja']) # Pastikan kinerja tidak kosong
+                    df_plot_ipa = df_plot_ipa.dropna(subset=['Kinerja']) 
 
                     if not df_plot_ipa.empty:
                         # --- 3. FIKSASI CROSSHAIR (Standar Kinerja PLN) ---
-                        x_cross = 4.5  # Sumbu X (Kinerja) dikunci di standar minimal TMP PLN
-                        y_cross = df_plot_ipa['Kepentingan'].mean() # Sumbu Y (Kepentingan) tetap dinamis
+                        x_cross = 4.5  
+                        y_cross = df_plot_ipa['Kepentingan'].mean() 
                         
                         # Pembuatan Grafik
                         fig_ipa = px.scatter(df_plot_ipa, x='Kinerja', y='Kepentingan', text='Kategori')
@@ -403,7 +410,6 @@ try:
                         fig_ipa.add_vline(x=x_cross, line_dash="dash", line_color="#FFC000", 
                                           annotation_text="Standar TMP (4.5)", annotation_position="top left")
                         
-                        # Label 4 Kuadran
                         for ax, ay, txt, col, algn in [
                             (0.01,0.99,"<b>KUADRAN 1</b><br>🚨 Prioritas Utama","#d32f2f","left"),
                             (0.99,0.99,"<b>KUADRAN 2</b><br>🌟 Pertahankan","#2e7d32","right"),
@@ -413,10 +419,10 @@ try:
                             fig_ipa.add_annotation(xref="paper",yref="paper",x=ax,y=ay,text=txt,
                                                    showarrow=False,font=dict(color=col,size=13),align=algn)
                         
-                        # Fiksasi batas skala grafik agar tampilan selalu rapi dan proporsional
-                        min_x = min(4.0, df_plot_ipa['Kinerja'].min() - 0.1)
-                        min_y = min(-0.1, df_plot_ipa['Kepentingan'].min() - 0.1)
-                        max_y = max(1.1, df_plot_ipa['Kepentingan'].max() + 0.1)
+                        # Fiksasi batas skala grafik agar tampilan selalu rapi
+                        min_x = min(4.0, df_plot_ipa['Kinerja'].min() - 0.1) if not df_plot_ipa['Kinerja'].empty else 4.0
+                        min_y = min(-0.1, df_plot_ipa['Kepentingan'].min() - 0.1) if not df_plot_ipa['Kepentingan'].empty else -0.1
+                        max_y = max(1.1, df_plot_ipa['Kepentingan'].max() + 0.1) if not df_plot_ipa['Kepentingan'].empty else 1.1
                         
                         fig_ipa.update_layout(height=600, margin=dict(t=40,b=40,l=40,r=40),
                                               xaxis_range=[min_x, 5.1], yaxis_range=[min_y, max_y],
@@ -424,7 +430,7 @@ try:
                         
                         st.plotly_chart(fig_ipa, use_container_width=True)
                         
-                        # Logika Kesimpulan Kuadran 1 (Kinerja < 4.5 DAN Kepentingan > Rata-rata)
+                        # Logika Kesimpulan
                         q1 = df_plot_ipa[(df_plot_ipa['Kinerja'] < x_cross) & (df_plot_ipa['Kepentingan'] > y_cross)]['Kategori'].tolist()
                         if q1: 
                             st.error(f"**Tindakan Korektif:** Indikator **{', '.join(q1)}** berada di Kuadran 1 — Prioritaskan evaluasi dan perbaikan karena elemen ini sangat krusial bagi kepuasan peserta!")
