@@ -1149,36 +1149,94 @@ with tab_entry:
 # ══════════════════════════════════════════════════════════════════════════════
 with tab_sentimen:
     st.markdown("### 🚨 Sistem Peringatan Dini (Deteksi Keluhan Otomatis)")
-    st.write("Sistem memindai komentar peserta menggunakan **Open-Source Sentiment Lexicon** secara *real-time*.")
+    st.write("Sistem memindai komentar peserta secara *real-time* dari Google Sheets menggunakan **Open-Source Sentiment Lexicon**.")
     
-    # Karena saat ini kita belum menarik Sheet Komentar asli, kita gunakan data simulasi dulu:
-    st.info("💡 Catatan: Saat ini menggunakan data simulasi. Nanti akan dihubungkan ke Google Sheets 'Komentar' Anda.")
-    
-    data_simulasi = pd.DataFrame({
-        "Tanggal": ["2023-10-01", "2023-10-02", "2023-10-03"],
-        "Nama Peserta": ["Peserta A", "Peserta B", "Peserta C"],
-        "Komentar": [
-            "Materi sangat luar biasa dan instruktur jelas menyampaikannya.",
-            "AC di ruangan sangat panas dan toiletnya kotor sekali, sangat tidak nyaman.",
-            "Cukup baik, makanannya enak."
-        ]
-    })
-    
-    # Menjalankan mesin sentimen
-    data_simulasi['Sentimen'] = data_simulasi['Komentar'].apply(analisis_sentimen_opensource)
-    
-    # Filter khusus yang Negatif
-    df_keluhan = data_simulasi[data_simulasi['Sentimen'] == 'Negatif']
-    
-    if not df_keluhan.empty:
-        st.error(f"Ditemukan **{len(df_keluhan)} keluhan (Sentimen Negatif)** yang membutuhkan tindakan segera!")
-        st.dataframe(df_keluhan, use_container_width=True)
+    try:
+        # 1. MENGAMBIL DATA DARI SHEET "Detail Komentar L1"
+        sheet_id_komentar = '1IDAmFwTbBQDZcKM3eiiEDcA3KwM9WKqW4zCrk__6-PU'
+        # Menggunakan %20 sebagai pengganti spasi pada URL
+        sheet_name_komentar = 'Detail%20Komentar%20L1' 
+        url_komentar = f'https://docs.google.com/spreadsheets/d/{sheet_id_komentar}/gviz/tq?tqx=out:csv&sheet={sheet_name_komentar}'
         
-        if st.button("🚀 Kirim Peringatan ke WhatsApp PIC Sarpras", type="primary"):
-            st.success("✅ Peringatan otomatis berhasil disimulasikan terkirim ke PIC bersangkutan!")
-            st.balloons()
-    else:
-        st.success("🎉 Aman! Tidak ditemukan sentimen negatif (keluhan) pada data ini.")
+        # Memuat data menggunakan fungsi load_csv yang sudah ada (dengan cache agar cepat)
+        df_komentar = load_csv(url_komentar)
+        
+        if not df_komentar.empty:
+            st.success(f"✅ Berhasil memuat **{len(df_komentar)} baris komentar** dari sheet 'Detail Komentar L1'.")
+            
+            # 2. MEMILIH KOLOM KOMENTAR SECARA DINAMIS
+            # Karena nama kolom di sheet Anda bisa bermacam-macam, silakan pilih kolomnya di bawah ini:
+            kolom_teks = st.selectbox("🎯 Pilih Kolom yang Berisi Komentar/Saran Peserta:", df_komentar.columns.tolist())
+            
+            if kolom_teks:
+                with st.spinner("Sistem sedang memindai dan menganalisis sentimen ribuan komentar..."):
+                    # Buat copy agar tidak merusak data asli
+                    df_analisis = df_komentar.copy()
+                    
+                    # 3. MENJALANKAN MESIN SENTIMEN
+                    df_analisis['Sentimen'] = df_analisis[kolom_teks].apply(analisis_sentimen_opensource)
+                    
+                    # Filter khusus yang Negatif
+                    df_keluhan = df_analisis[df_analisis['Sentimen'] == 'Negatif']
+                    
+                    st.markdown("---")
+                    
+                    if not df_keluhan.empty:
+                        # Tampilan jika ada keluhan
+                        st.error(f"⚠️ **AWAS!** Ditemukan **{len(df_keluhan)} keluhan (Sentimen Negatif)** yang membutuhkan tindakan segera!")
+                        
+                        # Menyusun kolom apa saja yang mau ditampilkan di tabel
+                        kolom_tampil = [kolom_teks, 'Sentimen'] 
+                        
+                        # Sistem otomatis mencoba mencari kolom 'Nama' atau 'Judul' jika ada di sheet Anda
+                        for col in ['Judul Pembelajaran/Kegiatan', 'Kode Unik', 'Nama Pelatihan', 'Tanggal']:
+                            if col in df_analisis.columns:
+                                kolom_tampil.insert(0, col)
+                                
+                        st.dataframe(df_keluhan[kolom_tampil], use_container_width=True)
+                        
+                        # Tombol Simulasi Eskalasi
+                        st.markdown("#### 🚀 Eskalasi Tindak Lanjut Otomatis")
+                        col_wa1, col_wa2 = st.columns(2)
+                        with col_wa1:
+                            if st.button("📱 Kirim Peringatan ke WhatsApp PIC Sarpras", use_container_width=True):
+                                st.success("✅ [SIMULASI] Peringatan otomatis berhasil dikirim ke WhatsApp PIC Sarana & Prasarana!")
+                                st.balloons()
+                        with col_wa2:
+                            if st.button("📧 Kirim Peringatan ke Email Evaluator", use_container_width=True):
+                                st.success("✅ [SIMULASI] Email rekap keluhan otomatis telah diteruskan ke Tim Evaluator!")
+                    else:
+                        st.success("🎉 **Luar Biasa!** Tidak ditemukan sentimen negatif (keluhan) pada data komentar ini. Semua berjalan prima.")
+                        
+                    # 4. MENAMPILKAN STATISTIK PROPORSI SENTIMEN (PIE CHART)
+                    st.markdown("---")
+                    st.markdown("#### 📊 Ringkasan Proporsi Sentimen Komentar")
+                    
+                    ringkasan_sentimen = df_analisis['Sentimen'].value_counts().reset_index()
+                    ringkasan_sentimen.columns = ['Kategori Sentimen', 'Jumlah']
+                    
+                    # Membuat visualisasi Pie Chart cantik ala PLN
+                    fig_pie = px.pie(ringkasan_sentimen, values='Jumlah', names='Kategori Sentimen', 
+                                     color='Kategori Sentimen',
+                                     color_discrete_map={'Positif':'#2e7d32', 'Netral':'#9e9e9e', 'Negatif':'#d32f2f'},
+                                     hole=0.45)
+                    
+                    fig_pie.update_traces(textposition='inside', textinfo='percent+label')
+                    fig_pie.update_layout(height=400, showlegend=False, margin=dict(t=10,b=10,l=10,r=10))
+                    
+                    # Membagi 2 kolom agar chart tidak terlalu besar di layar
+                    col_pie1, col_pie2 = st.columns([1, 1])
+                    with col_pie1:
+                        st.plotly_chart(fig_pie, use_container_width=True)
+                    with col_pie2:
+                        st.markdown("<br><br>", unsafe_allow_html=True)
+                        st.write("Visualisasi di samping menunjukkan perbandingan total komentar positif, netral, dan negatif. Semakin kecil warna merah (Negatif), semakin baik reputasi layanan UPDL Jakarta di mata peserta.")
+                    
+        else:
+            st.warning("⚠️ Sheet 'Detail Komentar L1' berhasil diakses, namun datanya kosong.")
+            
+    except Exception as e:
+        st.error(f"❌ Gagal memuat data dari Sheet 'Detail Komentar L1'. Pastikan nama sheet benar (perhatikan huruf besar/kecil). Detail error: {e}")
 # ══════════════════════════════════════════════════════════════════════════════
 # TAB 6: PENGATURAN
 # ══════════════════════════════════════════════════════════════════════════════
