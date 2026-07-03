@@ -703,6 +703,83 @@ except Exception as e:
     with tab_dashboard:
         st.error(f"Gagal memuat data: {e}")
 
+# ══════════════════════════════════════════════════════════════════
+    # TAB 2: DASHBOARD
+    # ══════════════════════════════════════════════════════════════════
+    with tab_dashboard:
+        df_filtered_dash = build_filters("dashboard")
+        st.markdown("---")
+
+        if not df_filtered_dash.empty:
+            skor_evaluasi = df_filtered_dash['RATA-RATA KESELURUHAN'].mean()
+            ind_kurang    = df_filtered_dash['Jumlah Indikator dibawah 4.5'].sum() if 'Jumlah Indikator dibawah 4.5' in df_filtered_dash.columns else 0
+            ind_lebih     = df_filtered_dash['Jumlah Indikator diatas 4.5'].sum()  if 'Jumlah Indikator diatas 4.5'  in df_filtered_dash.columns else 0
+
+            col_kpi1, col_kpi2, col_kpi3 = st.columns(3)
+            with col_kpi1: st.metric("🌟 Skor Evaluasi L1",  f"{skor_evaluasi:.2f}" if pd.notna(skor_evaluasi) else "N/A")
+            with col_kpi2: st.metric("⚠️ Indikator < 4.5",  int(ind_kurang))
+            with col_kpi3: st.metric("✅ Indikator ≥ 4.5",  int(ind_lebih))
+            st.markdown("---")
+
+            col_chart_l, col_chart_r = st.columns([3, 2])
+            with col_chart_l:
+                st.markdown("#### 📈 Skor L1 per Strategi Pelaksanaan")
+                df_grafik = df_filtered_dash.groupby('Strategi Pelaksanaan')['RATA-RATA KESELURUHAN'].mean().reset_index()
+                fig = px.bar(df_grafik, x='Strategi Pelaksanaan', y='RATA-RATA KESELURUHAN',
+                             text='RATA-RATA KESELURUHAN', color_discrete_sequence=['#005b9f'])
+                fig.update_traces(texttemplate='%{text:.2f}', textposition='outside')
+                fig.add_hline(y=4.5, line_dash="dash", line_color="#FFC000",
+                              annotation_text="Standar TMP (4.5)", annotation_position="top left")
+                fig.update_layout(height=350, bargap=0.5, yaxis_range=[0,5],
+                                  yaxis_title="Rata-rata Skor", xaxis_title="",
+                                  margin=dict(t=40,b=0,l=0,r=0))
+                st.plotly_chart(fig, use_container_width=True)
+
+            with col_chart_r:
+                st.markdown("#### 🕸️ Radar — Rata-rata Kategori")
+                kategori_radar = {
+                    'Eng. Instruktur':'Engagement Instruktur','Rel. Instruktur':'Relevance Instruktur',
+                    'Sat. Instruktur':'Satisfaction Instruktur','Eng. Materi':'Engagement Materi',
+                    'Rel. Materi':'Relevance Materi','Sat. Materi':'Satisfaction Materi',
+                    'Sarana Digital':'Satisfaction Sarana Digital','Sarana In-Class':'Satisfaction Sarana In Class',
+                }
+                labels = [k for k,v in kategori_radar.items() if v in df_filtered_dash.columns]
+                values = [df_filtered_dash[kategori_radar[k]].mean() for k in labels]
+                if labels:
+                    fig_radar = go.Figure(go.Scatterpolar(
+                        r=values+[values[0]], theta=labels+[labels[0]], fill='toself',
+                        fillcolor='rgba(0,85,164,0.15)', line=dict(color='#0055A4',width=2),
+                    ))
+                    fig_radar.update_layout(polar=dict(radialaxis=dict(visible=True,range=[0,5])),
+                                            showlegend=False, height=350, margin=dict(t=30,b=30,l=30,r=30))
+                    st.plotly_chart(fig_radar, use_container_width=True)
+
+            st.markdown("---")
+            if 'Laporan Bulan' in df_filtered_dash.columns:
+                st.markdown("#### 📆 Tren Skor L1 per Bulan")
+                URUTAN = ['Januari','Februari','Maret','April','Mei','Juni',
+                          'Juli','Agustus','September','Oktober','November','Desember']
+                df_tren = df_filtered_dash.groupby('Laporan Bulan')['RATA-RATA KESELURUHAN'].mean().reset_index()
+                df_tren['sort_key'] = df_tren['Laporan Bulan'].apply(lambda x: URUTAN.index(x) if x in URUTAN else 99)
+                df_tren = df_tren.sort_values('sort_key')
+                fig_tren = px.line(df_tren, x='Laporan Bulan', y='RATA-RATA KESELURUHAN',
+                                   markers=True, color_discrete_sequence=['#0055A4'])
+                fig_tren.add_hline(y=4.5, line_dash="dash", line_color="#FFC000",
+                                   annotation_text="Standar 4.5", annotation_position="top left")
+                fig_tren.update_layout(yaxis_range=[0,5], height=300, yaxis_title="Rata-rata Skor", xaxis_title="")
+                st.plotly_chart(fig_tren, use_container_width=True)
+
+            with st.expander(f"📄 Tabel Data Lengkap ({len(df_filtered_dash)} baris)", expanded=False):
+                st.dataframe(df_filtered_dash, use_container_width=True)
+        else:
+            st.warning("⚠️ Tidak ada data. Sesuaikan filter.")
+
+except Exception as e:
+    with tab_statistik:
+        st.error(f"Gagal memuat data: {e}")
+    with tab_dashboard:
+        st.error(f"Gagal memuat data: {e}")
+
 # ══════════════════════════════════════════════════════════════════════════════
 # TAB 3: AI ASSISTANT
 # ══════════════════════════════════════════════════════════════════════════════
