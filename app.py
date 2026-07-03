@@ -398,19 +398,19 @@ try:
                         
                         # --- KAMUS PERTANYAAN (Sesuaikan teks ini dengan kuesioner asli PLN Anda) ---
                         kamus_nama = {
-                            'INS1': 'INS1: Kejelasan Penjelasan', 'INS2': 'INS2: Penguasaan Materi',
-                            'INS3': 'INS3: Relevansi Kasus',      'INS4': 'INS4: Interaksi Peserta',
-                            'INS5': 'INS5: Sistematika',          'INS6': 'INS6: Manajemen Waktu',
-                            'INS7': 'INS7: Cara Menjawab',        'INS8': 'INS8: Empati & Etika',
-                            'MAT1': 'MAT1: Desain Modul',         'MAT2': 'MAT2: Update Materi',
-                            'MAT3': 'MAT3: Sesuai Pekerjaan',     'MAT4': 'MAT4: Mudah Dipahami',
-                            'MAT5': 'MAT5: Kelengkapan',          'MAT6': 'MAT6: Studi Kasus',
-                            'SP1':  'SP1: Kenyamanan Kelas',      'SP2':  'SP2: Kebersihan Kelas',
-                            'SP3':  'SP3: Kualitas Konsumsi',     'SP4':  'SP4: Kebersihan Toilet', 
-                            'SP5':  'SP5: Proyektor & Audio',
-                            'DS1':  'DS1: Kemudahan Aplikasi',    'DS2':  'DS2: Kecepatan Akses',
-                            'DS3':  'DS3: UI/UX Platform',        'DS4':  'DS4: Kelengkapan Data', 
-                            'DS5':  'DS5: Keamanan & Privasi'
+                            'INS1': 'INS1: Partisipasi Aktif',    'INS2': 'INS2: Peserta Jadi Terlibat',
+                            'INS3': 'INS3: Konteks Pekerjaan',    'INS4': 'INS4: Contoh Relevan',
+                            'INS5': 'INS5: Metode Mengajar',      'INS6': 'INS6: Studi Kasus',
+                            'INS7': 'INS7: Manajemen Waktu',      'INS8': 'INS8: Penampilan Profesional',
+                            'MAT1': 'MAT1: Diskusi Aktif',        'MAT2': 'MAT2: Motivasi Belajar',
+                            'MAT3': 'MAT3: Materi Aplikatif',     'MAT4': 'MAT4: Meningkatkan Kompetensi',
+                            'MAT5': 'MAT5: Materi Menarik',       'MAT6': 'MAT6: Bisa direkomendasikan',
+                            'SP1':  'SP1: Kenyamanan Kelas',      'SP2':  'SP2: Fasilitas Fisik',
+                            'SP3':  'SP3: Peralatan Belajar',     'SP4':  'SP4: Ruang Praktik', 
+                            'SP5':  'SP5: Sarana Pendukung',
+                            'DS1':  'DS1: Platform Online',       'DS2':  'DS2: Modul Digital',
+                            'DS3':  'DS3: Koneksi Internet',      'DS4':  'DS4: Media Interaktif', 
+                            'DS5':  'DS5: Fasilitas Digital'
                         }
                         # Translate kode kolom menjadi nama manusiawi
                         nama_tampil = [kamus_nama.get(k, k) for k in kategori_list]
@@ -591,7 +591,7 @@ try:
                         k_awal, k_akhir = histori_kinerja[0], histori_kinerja[-1]
                         selisih = k_akhir - k_awal
                         
-                        status_efektivitas = "🟢 BERHASIL (Kinerja Naik)" if selisih > 0 else "🔴 BELUM EFEKTIF (Kinerja Stagnan/Turun)"
+                        status_efektivitas = "🟢 BERHASIL (Skor Naik)" if selisih > 0 else "🔴 BELUM EFEKTIF (Skor Stagnan/Turun)"
                         if abs(selisih) < 0.05: status_efektivitas = "🟡 BERTAHAN (Perubahan Minimal)"
                         
                         col_t1, col_t2, col_t3 = st.columns(3)
