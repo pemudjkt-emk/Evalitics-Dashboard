@@ -214,12 +214,15 @@ model = load_gemini_model()
 # ─────────────────────────────────────────────────────────────────────────────
 # LOAD DATA DASHBOARD
 # ─────────────────────────────────────────────────────────────────────────────
-sheet_id = '1RitrlhPmYvxAax2gmZHyhyLX5a8j4xEjwpytlBMxvs8'
-url = f'https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv'
+sheet_id = '1IDAmFwTbBQDZcKM3eiiEDcA3KwM9WKqW4zCrk__6-PU'
+sheet_name = 'L1%20Tertutup' # %20 adalah representasi karakter spasi pada URL
+
+# Menggunakan endpoint gviz agar bisa secara spesifik memilih nama tab/worksheet
+url = f'https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet={sheet_name}'
 
 col_button, _ = st.columns([0.5, 4])
 with col_button:
-    if st.button("🔄 Update Data", use_container_width=True):
+    if st.button("🔄 Sinkron Data", use_container_width=True):
         st.cache_data.clear()
         st.toast("Menarik data terbaru dari Google Sheets...")
 
