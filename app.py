@@ -11,6 +11,8 @@ import math
 import os
 import base64
 from datetime import datetime
+import urllib.request
+import re
 
 # ─────────────────────────────────────────────────────────────────────────────
 # PAGE CONFIG
@@ -225,15 +227,53 @@ with col_button:
     if st.button("🔄 Sinkron Data", use_container_width=True):
         st.cache_data.clear()
         st.toast("Menarik data terbaru dari Google Sheets...")
+# ─────────────────────────────────────────────────────────────────────────────
+# ENGINE SENTIMENT ANALYSIS (OPEN-SOURCE LEXICON)
+# ─────────────────────────────────────────────────────────────────────────────
+@st.cache_data(ttl=86400)
+def load_opensource_lexicon():
+    url_pos = "https://raw.githubusercontent.com/masdevid/ID-OpinionWords/master/positive.txt"
+    url_neg = "https://raw.githubusercontent.com/masdevid/ID-OpinionWords/master/negative.txt"
+    try:
+        pos_data = urllib.request.urlopen(url_pos).read().decode('utf-8').split('\n')
+        neg_data = urllib.request.urlopen(url_neg).read().decode('utf-8').split('\n')
+        pos_set = set([kata.strip() for kata in pos_data if kata.strip() and not kata.startswith(';')])
+        neg_set = set([kata.strip() for kata in neg_data if kata.strip() and not kata.startswith(';')])
+        return pos_set, neg_set
+    except Exception as e:
+        return set(), set()
 
+kamus_positif, kamus_negatif = load_opensource_lexicon()
+kata_negasi = {'tidak', 'bukan', 'jangan', 'kurang', 'ga', 'gak', 'enggak', 'tdk'}
+
+def analisis_sentimen_opensource(teks):
+    if pd.isna(teks) or str(teks).strip() == "": return "Netral"
+    teks_bersih = re.sub(r'[^\w\s]', '', str(teks).lower())
+    kata_kata = teks_bersih.split()
+    skor = 0
+    i = 0
+    while i < len(kata_kata):
+        kata = kata_kata[i]
+        if kata in kata_negasi and i + 1 < len(kata_kata):
+            kata_berikutnya = kata_kata[i+1]
+            if kata_berikutnya in kamus_positif: skor -= 1  
+            elif kata_berikutnya in kamus_negatif: skor += 1  
+            i += 2; continue
+        if kata in kamus_positif: skor += 1
+        elif kata in kamus_negatif: skor -= 1
+        i += 1
+    if skor > 0: return "Positif"
+    elif skor < 0: return "Negatif"
+    else: return "Netral"
 # ─────────────────────────────────────────────────────────────────────────────
 # TABS UTAMA — urutan: Data Entry | Analytics | Dashboard | AI | Pengaturan
 # ─────────────────────────────────────────────────────────────────────────────
-tab_entry, tab_statistik, tab_dashboard, tab_ai, tab_setting = st.tabs([
+tab_entry, tab_statistik, tab_dashboard, tab_ai, tab_sentimen, tab_setting = st.tabs([
     "📤 DATA ENTRY",
     "📈 ANALYTICS",
     "📊 DASHBOARD",
     "🤖 AI ASSISTANT",
+    "🚨 SENTIMENT ANALYSIS",
     "⚙️ PENGATURAN",
 ])
 
@@ -1104,9 +1144,43 @@ with tab_entry:
         with st.expander("📖 File Instruktur — Laporan Instruktur", expanded=True):
             st.markdown("- Wajib ada kolom `Nama` **DAN** `Kode Diklat`\n- Kolom skor: `Ins-Eng-1 of 2`, `Ins-Eng-2 of 2`, `Ins-Rel-1 of 2`, `Ins-Rel-2 of 2`, `Ins-Sat-1 of 4` s.d. `Ins-Sat-4 of 4`, `Ins-Rat`")
             st.warning("⚠️ Nama kolom **harus persis sama** (case-sensitive). `Mat-Sat-1 0f 2` menggunakan angka nol (0), bukan huruf o.")
-
 # ══════════════════════════════════════════════════════════════════════════════
-# TAB 5: PENGATURAN
+# TAB 5: EARLY WARNING SYSTEM (SENTIMENT ANALYSIS)
+# ══════════════════════════════════════════════════════════════════════════════
+with tab_sentimen:
+    st.markdown("### 🚨 Sistem Peringatan Dini (Deteksi Keluhan Otomatis)")
+    st.write("Sistem memindai komentar peserta menggunakan **Open-Source Sentiment Lexicon** secara *real-time*.")
+    
+    # Karena saat ini kita belum menarik Sheet Komentar asli, kita gunakan data simulasi dulu:
+    st.info("💡 Catatan: Saat ini menggunakan data simulasi. Nanti akan dihubungkan ke Google Sheets 'Komentar' Anda.")
+    
+    data_simulasi = pd.DataFrame({
+        "Tanggal": ["2023-10-01", "2023-10-02", "2023-10-03"],
+        "Nama Peserta": ["Peserta A", "Peserta B", "Peserta C"],
+        "Komentar": [
+            "Materi sangat luar biasa dan instruktur jelas menyampaikannya.",
+            "AC di ruangan sangat panas dan toiletnya kotor sekali, sangat tidak nyaman.",
+            "Cukup baik, makanannya enak."
+        ]
+    })
+    
+    # Menjalankan mesin sentimen
+    data_simulasi['Sentimen'] = data_simulasi['Komentar'].apply(analisis_sentimen_opensource)
+    
+    # Filter khusus yang Negatif
+    df_keluhan = data_simulasi[data_simulasi['Sentimen'] == 'Negatif']
+    
+    if not df_keluhan.empty:
+        st.error(f"Ditemukan **{len(df_keluhan)} keluhan (Sentimen Negatif)** yang membutuhkan tindakan segera!")
+        st.dataframe(df_keluhan, use_container_width=True)
+        
+        if st.button("🚀 Kirim Peringatan ke WhatsApp PIC Sarpras", type="primary"):
+            st.success("✅ Peringatan otomatis berhasil disimulasikan terkirim ke PIC bersangkutan!")
+            st.balloons()
+    else:
+        st.success("🎉 Aman! Tidak ditemukan sentimen negatif (keluhan) pada data ini.")
+# ══════════════════════════════════════════════════════════════════════════════
+# TAB 6: PENGATURAN
 # ══════════════════════════════════════════════════════════════════════════════
 with tab_setting:
     st.subheader("⚙️ Pengaturan Data Entry")
