@@ -1145,7 +1145,7 @@ with tab_entry:
             st.markdown("- Wajib ada kolom `Nama` **DAN** `Kode Diklat`\n- Kolom skor: `Ins-Eng-1 of 2`, `Ins-Eng-2 of 2`, `Ins-Rel-1 of 2`, `Ins-Rel-2 of 2`, `Ins-Sat-1 of 4` s.d. `Ins-Sat-4 of 4`, `Ins-Rat`")
             st.warning("⚠️ Nama kolom **harus persis sama** (case-sensitive). `Mat-Sat-1 0f 2` menggunakan angka nol (0), bukan huruf o.")
 # ══════════════════════════════════════════════════════════════════════════════
-# TAB 5: EARLY WARNING SYSTEM (SENTIMENT ANALYSIS)
+# TAB 5: EARLY WARNING SYSTEM (SENTIMENT ANALYSIS WITH MONTH FILTER)
 # ══════════════════════════════════════════════════════════════════════════════
 with tab_sentimen:
     st.markdown("### 🚨 Sistem Peringatan Dini (Deteksi Keluhan Otomatis)")
@@ -1154,89 +1154,110 @@ with tab_sentimen:
     try:
         # 1. MENGAMBIL DATA DARI SHEET "Detail Komentar L1"
         sheet_id_komentar = '1IDAmFwTbBQDZcKM3eiiEDcA3KwM9WKqW4zCrk__6-PU'
-        # Menggunakan %20 sebagai pengganti spasi pada URL
         sheet_name_komentar = 'Detail%20Komentar%20L1' 
         url_komentar = f'https://docs.google.com/spreadsheets/d/{sheet_id_komentar}/gviz/tq?tqx=out:csv&sheet={sheet_name_komentar}'
         
-        # Memuat data menggunakan fungsi load_csv yang sudah ada (dengan cache agar cepat)
         df_komentar = load_csv(url_komentar)
         
         if not df_komentar.empty:
             st.success(f"✅ Berhasil memuat **{len(df_komentar)} baris komentar** dari sheet 'Detail Komentar L1'.")
             
-            # 2. MEMILIH KOLOM KOMENTAR SECARA DINAMIS
-            # Karena nama kolom di sheet Anda bisa bermacam-macam, silakan pilih kolomnya di bawah ini:
-            kolom_teks = st.selectbox("🎯 Pilih Kolom yang Berisi Komentar/Saran Peserta:", df_komentar.columns.tolist())
+            # 2. PENGATURAN KOLOM SECARA DINAMIS (MEMBAGI LAYAR MENJADI 2 KOLOM)
+            col_setup1, col_wa_setup2 = st.columns(2)
+            with col_setup1:
+                kolom_teks = st.selectbox("🎯 Pilih Kolom Komentar/Saran Peserta:", df_komentar.columns.tolist(), key="teks_sentimen")
             
-            if kolom_teks:
-                with st.spinner("Sistem sedang memindai dan menganalisis sentimen ribuan komentar..."):
-                    # Buat copy agar tidak merusak data asli
-                    df_analisis = df_komentar.copy()
+            with col_wa_setup2:
+                # Otomatis mendeteksi jika ada kolom bernama 'Laporan Bulan' atau 'Bulan'
+                opsi_kolom = df_komentar.columns.tolist()
+                idx_bulan = 0
+                for kandidat in ['Laporan Bulan', 'Bulan', 'bulan', 'LAPORAN BULAN']:
+                    if kandidat in opsi_kolom:
+                        idx_bulan = opsi_kolom.index(kandidat)
+                        break
+                kolom_bulan = st.selectbox("📅 Pilih Kolom Bulan:", opsi_kolom, index=idx_bulan, key="bulan_kol_sentimen")
+            
+            # 3. WIDGET FILTER BULAN (MULTI-SELECT)
+            opsi_bulan_tersedia = list(df_komentar[kolom_bulan].dropna().unique())
+            filter_bulan_sentimen = st.multiselect(
+                "🎛️ Filter Berdasarkan Bulan Laporan:", 
+                options=opsi_bulan_tersedia, 
+                default=opsi_bulan_tersedia, 
+                key="filter_bulan_sentimen"
+            )
+            
+            # Jalankan analisis hanya jika kolom teks dipilih dan filter bulan tidak kosong
+            if kolom_teks and filter_bulan_sentimen:
+                with st.spinner("Sistem sedang memfilter dan menganalisis sentimen komentar..."):
                     
-                    # 3. MENJALANKAN MESIN SENTIMEN
-                    df_analisis['Sentimen'] = df_analisis[kolom_teks].apply(analisis_sentimen_opensource)
+                    # Filter data asli berdasarkan bulan yang dipilih pengguna
+                    df_analisis = df_komentar[df_komentar[kolom_bulan].isin(filter_bulan_sentimen)].copy()
                     
-                    # Filter khusus yang Negatif
-                    df_keluhan = df_analisis[df_analisis['Sentimen'] == 'Negatif']
-                    
-                    st.markdown("---")
-                    
-                    if not df_keluhan.empty:
-                        # Tampilan jika ada keluhan
-                        st.error(f"⚠️ **AWAS!** Ditemukan **{len(df_keluhan)} keluhan (Sentimen Negatif)** yang membutuhkan tindakan segera!")
+                    if not df_analisis.empty:
+                        # 4. MENJALANKAN MESIN SENTIMEN PADA DATA YANG SUDAH DIFILTER
+                        df_analisis['Sentimen'] = df_analisis[kolom_teks].apply(analisis_sentimen_opensource)
                         
-                        # Menyusun kolom apa saja yang mau ditampilkan di tabel
-                        kolom_tampil = [kolom_teks, 'Sentimen'] 
+                        # Filter khusus yang Negatif
+                        df_keluhan = df_analisis[df_analisis['Sentimen'] == 'Negatif']
                         
-                        # Sistem otomatis mencoba mencari kolom 'Nama' atau 'Judul' jika ada di sheet Anda
-                        for col in ['Judul Pembelajaran/Kegiatan', 'Kode Unik', 'Nama Pelatihan', 'Tanggal']:
-                            if col in df_analisis.columns:
-                                kolom_tampil.insert(0, col)
-                                
-                        st.dataframe(df_keluhan[kolom_tampil], use_container_width=True)
+                        st.markdown("---")
                         
-                        # Tombol Simulasi Eskalasi
-                        st.markdown("#### 🚀 Eskalasi Tindak Lanjut Otomatis")
-                        col_wa1, col_wa2 = st.columns(2)
-                        with col_wa1:
-                            if st.button("📱 Kirim Peringatan ke WhatsApp PIC Sarpras", use_container_width=True):
-                                st.success("✅ [SIMULASI] Peringatan otomatis berhasil dikirim ke WhatsApp PIC Sarana & Prasarana!")
-                                st.balloons()
-                        with col_wa2:
-                            if st.button("📧 Kirim Peringatan ke Email Evaluator", use_container_width=True):
-                                st.success("✅ [SIMULASI] Email rekap keluhan otomatis telah diteruskan ke Tim Evaluator!")
+                        if not df_keluhan.empty:
+                            # Tampilan jika ada keluhan di bulan terpilih
+                            st.error(f"⚠️ **AWAS!** Ditemukan **{len(df_keluhan)} keluhan (Sentimen Negatif)** pada bulan terpilih!")
+                            
+                            # Menyusun kolom yang rapi untuk ditampilkan di tabel
+                            kolom_tampil = [kolom_teks, 'Sentimen'] 
+                            for col in ['Judul Pembelajaran/Kegiatan', 'Kode Unik', 'Nama Pelatihan', kolom_bulan]:
+                                if col in df_analisis.columns and col not in kolom_tampil:
+                                    kolom_tampil.insert(0, col)
+                                    
+                            st.dataframe(df_keluhan[kolom_tampil], use_container_width=True)
+                            
+                            # Tombol Simulasi Eskalasi
+                            st.markdown("#### 🚀 Eskalasi Tindak Lanjut Otomatis")
+                            col_wa1, col_wa2 = st.columns(2)
+                            with col_wa1:
+                                if st.button("📱 Kirim Peringatan ke WhatsApp PIC Sarpras", use_container_width=True):
+                                    st.success("✅ [SIMULASI] Peringatan otomatis berhasil dikirim ke WhatsApp PIC Sarana & Prasarana!")
+                                    st.balloons()
+                            with col_wa2:
+                                if st.button("📧 Kirim Peringatan ke Email Evaluator", use_container_width=True):
+                                    st.success("✅ [SIMULASI] Email rekap keluhan otomatis telah diteruskan ke Tim Evaluator!")
+                        else:
+                            st.success("🎉 **Luar Biasa!** Tidak ditemukan sentimen negatif (keluhan) pada bulan yang dipilih. Semua berjalan prima.")
+                            
+                        # 5. MENAMPILKAN STATISTIK PROPORSI SENTIMEN (PIE CHART DINAMIS)
+                        st.markdown("---")
+                        st.markdown("#### 📊 Ringkasan Proporsi Sentimen Komentar (Periode Terpilih)")
+                        
+                        ringkasan_sentimen = df_analisis['Sentimen'].value_counts().reset_index()
+                        ringkasan_sentimen.columns = ['Kategori Sentimen', 'Jumlah']
+                        
+                        fig_pie = px.pie(ringkasan_sentimen, values='Jumlah', names='Kategori Sentimen', 
+                                         color='Kategori Sentimen',
+                                         color_discrete_map={'Positif':'#2e7d32', 'Netral':'#9e9e9e', 'Negatif':'#d32f2f'},
+                                         hole=0.45)
+                        
+                        fig_pie.update_traces(textposition='inside', textinfo='percent+label')
+                        fig_pie.update_layout(height=400, showlegend=False, margin=dict(t=10,b=10,l=10,r=10))
+                        
+                        col_pie1, col_pie2 = st.columns([1, 1])
+                        with col_pie1:
+                            st.plotly_chart(fig_pie, use_container_width=True)
+                        with col_pie2:
+                            st.markdown("<br><br>", unsafe_allow_html=True)
+                            st.write("Donut Chart di samping menampilkan rangkuman sentimen dari bulan yang Anda centang pada filter di atas. Gunakan ini untuk melihat perbaikan mutu kenyamanan kelas secara berkala.")
                     else:
-                        st.success("🎉 **Luar Biasa!** Tidak ditemukan sentimen negatif (keluhan) pada data komentar ini. Semua berjalan prima.")
-                        
-                    # 4. MENAMPILKAN STATISTIK PROPORSI SENTIMEN (PIE CHART)
-                    st.markdown("---")
-                    st.markdown("#### 📊 Ringkasan Proporsi Sentimen Komentar")
-                    
-                    ringkasan_sentimen = df_analisis['Sentimen'].value_counts().reset_index()
-                    ringkasan_sentimen.columns = ['Kategori Sentimen', 'Jumlah']
-                    
-                    # Membuat visualisasi Pie Chart cantik ala PLN
-                    fig_pie = px.pie(ringkasan_sentimen, values='Jumlah', names='Kategori Sentimen', 
-                                     color='Kategori Sentimen',
-                                     color_discrete_map={'Positif':'#2e7d32', 'Netral':'#9e9e9e', 'Negatif':'#d32f2f'},
-                                     hole=0.45)
-                    
-                    fig_pie.update_traces(textposition='inside', textinfo='percent+label')
-                    fig_pie.update_layout(height=400, showlegend=False, margin=dict(t=10,b=10,l=10,r=10))
-                    
-                    # Membagi 2 kolom agar chart tidak terlalu besar di layar
-                    col_pie1, col_pie2 = st.columns([1, 1])
-                    with col_pie1:
-                        st.plotly_chart(fig_pie, use_container_width=True)
-                    with col_pie2:
-                        st.markdown("<br><br>", unsafe_allow_html=True)
-                        st.write("Visualisasi di samping menunjukkan perbandingan total komentar positif, netral, dan negatif. Semakin kecil warna merah (Negatif), semakin baik reputasi layanan UPDL Jakarta di mata peserta.")
-                    
+                        st.warning("⚠️ Tidak ada data komentar pada bulan yang dipilih.")
+            else:
+                st.warning("💡 Silakan pilih minimal satu bulan pada filter di atas untuk memulai analisis.")
+                
         else:
             st.warning("⚠️ Sheet 'Detail Komentar L1' berhasil diakses, namun datanya kosong.")
             
     except Exception as e:
-        st.error(f"❌ Gagal memuat data dari Sheet 'Detail Komentar L1'. Pastikan nama sheet benar (perhatikan huruf besar/kecil). Detail error: {e}")
+        st.error(f"❌ Gagal memuat data dari Sheet 'Detail Komentar L1'. Detail error: {e}")
 # ══════════════════════════════════════════════════════════════════════════════
 # TAB 6: PENGATURAN
 # ══════════════════════════════════════════════════════════════════════════════
