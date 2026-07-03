@@ -491,79 +491,54 @@ try:
                         
                         st.plotly_chart(fig_ipa, use_container_width=True)
 
-                        # --- 6. AUTO-DIAGNOSIS (KESIMPULAN OTOMATIS) DENGAN UI PREMIUM PLN ---
+                        # --- 6. AUTO-DIAGNOSIS (KESIMPULAN OTOMATIS) DENGAN UI PLN ---
                         # Cari item yang Kinerjanya < 4.5 DAN Kepentingannya > Rata-rata
-                        df_q1 = df_plot_ipa[(df_plot_ipa['Kinerja'] < x_cross) & (df_plot_ipa['Kepentingan'] > y_cross)]
-                        q1_items = df_q1['Kategori'].tolist()
+                        q1_items = df_plot_ipa[(df_plot_ipa['Kinerja'] < x_cross) & (df_plot_ipa['Kepentingan'] > y_cross)]['Kategori'].tolist()
                         
-                        st.markdown("<h4 style='color: #003366; margin-top: 35px; font-weight: bold; letter-spacing: 0.5px;'>💡 Executive Diagnosis System</h4>", unsafe_allow_html=True)
+                        st.markdown("<h4 style='color: #003366; margin-top: 30px;'>💡 Executive Diagnosis</h4>", unsafe_allow_html=True)
                         
                         if q1_items:
-                            # Membuat baris tabel HTML secara dinamis untuk setiap indikator yang bermasalah
-                            rows_html = ""
-                            for _, row in df_q1.iterrows():
-                                rows_html += f"""
-                                <tr style="border-bottom: 1px solid #e0e0e0;">
-                                    <td style="padding: 10px; color: #333; font-size: 14px;">{row['Kategori']}</td>
-                                    <td style="padding: 10px; text-align: center;"><span style="background-color: #ffeeee; color: #d32f2f; padding: 3px 10px; border-radius: 12px; font-weight: bold; font-size: 13px;">{row['Kinerja']:.2f}</span></td>
-                                    <td style="padding: 10px; text-align: center; color: #666; font-size: 14px;">{row['Kepentingan']:.2f}</td>
-                                </tr>
-                                """
+                            # Format list item menjadi HTML bullet point agar rapi & mudah dibaca
+                            list_html = "".join([f"<li style='margin-bottom: 5px;'><b>{item}</b></li>" for item in q1_items])
                             
                             # Teks Rekomendasi dinamis berdasarkan pilihan Makro/Mikro
                             if level_ipa == "📊 Makro (Kategori Utama)":
-                                rujukan_tindakan = "Direkomendasikan untuk beralih ke <b>Mode Mikro (Sub-Indikator Detail)</b> pada opsi di atas untuk mengisolasi butir pertanyaan spesifik yang memicu penurunan nilai."
+                                rek_text = "Beralih ke <b>Mode Mikro</b> di pengaturan atas untuk melihat rincian sub-indikator spesifik yang menjadi akar masalah."
                             else:
-                                rujukan_tindakan = "Sistem merekomendasikan peninjauan ulang pada aspek operasional terkait butir di atas. Intervensi taktis pada indikator ini akan menghasilkan efisiensi anggaran terbaik karena dampaknya yang masif terhadap kepuasan total."
-
-                            # RENDERING UI KARTU PERINGATAN KRITIS (Tema Corporate Putih-Merah dengan Aksen Biru PLN)
-                            ui_html = f"""
-                            <div style="background-color: #ffffff; border-radius: 12px; border: 1px solid #e0e0e0; border-left: 8px solid #d32f2f; box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 25px; margin-bottom: 25px;">
-                                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
-                                    <span style="font-size: 24px;">🚨</span>
-                                    <h5 style="margin: 0; color: #d32f2f; font-size: 18px; font-weight: bold;">Attention Required: Indikator Berada di Kuadran 1 (Prioritas Utama)</h5>
-                                </div>
-                                <p style="color: #555; font-size: 14.5px; margin: 0 0 20px 0; line-height: 1.5;">
-                                    Berikut adalah daftar elemen pembelajaran yang memiliki <b>tingkat pengaruh sangat tinggi</b> terhadap kepuasan total peserta, namun realisasi kinerjanya masih <b>di bawah standar minimal kelulusan (4.50)</b>:
-                                </p>
-                                
-                                <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-                                    <thead>
-                                        <tr style="background-color: #f8f9fa; border-bottom: 2px solid #0055A4; text-align: left;">
-                                            <th style="padding: 10px; color: #003366; font-size: 14px; font-weight: bold;">Elemen / Indikator Evaluasi</th>
-                                            <th style="padding: 10px; color: #003366; font-size: 14px; font-weight: bold; text-align: center;">Skor Realisasi (Kinerja)</th>
-                                            <th style="padding: 10px; color: #003366; font-size: 14px; font-weight: bold; text-align: center;">Dampak Strategis (Korelasi)</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {rows_html}
-                                    </tbody>
-                                </table>
-                                
-                                <div style="background-color: #f0f6ff; border-left: 4px solid #0055A4; padding: 15px; border-radius: 4px;">
-                                    <h6 style="margin: 0 0 5px 0; color: #003366; font-size: 14px; font-weight: bold;">🎯 Rekomendasi Preskriptif:</h6>
-                                    <p style="margin: 0; color: #333; font-size: 13.5px; line-height: 1.5;">{rujukan_tindakan}</p>
+                                rek_text = "Segera susun rencana perbaikan operasional untuk indikator di atas. Elevasi di area ini akan memberikan dampak paling masif terhadap lonjakan total skor evaluasi."
+                            
+                            # Kartu UI Peringatan (Warna Putih bersih dengan border Merah Kritis)
+                            alert_html = f"""
+                            <div style="padding: 20px; border-radius: 10px; border-left: 8px solid #d32f2f; background-color: #fdf5f5; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px;">
+                                <div style="display: flex; align-items: flex-start; gap: 15px;">
+                                    <div style="font-size: 32px; margin-top: 2px;">🚨</div>
+                                    <div style="width: 100%;">
+                                        <h4 style="margin: 0 0 8px 0; color: #d32f2f; font-size: 18px;">Peringatan Area Kritis (Kuadran 1)</h4>
+                                        <p style="margin: 0 0 10px 0; color: #444; font-size: 15px;">Ditemukan indikator yang <b>sangat memengaruhi kepuasan peserta</b>, namun kinerjanya <b>di bawah standar PLN (4.5)</b>:</p>
+                                        <ul style="margin: 0 0 15px 0; padding-left: 20px; color: #b71c1c; font-size: 15px;">
+                                            {list_html}
+                                        </ul>
+                                        <div style="padding: 10px 15px; background-color: rgba(0, 85, 164, 0.08); border-radius: 6px; border-left: 4px solid #0055A4;">
+                                            <p style="margin: 0; font-size: 14px; color: #003366;"><b>Tindak Lanjut:</b> {rek_text}</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             """
-                            st.markdown(ui_html, unsafe_allow_html=True)
+                            st.markdown(alert_html, unsafe_allow_html=True)
                             
                         else:  
-                            # RENDERING UI KARTU PRIMA/AMAN (Gradien Deep Blue PLN & Bright Blue dengan Aksen Gold #ffc107)
+                            # Kartu UI Sukses (Gradien Biru PLN & Kuning Emas)
                             success_html = """
-                            <div style="background: linear-gradient(135deg, #003366, #0055A4); border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.12); padding: 30px; margin-bottom: 25px; border-left: 8px solid #ffc107; display: flex; align-items: center; gap: 25px;">
-                                <div style="font-size: 40px; background: rgba(255,255,255,0.12); padding: 12px 18px; border-radius: 50%; color: #ffc107;">🏆</div>
+                            <div style="padding: 25px; border-radius: 10px; background: linear-gradient(135deg, #003366, #0055A4); box-shadow: 0 4px 10px rgba(0,0,0,0.15); margin-bottom: 20px; border-left: 8px solid #ffc107; display: flex; align-items: center; gap: 20px;">
+                                <div style="font-size: 45px; background: rgba(255,255,255,0.1); padding: 10px 15px; border-radius: 50%;">🏆</div>
                                 <div>
-                                    <h5 style="margin: 0 0 6px 0; color: #ffc107; font-size: 19px; font-weight: bold; letter-spacing: 0.3px;">Status Operasional: Prima & Kondusif</h5>
-                                    <p style="margin: 0; color: #ffffff; font-size: 14.5px; line-height: 1.6; opacity: 0.95;">
-                                        Seluruh indikator evaluasi pembelajaran berhasil dipertahankan di luar Kuadran 1. Tidak ditemukan adanya defisit kepuasan pada elemen-elemen kritikal. Pertahankan konsistensi mutu pelayanan ini di UPDL Jakarta.
-                                    </p>
+                                    <h4 style="margin: 0 0 5px 0; color: #ffc107; font-size: 20px;">Kinerja Prima Luar Biasa!</h4>
+                                    <p style="margin: 0; color: #ffffff; font-size: 15px; line-height: 1.5; opacity: 0.9;">Tidak ada indikator krusial yang jatuh di Kuadran 1 pada periode evaluasi ini. Terus pertahankan kualitas pelayanan dan materi Anda sesuai standar ekselensi UPDL Jakarta.</p>
                                 </div>
                             </div>
                             """
                             st.markdown(success_html, unsafe_allow_html=True)
-
-                        
                     
                     # ==============================================================================
                     # 📜 FITUR TAMBAHAN: HISTORI PERGERAKAN INDIKATOR (EVALUASI TINDAK LANJUT)
