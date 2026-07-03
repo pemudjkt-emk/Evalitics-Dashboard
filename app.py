@@ -259,6 +259,7 @@ try:
         opsi_bulan    = list(df['Laporan Bulan'].dropna().unique())
         opsi_strategi = list(df['Strategi Pelaksanaan'].dropna().unique())
         opsi_valid    = ["Semua Status"] + list(df['% Valid'].dropna().unique())
+        
         col_f1, col_f2, col_f3 = st.columns(3)
         with col_f1:
             filter_bulan = st.multiselect("Laporan Bulanan", options=opsi_bulan,
@@ -270,8 +271,12 @@ try:
             filter_valid = st.selectbox("Validitas", opsi_valid, key=f"valid_{suffix}")
 
         df_f = df.copy()
-        df_f = df_f[df_f['Laporan Bulan'].isin(filter_bulan)]       if filter_bulan    else pd.DataFrame(columns=df.columns)
-        df_f = df_f[df_f['Strategi Pelaksanaan'].isin(filter_strategi)] if filter_strategi else pd.DataFrame(columns=df.columns)
+        
+        # 💡 PERBAIKAN LOGIKA FILTER DI SINI:
+        # Jika filter dikosongkan, kembalikan ke semua data (df_f), BUKAN data kosong
+        df_f = df_f[df_f['Laporan Bulan'].isin(filter_bulan)] if filter_bulan else df_f
+        df_f = df_f[df_f['Strategi Pelaksanaan'].isin(filter_strategi)] if filter_strategi else df_f
+        
         if filter_valid != "Semua Status":
             df_f = df_f[df_f['% Valid'] == filter_valid]
 
