@@ -470,7 +470,7 @@ try:
                         for ax, ay, txt, col, algn in [
                             (0.01, 0.99, "<b>KUADRAN 1</b><br>🚨 Prioritas Utama", "#d32f2f", "left"),
                             (0.99, 0.99, "<b>KUADRAN 2</b><br>🌟 Pertahankan", "#2e7d32", "right"),
-                            (0.01, 0.01, "<b>KUADRAN 3</b><br>📉 Prioritas Rendah", "#757575", "left"),
+                            (0.01, 0.01, "<b>KUADRAN 3</b><br>📉 Prioritas Sekunder", "#757575", "left"),
                             (0.99, 0.01, "<b>KUADRAN 4</b><br>⚠️ Berlebihan", "#f57c00", "right"),
                         ]:
                             fig_ipa.add_annotation(xref="paper", yref="paper", x=ax, y=ay, text=txt,
