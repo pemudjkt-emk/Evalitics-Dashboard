@@ -1149,8 +1149,8 @@ with tab_entry:
 # TAB 5: EARLY WARNING SYSTEM (SENTIMENT ANALYSIS WITH MONTH FILTER)
 # ══════════════════════════════════════════════════════════════════════════════
 with tab_sentimen:
-    st.markdown("### 🚨 Sistem Peringatan Dini (Deteksi Keluhan Otomatis)")
-    st.write("Sistem memindai komentar peserta secara *real-time* dari Google Sheets menggunakan **Open-Source Sentiment Lexicon**.")
+    st.markdown("### 🚨 Sentiment Analysis (Deteksi Keluhan Otomatis)")
+    st.write("Sistem melihat komentar peserta secara *real-time* dari Google Sheets menggunakan **Open-Source Sentiment Lexicon**.")
     
     try:
         # 1. MENGAMBIL DATA DARI SHEET "Detail Komentar L1"
