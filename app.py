@@ -1302,6 +1302,10 @@ with tab_report:
                             k_corr = df_bln[kat].corr(pd.to_numeric(df_bln['RATA-RATA KESELURUHAN'], errors='coerce'))
                             kinerja_r.append(k_mean)
                             kep_r.append(k_corr if pd.notna(k_corr) else 0.5)
+                        else:
+                            # 💡 FIX ERROR: Tambahkan baris kosong jika kolom tidak ditemukan agar tabel sejajar
+                            kinerja_r.append(None)
+                            kep_r.append(None)
                     
                     df_ipa_rep = pd.DataFrame({'Kat': kategori_list, 'Kin': kinerja_r, 'Kep': kep_r}).dropna()
                     if not df_ipa_rep.empty:
