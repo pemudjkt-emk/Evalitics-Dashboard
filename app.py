@@ -266,14 +266,15 @@ def analisis_sentimen_opensource(teks):
     elif skor < 0: return "Negatif"
     else: return "Netral"
 # ─────────────────────────────────────────────────────────────────────────────
-# TABS UTAMA — urutan: Data Entry | Analytics | Dashboard | AI | Pengaturan
+# TABS UTAMA — urutan: Data Entry | Analytics | Dashboard | AI | Sentimen | Report | Pengaturan
 # ─────────────────────────────────────────────────────────────────────────────
-tab_entry, tab_statistik, tab_dashboard, tab_ai, tab_sentimen, tab_setting = st.tabs([
+tab_entry, tab_statistik, tab_dashboard, tab_ai, tab_sentimen, tab_report, tab_setting = st.tabs([
     "📤 DATA ENTRY",
     "📈 ANALYTICS",
     "📊 DASHBOARD",
     "🤖 AI ASSISTANT",
-    "🚨 SENTIMENT ANALYSIS",
+    "🚨 EARLY WARNING",
+    "📑 REPORT GENERATOR",
     "⚙️ PENGATURAN",
 ])
 
@@ -1259,7 +1260,158 @@ with tab_sentimen:
     except Exception as e:
         st.error(f"❌ Gagal memuat data dari Sheet 'Detail Komentar L1'. Detail error: {e}")
 # ══════════════════════════════════════════════════════════════════════════════
-# TAB 6: PENGATURAN
+# TAB 6: REPORT GENERATOR (AUTO-WORD DOCUMENT)
+# ══════════════════════════════════════════════════════════════════════════════
+with tab_report:
+    st.markdown("### 📑 Generator Laporan Manajemen (Otomatis)")
+    st.write("Fitur ini menyusun seluruh hasil analitik, IPA, dan sentimen menjadi dokumen naratif resmi (Microsoft Word) yang siap diserahkan ke General Manager.")
+    
+    # Ambil daftar bulan yang tersedia dari data utama
+    opsi_bulan_rep = list(df['Laporan Bulan'].dropna().unique())
+    
+    if opsi_bulan_rep:
+        with st.container(border=True):
+            col_r1, col_r2 = st.columns([2, 1])
+            with col_r1:
+                bulan_pilih = st.selectbox("📅 Pilih Periode Laporan:", opsi_bulan_rep, key="bln_report")
+            with col_r2:
+                st.markdown("<br>", unsafe_allow_html=True)
+                btn_generate = st.button("🚀 Generate Dokumen Word", type="primary", use_container_width=True)
+        
+        if btn_generate:
+            with st.spinner(f"Menyusun laporan mutu untuk bulan {bulan_pilih}..."):
+                # --- 1. PROSES DATA DASHBOARD (KPI) ---
+                df_bln = df[df['Laporan Bulan'] == bulan_pilih].copy()
+                rata_l1 = df_bln['RATA-RATA KESELURUHAN'].mean() if not df_bln.empty else 0
+                total_sesi = len(df_bln)
+                
+                # --- 2. PROSES DATA IPA (KUADRAN 1) ---
+                q1_items = []
+                kategori_list = [
+                    'Engagement Instruktur', 'Relevance Instruktur', 'Satisfaction Instruktur',
+                    'Engagement Materi', 'Relevance Materi', 'Satisfaction Materi',
+                    'Satisfaction Sarana Digital', 'Satisfaction Sarana In Class'
+                ]
+                
+                if len(df_bln) > 2:
+                    kinerja_r, kep_r = [], []
+                    for kat in kategori_list:
+                        if kat in df_bln.columns:
+                            df_bln[kat] = pd.to_numeric(df_bln[kat], errors='coerce')
+                            k_mean = df_bln[kat].mean()
+                            k_corr = df_bln[kat].corr(pd.to_numeric(df_bln['RATA-RATA KESELURUHAN'], errors='coerce'))
+                            kinerja_r.append(k_mean)
+                            kep_r.append(k_corr if pd.notna(k_corr) else 0.5)
+                    
+                    df_ipa_rep = pd.DataFrame({'Kat': kategori_list, 'Kin': kinerja_r, 'Kep': kep_r}).dropna()
+                    if not df_ipa_rep.empty:
+                        y_cross = df_ipa_rep['Kep'].mean()
+                        df_q1_rep = df_ipa_rep[(df_ipa_rep['Kin'] < 4.5) & (df_ipa_rep['Kep'] > y_cross)]
+                        q1_items = df_q1_rep['Kat'].tolist()
+
+                # --- 3. PROSES DATA KOMENTAR (SENTIMEN) ---
+                sentimen_teks = "Data komentar pelanggan pada periode ini tidak tersedia atau belum ditarik oleh sistem."
+                contoh_negatif = ""
+                try:
+                    # Menarik langsung dari Sheet Komentar
+                    sheet_id_komentar = '1IDAmFwTbBQDZcKM3eiiEDcA3KwM9WKqW4zCrk__6-PU'
+                    url_k = f'https://docs.google.com/spreadsheets/d/{sheet_id_komentar}/gviz/tq?tqx=out:csv&sheet=Detail%20Komentar%20L1'
+                    df_k = load_csv(url_k)
+                    
+                    kol_b_k = None
+                    for c in ['Laporan Bulan', 'Bulan', 'bulan', 'LAPORAN BULAN']:
+                        if c in df_k.columns: kol_b_k = c; break
+                    
+                    if kol_b_k:
+                        df_k_bln = df_k[df_k[kol_b_k] == bulan_pilih].copy()
+                        if not df_k_bln.empty:
+                            kol_k_teks = None
+                            for c in df_k_bln.columns:
+                                if 'komentar' in c.lower() or 'saran' in c.lower(): kol_k_teks = c; break
+                            if not kol_k_teks: kol_k_teks = df_k_bln.columns[-1]
+                            
+                            df_k_bln['Sentimen'] = df_k_bln[kol_k_teks].apply(analisis_sentimen_opensource)
+                            jml_pos = len(df_k_bln[df_k_bln['Sentimen']=='Positif'])
+                            jml_neg = len(df_k_bln[df_k_bln['Sentimen']=='Negatif'])
+                            
+                            sentimen_teks = f"Berdasarkan analisis pemindaian (Lexicon-Based), dari total komentar yang masuk, terdapat <b>{jml_pos} sentimen positif</b> (Apresiasi) dan <b>{jml_neg} sentimen negatif</b> (Keluhan)."
+                            
+                            if jml_neg > 0:
+                                sample_neg = df_k_bln[df_k_bln['Sentimen']=='Negatif'][kol_k_teks].dropna().head(3).tolist()
+                                contoh_negatif = "Berikut adalah sorotan (Top 3) suara pelanggan yang membutuhkan eskalasi:<br><ul>" + "".join([f"<li><i>\"{s}\"</i></li>" for s in sample_neg]) + "</ul>"
+                except:
+                    pass
+                
+                # --- 4. LOGIKA PEMBUATAN TEKS REKOMENDASI OTOMATIS ---
+                teks_q1 = "Tidak ditemukan indikator yang berstatus kritis. Seluruh performa elemen layanan berada pada status <b>Prima dan Memuaskan</b>."
+                teks_rekomendasi = "Manajemen direkomendasikan untuk mempertahankan standar ekselensi mutu layanan (Service Excellence) yang telah tercapai."
+                
+                if q1_items:
+                    teks_q1 = "Berdasarkan analisis silang (IPA), indikator operasional yang jatuh ke dalam <b>Kuadran 1 (Prioritas Utama)</b>—yakni elemen dengan dampak strategis tinggi namun realisasi kinerjanya di bawah standar PLN (4.50)—adalah sebagai berikut:<ul>" + "".join([f"<li><b>{kat}</b></li>" for kat in q1_items]) + "</ul>"
+                    
+                    teks_rekomendasi = "Sistem secara preskriptif merekomendasikan Manajemen UPDL Jakarta untuk <b>segera menyusun Rencana Tindakan Perbaikan (Corrective Action Plan)</b> khususnya pada indikator Kuadran 1 yang disebutkan di atas. Pengalokasian sumber daya pada elemen tersebut akan memberikan eskalasi dan lonjakan tertinggi pada kepuasan total peserta secara efisien."
+
+                # --- 5. PERAKITAN DOKUMEN HTML (SIAP JADI WORD) ---
+                html_content = f"""
+                <html>
+                <head><meta charset="utf-8"></head>
+                <body style="font-family: 'Times New Roman', Times, serif; line-height: 1.6; font-size: 12pt;">
+                    <h2 style="text-align:center; color:#003366;">LAPORAN EVALUASI MUTU PEMBELAJARAN L1</h2>
+                    <h3 style="text-align:center;">UPDL JAKARTA - PERIODE {bulan_pilih.upper()}</h3>
+                    <hr style="border: 1.5px solid black; margin-bottom: 20px;">
+                    
+                    <h4 style="color:#0055A4;">1. RINGKASAN EKSEKUTIF</h4>
+                    <p style="text-align: justify;">Pada periode <b>{bulan_pilih}</b>, proses evaluasi pembelajaran (Level 1) telah selesai dilaksanakan secara komprehensif. Kinerja mutu secara keseluruhan mencatatkan skor rata-rata sebesar <b>{rata_l1:.2f}</b> (dari skala maksimal 5.0). Laporan ini merangkum indikator kinerja utama, temuan area kritis dari Importance-Performance Analysis (IPA), serta rekapitulasi suara pelanggan (Voice of Customer) sebagai landasan strategis pengambilan keputusan operasional bulan berikutnya.</p>
+
+                    <h4 style="color:#0055A4;">2. PENCAPAIAN KEY PERFORMANCE INDICATORS (KPI)</h4>
+                    <ul>
+                        <li><b>Rata-rata Skor L1 Keseluruhan:</b> {rata_l1:.2f}</li>
+                        <li><b>Total Implementasi Kelas:</b> {total_sesi} sesi/pelatihan tercatat.</li>
+                    </ul>
+
+                    <h4 style="color:#0055A4;">3. ANALISIS AREA KRITIS (IMPORTANCE-PERFORMANCE)</h4>
+                    <p style="text-align: justify;">{teks_q1}</p>
+                    
+                    <h4 style="color:#0055A4;">4. SOROTAN SUARA PELANGGAN (SENTIMEN KOMENTAR)</h4>
+                    <p style="text-align: justify;">{sentimen_teks}</p>
+                    {contoh_negatif}
+
+                    <h4 style="color:#0055A4;">5. REKOMENDASI TINDAK LANJUT OPERASIONAL</h4>
+                    <p style="text-align: justify;">{teks_rekomendasi}</p>
+                    
+                    <br><br><br>
+                    <table style="width:100%; text-align:center; border: none;">
+                        <tr>
+                            <td style="width:50%; border: none;"></td>
+                            <td style="width:50%; border: none;">
+                                Disusun secara otomatis oleh sistem <b>EVALYTICS</b><br>
+                                UPDL Jakarta, {datetime.now().strftime('%d %B %Y')}<br><br><br><br>
+                                <b>( _________________________ )</b><br>
+                                Manajemen Mutu
+                            </td>
+                        </tr>
+                    </table>
+                </body>
+                </html>
+                """
+                
+                # --- 6. TOMBOL DOWNLOAD DOKUMEN ---
+                st.success("✅ Dokumen Laporan berhasil disusun!")
+                st.download_button(
+                    label="📥 DOWNLOAD LAPORAN WORD (.doc)",
+                    data=html_content.encode('utf-8'),
+                    file_name=f"Laporan_Mutu_EVALYTICS_{bulan_pilih}.doc",
+                    mime="application/msword",
+                    type="primary"
+                )
+                
+                with st.expander("👀 Pratinjau Teks Laporan (Preview)"):
+                    st.markdown(html_content, unsafe_allow_html=True)
+    else:
+        st.info("Belum ada data bulan yang tersedia untuk dibuatkan laporan.")
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TAB 7: PENGATURAN
 # ══════════════════════════════════════════════════════════════════════════════
 with tab_setting:
     st.subheader("⚙️ Pengaturan Data Entry")
