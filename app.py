@@ -1157,9 +1157,9 @@ with tab_report:
             df_katalog_raw = load_csv(url_ins_katalog)
             
             if not df_katalog_raw.empty:
-                df_katalog_raw['Engagement'] = pd.to_numeric(df_katalog_raw['Ins-Eng'], errors='coerce')
-                df_katalog_raw['Relevance'] = pd.to_numeric(df_katalog_raw['Ins-Rel'], errors='coerce')
-                df_katalog_raw['Satisfaction'] = pd.to_numeric(df_katalog_raw['Ins-Sat'], errors='coerce')
+                df_katalog_raw['Ins-Eng'] = pd.to_numeric(df_katalog_raw['Ins-Eng'], errors='coerce')
+                df_katalog_raw['Ins-Rel'] = pd.to_numeric(df_katalog_raw['Ins-Rel'], errors='coerce')
+                df_katalog_raw['Ins-Sat'] = pd.to_numeric(df_katalog_raw['Ins-Sat'], errors='coerce')
                 df_katalog_raw['Ins-Rat'] = pd.to_numeric(df_katalog_raw['Ins-Rat'], errors='coerce')
                 
                 col_f1, col_f2 = st.columns(2)
@@ -1191,9 +1191,9 @@ with tab_report:
                 if not df_final_kat.empty and 'Nama' in df_final_kat.columns:
                     df_kat_grouped = df_final_kat.groupby(['Nama']).agg(
                         Skor_Akhir_InsRat=('Ins-Rat', 'mean'),
-                        Avg_Engagement=('Engagement', 'mean'),
-                        Avg_Relevance=('Relevance', 'mean'),
-                        Avg_Satisfaction=('Satisfaction', 'mean'),
+                        Avg_Engagement=('Ins-Eng', 'mean'),
+                        Avg_Relevance=('Ins-Rel', 'mean'),
+                        Avg_Satisfaction=('Ins-Sat', 'mean'),
                         Frekuensi_Mengajar=('Nama', 'count')
                     ).reset_index()
                     
@@ -1214,7 +1214,7 @@ with tab_report:
                         st.markdown("---")
                         
                     st.subheader("📋 Detail Rapor Instruktur")
-                    show_kategori = st.checkbox("Tampilkan Detail Kategori (Engagement, Relevance, Satisfaction)", value=True, key="k_showkat")
+                    show_kategori = st.checkbox("Tampilkan Detail Kategori (Ins-Eng, Ins-Rel, Ins-Sat)", value=True, key="k_showkat")
                     
                     display_cols = ['Nama', 'Frekuensi_Mengajar', 'Skor_Akhir_InsRat']
                     if show_kategori: display_cols += ['Avg_Engagement', 'Avg_Relevance', 'Avg_Satisfaction']
