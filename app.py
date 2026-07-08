@@ -101,7 +101,7 @@ DS_COL_NAMES  = ['Dig-Sas-1 of 5','Dig-Sas-2 of 5','Dig-Sas-3 of 5',
 L2_MERGE_COLS = ['Kode Unik','Jumlah Peserta Lulus L2','Jumlah Peserta Isi L2',
                  'Nilai Confidence','Nilai Commitment']
 
-# Struktur kolom 15 Kolom yang Bersih dan Baru untuk Instruktur
+# Struktur kolom 15 Kolom pada Sheet Detail Instruktur
 DETAIL_INSTRUKTUR_COLUMNS = [
     'NIP', 'Nama', 'Tgl Mulai', 'Tgl Selesai', 'Kode Diklat', 'Judul Diklat',
     'Angkatan', 'UPDL', 'Jenis Peyelenggaraan', 'Durasi Mengajar',
@@ -125,7 +125,6 @@ def detect_and_show_column_mismatch(df_raw, expected_cols, file_name, section_la
     return missing
 
 def build_instruktur_df(df_raw):
-    # Mapping Dataframe Baru agar presisi dengan 15 kolom target Anda
     df = pd.DataFrame(columns=DETAIL_INSTRUKTUR_COLUMNS)
     
     df['NIP'] = df_raw.get('NIP')
@@ -143,17 +142,14 @@ def build_instruktur_df(df_raw):
     df['Jenis Peyelenggaraan'] = df_raw.get('Jenis Peyelenggaraan')
     df['Durasi Mengajar'] = pd.to_numeric(df_raw.get('Durasi Mengajar'), errors='coerce')
     
-    # Kumpulan kolom mentah dari CSV PLN
     ins_eng_cols = ['Ins-Eng-1 of 2', 'Ins-Eng-2 of 2']
     ins_rel_cols = ['Ins-Rel-1 of 2', 'Ins-Rel-2 of 2']
     ins_sat_cols = ['Ins-Sat-1 of 4', 'Ins-Sat-2 of 4', 'Ins-Sat-3 of 4', 'Ins-Sat-4 of 4']
     
-    # Pastikan data mentah berformat numerik sebelum di rata-rata
     for c in ins_eng_cols + ins_rel_cols + ins_sat_cols + ['Ins-Rat', 'Ins-Val']:
         if c in df_raw.columns:
             df_raw[c] = pd.to_numeric(df_raw[c], errors='coerce')
             
-    # Kalkulasi Rata-rata saat Data Entry
     valid_eng = [c for c in ins_eng_cols if c in df_raw.columns]
     valid_rel = [c for c in ins_rel_cols if c in df_raw.columns]
     valid_sat = [c for c in ins_sat_cols if c in df_raw.columns]
@@ -183,16 +179,6 @@ def clean_row_for_sheets(row):
         except (ValueError, TypeError):
             clean_row.append(str(val).strip() if val != "" else "")
     return clean_row
-
-def get_sheet_max_no(sheet):
-    col_a = sheet.col_values(1)
-    max_no = 0
-    for val in col_a:
-        try:
-            num = int(str(val).strip())
-            if num > max_no: max_no = num
-        except ValueError: continue
-    return max_no
 
 def init_gsheets_connection():
     scope = ["https://spreadsheets.google.com/feeds","https://www.googleapis.com/auth/drive"]
@@ -948,9 +934,9 @@ with tab_entry:
                                 hasil.append(f"✅ **L1 & L2**: {len(rows)} baris → sheet **{ws_l1l2}**")
                                 
                             if has_ins:
+                                # Mengirim langsung ke tab "Detail Instruktur" sesuai koreksi Anda
                                 sht_ins = client.open(sheet_name).worksheet(ws_ins)
                                 df_ins_push_send = df_ins_push.copy()
-                                # Memastikan kolom sinkron urutannya dengan target 15 kolom
                                 df_ins_push_send = df_ins_push_send.reindex(columns=DETAIL_INSTRUKTUR_COLUMNS)
                                 rows_ins = [clean_row_for_sheets(r) for r in df_ins_push_send.values.tolist()]
                                 sht_ins.append_rows(rows_ins, value_input_option='USER_ENTERED')
@@ -999,6 +985,7 @@ with tab_entry:
 # TAB 5: EARLY WARNING SYSTEM (SENTIMENT ANALYSIS WITH MONTH FILTER)
 # ══════════════════════════════════════════════════════════════════════════════
 with tab_sentimen:
+    
     st.markdown("### 🚨 Sentiment Analysis (Deteksi Keluhan Otomatis)")
     st.write("Sistem melihat komentar peserta secara *real-time* dari Google Sheets menggunakan **Open-Source Sentiment Lexicon**.")
     try:
@@ -1162,6 +1149,7 @@ with tab_report:
         st.markdown("### 👨‍🏫 Katalog & Rapor Instruktur")
         st.write("Temukan instruktur terbaik berdasarkan riwayat nilai dan jam terbang untuk setiap mata diklat.")
         
+        # Tarik data dari Sheet Detail Instruktur
         sheet_id_ins = '1IDAmFwTbBQDZcKM3eiiEDcA3KwM9WKqW4zCrk__6-PU'
         url_ins_katalog = f'https://docs.google.com/spreadsheets/d/{sheet_id_ins}/gviz/tq?tqx=out:csv&sheet=Detail%20Instruktur'
         
@@ -1169,13 +1157,11 @@ with tab_report:
             df_katalog_raw = load_csv(url_ins_katalog)
             
             if not df_katalog_raw.empty:
-                # 1. Tarik Data Kategori yang sudah dirata-rata dari GSheets
                 df_katalog_raw['Engagement'] = pd.to_numeric(df_katalog_raw['Ins-Eng'], errors='coerce')
                 df_katalog_raw['Relevance'] = pd.to_numeric(df_katalog_raw['Ins-Rel'], errors='coerce')
                 df_katalog_raw['Satisfaction'] = pd.to_numeric(df_katalog_raw['Ins-Sat'], errors='coerce')
                 df_katalog_raw['Ins-Rat'] = pd.to_numeric(df_katalog_raw['Ins-Rat'], errors='coerce')
                 
-                # 2. UI Streamlit Filter
                 col_f1, col_f2 = st.columns(2)
                 with col_f1:
                     if 'UPDL' in df_katalog_raw.columns:
@@ -1197,14 +1183,12 @@ with tab_report:
                         list_diklat = ["Semua Pembelajaran"]
                     selected_diklat = st.selectbox("📚 Pilih Judul Pembelajaran:", list_diklat, key="k_diklat")
                     
-                # 3. Terapkan Filter Pembelajaran
                 if selected_diklat != "Semua Pembelajaran":
                     df_final_kat = df_filt_updl[df_filt_updl['Judul Diklat'] == selected_diklat]
                 else:
                     df_final_kat = df_filt_updl
                     
                 if not df_final_kat.empty and 'Nama' in df_final_kat.columns:
-                    # 4. Grouping Data
                     df_kat_grouped = df_final_kat.groupby(['Nama']).agg(
                         Skor_Akhir_InsRat=('Ins-Rat', 'mean'),
                         Avg_Engagement=('Engagement', 'mean'),
@@ -1215,7 +1199,6 @@ with tab_report:
                     
                     df_kat_grouped = df_kat_grouped.sort_values(by='Skor_Akhir_InsRat', ascending=False).reset_index(drop=True)
                     
-                    # 5. Highlight Top 3
                     if selected_diklat != "Semua Pembelajaran" and len(df_kat_grouped) > 0:
                         st.markdown("### 🏆 Top 3 Instruktur Rekomendasi")
                         top_n = min(3, len(df_kat_grouped))
@@ -1230,7 +1213,6 @@ with tab_report:
                                 )
                         st.markdown("---")
                         
-                    # 6. Tabel Data Katalog
                     st.subheader("📋 Detail Rapor Instruktur")
                     show_kategori = st.checkbox("Tampilkan Detail Kategori (Engagement, Relevance, Satisfaction)", value=True, key="k_showkat")
                     
