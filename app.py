@@ -921,65 +921,68 @@ with tab_entry:
                         st.caption(f"📁 Google Sheets: **{sheet_name}**")
 
                 with col_btn:
-                    if st.button("🚀 KIRIM KE GOOGLE SHEETS", use_container_width=True, disabled=not(has_l1l2 or has_ins), type="primary", key="btn_kirim"):
-                        with st.spinner("Menghubungkan..."):
-                            client = init_gsheets_connection()
-                            hasil = []
-                            if has_l1l2:
-                                sht = client.open(sheet_name).worksheet(ws_l1l2)
-                                max_no = get_sheet_max_no(sht)
-                                df_to_push['No'] = range(max_no+1, max_no+1+len(df_to_push))
-                                rows = [clean_row_for_sheets(r) for r in df_to_push.reindex(columns=TARGET_COLUMNS).values.tolist()]
-                                sht.append_rows(rows, value_input_option='USER_ENTERED')
-                                hasil.append(f"✅ **L1 & L2**: {len(rows)} baris → sheet **{ws_l1l2}**")
-                                
-                            if has_ins:
-                                # Mengirim langsung ke tab "Detail Instruktur" sesuai koreksi Anda
-                                sht_ins = client.open(sheet_name).worksheet(ws_ins)
-                                df_ins_push_send = df_ins_push.copy()
-                                df_ins_push_send = df_ins_push_send.reindex(columns=DETAIL_INSTRUKTUR_COLUMNS)
-                                rows_ins = [clean_row_for_sheets(r) for r in df_ins_push_send.values.tolist()]
-                                sht_ins.append_rows(rows_ins, value_input_option='USER_ENTERED')
-                                hasil.append(f"✅ **Instruktur**: {len(rows_ins)} baris → sheet **{ws_ins}**")
-                                
-                            for h in hasil: st.success(h)
-                            st.balloons()
+    if has_l1l2 or has_ins:
+        if st.button("🚀 KIRIM KE GOOGLE SHEETS", use_container_width=True, type="primary", key="btn_kirim"):
+            with st.spinner("Menghubungkan..."):
+                try:
+                    client = init_gsheets_connection()
+                    hasil = []
+                    
+                    if has_l1l2:
+                        sht = client.open(sheet_name).worksheet(ws_l1l2)
+                        max_no = get_sheet_max_no(sht)
+                        df_to_push['No'] = list(range(max_no + 1, max_no + 1 + len(df_to_push)))
+                        rows = [clean_row_for_sheets(r) for r in df_to_push.reindex(columns=TARGET_COLUMNS).values.tolist()]
+                        sht.append_rows(rows, value_input_option='USER_ENTERED')
+                        hasil.append(f"✅ **L1 & L2**: {len(rows)} baris → sheet **{ws_l1l2}**")
+                        
+                    if has_ins:
+                        sht_ins = client.open(sheet_name).worksheet(ws_ins)
+                        df_ins_push_send = df_ins_push.copy()
+                        df_ins_push_send = df_ins_push_send.reindex(columns=DETAIL_INSTRUKTUR_COLUMNS)
+                        rows_ins = [clean_row_for_sheets(r) for r in df_ins_push_send.values.tolist()]
+                        sht_ins.append_rows(rows_ins, value_input_option='USER_ENTERED')
+                        hasil.append(f"✅ **Instruktur**: {len(rows_ins)} baris → sheet **{ws_ins}**")
+                        
+                    for h in hasil: 
+                        st.success(h)
+                    st.balloons()
 
-            except Exception as e:
-                st.error(f"Terjadi kesalahan: {e}")
-                st.exception(e)
-        else:
-            st.markdown("""
-            <div style="text-align:center;padding:40px;color:#aaa;">
-                <i class="material-icons" style="font-size:60px;color:#ccc;">upload_file</i>
-                <p style="font-size:1.1em;margin-top:10px;">Belum ada file diupload.<br>
-                <span style="font-size:0.9em;">Seret file L1, L2, dan/atau Instruktur ke area upload di atas.</span></p>
-            </div>
-            """, unsafe_allow_html=True)
+                except Exception as e:
+                    st.error(f"Terjadi kesalahan: {e}")
+                    st.exception(e)
+    else:
+        st.markdown("""
+        <div style="text-align:center;padding:40px;color:#aaa;">
+            <i class="material-icons" style="font-size:60px;color:#ccc;">upload_file</i>
+            <p style="font-size:1.1em;margin-top:10px;">Belum ada file diupload.<br>
+            <span style="font-size:0.9em;">Seret file L1, L2, dan/atau Instruktur ke area upload di atas.</span></p>
+        </div>
+        """, unsafe_allow_html=True)
 
-    with sub_riwayat:
-        if not st.session_state.riwayat_upload:
-            st.info("Belum ada riwayat upload.")
-        else:
-            for item in reversed(st.session_state.riwayat_upload):
-                badge_color = {"L1":"#0055A4","L2":"#1a7a2e","Instruktur":"#b35900"}.get(item['tipe'],"#666")
-                st.markdown(f"""
-                <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #eee;">
-                    <div style="flex:1;">
-                        <p style="margin:0;font-weight:bold;">{item['nama']}</p>
-                        <p style="margin:0;font-size:0.8em;color:#8a8a8a;">{item['waktu']} &bull; {item['baris']} baris</p>
-                    </div>
-                    <span style="background:{badge_color}20;color:{badge_color};border:1px solid {badge_color}55;
-                                 padding:2px 10px;border-radius:20px;font-size:0.75em;font-weight:bold;">{item['tipe']}</span>
-                </div>""", unsafe_allow_html=True)
+with sub_riwayat:
+    if not st.session_state.riwayat_upload:
+        st.info("Belum ada riwayat upload.")
+    else:
+        for item in reversed(st.session_state.riwayat_upload):
+            badge_color = {"L1": "#0055A4", "L2": "#1a7a2e", "Instruktur": "#b35900"}.get(item['tipe'], "#666")
+            st.markdown(f"""
+            <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #eee;">
+                <div style="flex:1;">
+                    <p style="margin:0;font-weight:bold;">{item['nama']}</p>
+                    <p style="margin:0;font-size:0.8em;color:#8a8a8a;">{item['waktu']} &bull; {item['baris']} baris</p>
+                </div>
+                <span style="background:{badge_color}20;color:{badge_color};border:1px solid {badge_color}55;
+                       padding:2px 10px;border-radius:20px;font-size:0.75em;font-weight:bold;">{item['tipe']}</span>
+            </div>""", unsafe_allow_html=True)
 
-    with sub_panduan:
-        with st.expander("📖 File L1 — Evaluasi Reaksi", expanded=True):
-            st.markdown("- Wajib ada kolom `Ins-Eng-1 of 2`\n- Kolom penting: `Kode Judul`, `Judul Pembelajaran`, `Angkatan`, `Tgl Mulai`, `Tgl Selesai`, `Strategi Pelaksana`, `P.Isi`, `P.Hadir`, `Bidang`")
-        with st.expander("📖 File L2 — Evaluasi Pembelajaran", expanded=True):
-            st.markdown("- Wajib ada kolom `Confidence Level` (tanpa `Ins-Eng-1 of 2`)\n- Kolom penting: `Kode Judul`, `Judul`, `Angkatan`, `Tgl Mulai`, `Tgl Selesai`, `Jumlah Peserta Hadir/Lulus/Isi`, `Commitment Level`")
-        with st.expander("📖 File Instruktur — Detail Instruktur", expanded=True):
-            st.markdown("- Wajib ada kolom `Nama` **DAN** `Kode Diklat`\n- Kolom skor: `Ins-Eng-1 of 2`, `Ins-Eng-2 of 2`, `Ins-Rel-1 of 2`, `Ins-Rel-2 of 2`, `Ins-Sat-1 of 4` s.d. `Ins-Sat-4 of 4`, `Ins-Rat`")
+with sub_panduan:
+    with st.expander("📖 File L1 — Evaluasi Reaksi", expanded=True):
+        st.markdown("- Wajib ada kolom `Ins-Eng-1 of 2`\n- Kolom penting: `Kode Judul`, `Judul Pembelajaran`, `Angkatan`, `Tgl Mulai`, `Tgl Selesai`, `Strategi Pelaksana`, `P.Isi`, `P.Hadir`, `Bidang`")
+    with st.expander("📖 File L2 — Evaluasi Pembelajaran", expanded=True):
+        st.markdown("- Wajib ada kolom `Confidence Level` (tanpa `Ins-Eng-1 of 2`)\n- Kolom penting: `Kode Judul`, `Judul`, `Angkatan`, `Tgl Mulai`, `Tgl Selesai`, `Jumlah Peserta Hadir/Lulus/Isi`, `Commitment Level`")
+    with st.expander("📖 File Instruktur — Detail Instruktur", expanded=True):
+        st.markdown("- Wajib ada kolom `Nama` **DAN** `Kode Diklat`\n- Kolom skor: `Ins-Eng-1 of 2`, `Ins-Eng-2 of 2`, `Ins-Rel-1 of 2`, `Ins-Rel-2 of 2`, `Ins-Sat-1 of 4` s.d. `Ins-Sat-4 of 4`, `Ins-Rat`")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # TAB 5: EARLY WARNING SYSTEM (SENTIMENT ANALYSIS WITH MONTH FILTER)
