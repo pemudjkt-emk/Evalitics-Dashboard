@@ -297,7 +297,7 @@ try:
         
         col_f1, col_f2, col_f3 = st.columns(3)
         with col_f1:
-            filter_bulan = st.multiselect("Laporan Bulanan", options=opsi_bulan,
+            filter_bulan = st.multiselect("Laporan Bulan", options=opsi_bulan,
                                           default=opsi_bulan, key=f"bulan_{suffix}")
         with col_f2:
             filter_strategi = st.multiselect("Strategi Pelaksanaan", options=opsi_strategi,
