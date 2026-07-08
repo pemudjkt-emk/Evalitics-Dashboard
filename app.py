@@ -1269,4 +1269,4 @@ with tab_setting:
             st.session_state["setting_ws_instruktur"] = nama_ws_instruktur
             st.session_state["setting_cutoff"]        = cutoff_hari
             st.session_state["setting_threshold"]     = threshold_valid
-            st.success("✅ Pengaturan berhasil disimpann!")
+            st.success("✅ Pengaturan berhasil disimpan!")
