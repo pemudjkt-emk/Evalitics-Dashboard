@@ -42,6 +42,19 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# Kode untuk menyembunyikan ikon avatar/user di pojok kanan bawah tabel
+st.markdown(
+    """
+    <style>
+    /* Mengincar elemen gambar/avatar di pojok kanan bawah */
+    img[src*="identicon"], .st-emotion-cache-1v0z425 img, [data-testid="stAvatar"] {
+        display: none !important;
+    }
+    </style>
+    """,
+    unsafe_update_context=True, # atau unsafe_allow_html=True tergantung versi Streamlit Anda
+    unsafe_allow_html=True
+)
 # ─────────────────────────────────────────────────────────────────────────────
 # HEADER (TETAP DI KONTEN UTAMA AGAR EKSKLUSIF)
 # ─────────────────────────────────────────────────────────────────────────────
