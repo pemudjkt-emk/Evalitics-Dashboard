@@ -24,93 +24,26 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ─────────────────────────────────────────────────────────────────────────────
-# CUSTOM CSS - CLEAN SAAS LIGHT THEME (SESUAI GAMBAR REFERENSI BARU)
-# ─────────────────────────────────────────────────────────────────────────────
+# Menghapus CSS tab lama dan sedikit merapikan area Uploader
 st.markdown("""
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
-    /* Background Utama App (Abu-abu sangat muda) */
-    .stApp {
-        background-color: #F5F7FA;
-    }
-    
-    /* Header Bawaan Streamlit Transparan */
-    [data-testid="stHeader"] {
-        background-color: transparent !important;
-    }
-    
-    /* Sidebar Styling (Putih Bersih) */
-    [data-testid="stSidebar"] {
-        background-color: #FFFFFF !important;
-        border-right: 1px solid #EAECF0;
-    }
-    [data-testid="stSidebar"] [data-testid="stRadio"] label p {
-        font-size: 15px;
-        font-weight: 500;
-        color: #4B5563;
-    }
-    
-    /* Container ber-border (Kotak Putih dengan Shadow Lembut) */
-    [data-testid="stVerticalBlockBorderWrapper"] {
-        background-color: #FFFFFF;
-        border-radius: 12px !important;
-        border: 1px solid #EAECF0 !important;
-        box-shadow: 0px 2px 4px rgba(0,0,0,0.02) !important;
-        padding: 10px;
-    }
-    
-    /* File Uploader styling */
     [data-testid="stFileUploader"] {
-        background: #F8FAFC;
-        border: 2px dashed #3B82F6;
+        background: #ffffff;
+        border: 2px dashed #0055A4;
         border-radius: 12px;
         padding: 20px;
     }
-
-    /* Expander Styling */
-    .streamlit-expanderHeader {
-        background-color: #FFFFFF;
-        color: #111827;
-        border-radius: 8px;
-        border: 1px solid #EAECF0;
-    }
-    
-    /* Global Text Colors */
-    h1, h2, h3, h4, h5, h6 { color: #111827 !important; }
-    p, span, label { color: #374151; }
-    
-    /* Tweak padding untuk Radio Sidebar agar berjarak */
-    div[role="radiogroup"] > label {
-        padding: 10px 15px;
-        border-radius: 8px;
-        transition: 0.2s;
-    }
-    div[role="radiogroup"] > label:hover {
-        background-color: #F3F4F6;
+    /* Mempercantik font di sidebar */
+    [data-testid="stSidebar"] [data-testid="stRadio"] label p {
+        font-size: 16px;
+        font-weight: 500;
     }
     </style>
 """, unsafe_allow_html=True)
 
 # ─────────────────────────────────────────────────────────────────────────────
-# HELPER: CUSTOM METRIC CARDS (Clean Light SaaS Design)
-# ─────────────────────────────────────────────────────────────────────────────
-def render_custom_metric(title, value, icon, color_hex):
-    html = f"""
-    <div style="background-color: #FFFFFF; padding: 20px; border-radius: 12px; display: flex; align-items: center; gap: 20px; border: 1px solid #EAECF0; box-shadow: 0px 4px 6px rgba(0,0,0,0.02); margin-bottom: 10px;">
-        <div style="background-color: {color_hex}15; width: 60px; height: 60px; border-radius: 14px; display: flex; justify-content: center; align-items: center;">
-            <i class="material-icons" style="color: {color_hex}; font-size: 30px;">{icon}</i>
-        </div>
-        <div>
-            <p style="margin: 0; color: #6B7280; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">{title}</p>
-            <h3 style="margin: 0; color: #111827; font-size: 26px; font-weight: 800; padding-top: 4px;">{value}</h3>
-        </div>
-    </div>
-    """
-    st.markdown(html, unsafe_allow_html=True)
-
-# ─────────────────────────────────────────────────────────────────────────────
-# HEADER APLIKASI (Clean Light Theme)
+# HEADER (TETAP DI KONTEN UTAMA AGAR EKSKLUSIF)
 # ─────────────────────────────────────────────────────────────────────────────
 def get_base64_logo(file_path):
     if os.path.exists(file_path):
@@ -120,20 +53,20 @@ def get_base64_logo(file_path):
 
 bin_pln       = get_base64_logo("Logo PLN.png")
 bin_danantara = get_base64_logo("logo_danantara.png")
-img_pln       = f'<img src="data:image/png;base64,{bin_pln}" style="height:60px;object-fit:contain;">' if bin_pln else ""
-img_danantara = f'<img src="data:image/png;base64,{bin_danantara}" style="height:35px;object-fit:contain;">' if bin_danantara else ""
+img_pln       = f'<img src="data:image/png;base64,{bin_pln}" style="height:85px;object-fit:contain;">' if bin_pln else ""
+img_danantara = f'<img src="data:image/png;base64,{bin_danantara}" style="height:40px;object-fit:contain;background:white;padding:4px;border-radius:6px;">' if bin_danantara else ""
 
 st.markdown(f"""
 <div style="display:flex;align-items:center;justify-content:space-between;
-    background:#FFFFFF; padding:20px 30px;
-    border-radius:12px; border: 1px solid #EAECF0; margin-bottom:25px; box-shadow:0px 4px 6px rgba(0,0,0,0.02);">
+    background:linear-gradient(90deg,#003366,#0055A4);padding:10px 30px;
+    border-radius:12px;color:white;margin-bottom:25px;box-shadow:0px 4px 10px rgba(0,0,0,0.1);">
     <div style="flex:1;display:flex;align-items:center;gap:15px;">{img_danantara}</div>
     <div style="flex:2;text-align:center;">
-        <h1 style="margin:0;font-size:1.7em;color:#111827 !important;font-weight:800;letter-spacing: 0.5px;">
-            &#9889; SMART EVALYTICS
+        <h1 style="margin:0;font-size:1.6em;color:white !important;font-weight:bold;line-height:1.2;">
+            &#9889; Smart Evaluation Analytics
         </h1>
-        <p style="margin:0;color:#6B7280 !important;font-size:0.9em; font-weight:500; margin-top:4px;">
-            Advanced Evaluation Dashboard &bull; UPDL Jakarta
+        <p style="margin:0;color:rgba(255,255,255,0.8) !important;font-size:0.85em;">
+            Website Analitik Interaktif Evaluasi Pembelajaran UPDL Jakarta
         </p>
     </div>
     <div style="flex:1;display:flex;align-items:center;justify-content:flex-end;">{img_pln}</div>
@@ -282,7 +215,7 @@ def load_gemini_model():
 model = load_gemini_model()
 
 # ─────────────────────────────────────────────────────────────────────────────
-# ENGINE SENTIMENT ANALYSIS
+# ENGINE SENTIMENT ANALYSIS (OPEN-SOURCE LEXICON)
 # ─────────────────────────────────────────────────────────────────────────────
 @st.cache_data(ttl=86400)
 def load_opensource_lexicon():
@@ -320,27 +253,16 @@ def analisis_sentimen_opensource(teks):
     elif skor < 0: return "Negatif"
     else: return "Netral"
 
+
 # ─────────────────────────────────────────────────────────────────────────────
-# MENU NAVIGASI (SIDEBAR)
+# MENU NAVIGASI (SIDEBAR) UI/UX BARU
 # ─────────────────────────────────────────────────────────────────────────────
 with st.sidebar:
-    # Avatar / User Profile Simulation (Light Mode)
-    st.markdown("""
-    <div style="display:flex; align-items:center; gap:15px; margin-bottom: 30px; padding: 10px; background-color: #F8FAFC; border-radius: 12px; border: 1px solid #EAECF0;">
-        <div style="background-color: #3B82F6; width: 45px; height: 45px; border-radius: 50%; display: flex; justify-content: center; align-items: center;">
-            <i class="material-icons" style="color: white; font-size: 24px;">person</i>
-        </div>
-        <div>
-            <h4 style="margin: 0; color: #111827; font-size: 14px; font-weight: 700;">Admin UPDL</h4>
-            <p style="margin: 0; color: #6B7280; font-size: 12px;">Quality Assurance</p>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown("### 🧭 Menu Navigasi")
     
-    st.markdown("<p style='color:#9CA3AF; font-size: 12px; font-weight:700; letter-spacing:1px; margin-bottom: 5px;'>MAIN MENU</p>", unsafe_allow_html=True)
-    
+    # Menu Pilihan Modul
     menu_selection = st.radio(
-        "",
+        "Pilih Modul Aplikasi:",
         [
             "📤 DATA ENTRY",
             "📈 ANALYTICS",
@@ -349,24 +271,25 @@ with st.sidebar:
             "🚨 EARLY WARNING",
             "📑 REPORT & KATALOG",
             "⚙️ PENGATURAN"
-        ],
-        label_visibility="collapsed"
+        ]
     )
     
-    st.markdown("<br><hr style='border-color: #EAECF0;'><br>", unsafe_allow_html=True)
+    st.markdown("---")
     
+    # Tombol Sinkronisasi dipindah ke Sidebar agar lebih ringkas
     if st.button("🔄 Sinkron Data Terkini", use_container_width=True):
         st.cache_data.clear()
         st.toast("Menarik data terbaru dari Google Sheets...")
 
-# URL Sumber Data Global
+
+# URL Sumber Data Global (Dibutuhkan oleh Analytics, Dashboard & Report)
 sheet_id = '1IDAmFwTbBQDZcKM3eiiEDcA3KwM9WKqW4zCrk__6-PU'
 sheet_name = 'L1%20Tertutup' 
 url = f'https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet={sheet_name}'
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# ROUTING KONTEN
+# ROUTING KONTEN BERDASARKAN PILIHAN SIDEBAR
 # ══════════════════════════════════════════════════════════════════════════════
 
 if menu_selection in ["📈 ANALYTICS", "📊 DASHBOARD"]:
@@ -394,8 +317,10 @@ if menu_selection in ["📈 ANALYTICS", "📊 DASHBOARD"]:
                 filter_valid = st.selectbox("Validitas", opsi_valid, key=f"valid_{suffix}")
 
             df_f = df.copy()
+            
             df_f = df_f[df_f['Laporan Bulan'].isin(filter_bulan)] if filter_bulan else df_f
             df_f = df_f[df_f['Strategi Pelaksanaan'].isin(filter_strategi)] if filter_strategi else df_f
+            
             if filter_valid != "Semua Status":
                 df_f = df_f[df_f['% Valid'] == filter_valid]
 
@@ -415,6 +340,7 @@ if menu_selection in ["📈 ANALYTICS", "📊 DASHBOARD"]:
                 df_f['Satisfaction Sarana Digital']  = df_f['RATA DS']
                 df_f['Satisfaction Sarana In Class'] = df_f['RATA SP']
 
+            st.success(f"Terdapat **{len(df_f)}** baris data yang sesuai dengan filter.")
             return df_f
 
         # ---------------------------------------------------------
@@ -423,20 +349,20 @@ if menu_selection in ["📈 ANALYTICS", "📊 DASHBOARD"]:
         if menu_selection == "📈 ANALYTICS":
             df_filtered = build_filters("analytics")
             kolom_tersedia = df_filtered.columns.tolist()
-            st.markdown("<hr style='border-color: #EAECF0;'>", unsafe_allow_html=True)
+            st.markdown("---")
 
             if not df_filtered.empty:
-                st.subheader("📋 Raw Data Explorer")
+                st.subheader("📋 Raw Data")
                 st.dataframe(df_filtered, use_container_width=True)
 
-                st.markdown("<br>### 🔍 Analisis Korelasi", unsafe_allow_html=True)
+                st.markdown("### 🔍 Analisis Korelasi")
                 col1, col2 = st.columns(2)
                 with col1:
                     var_x = st.selectbox("Variabel Independen (X):", kolom_tersedia, index=0, key="x_ana")
                 with col2:
                     var_y = st.selectbox("Variabel Dependen (Y):", kolom_tersedia,
                                          index=min(1, len(kolom_tersedia)-1), key="y_ana")
-                st.markdown("<hr style='border-color: #EAECF0;'>", unsafe_allow_html=True)
+                st.markdown("---")
 
                 if pd.api.types.is_numeric_dtype(df_filtered[var_x]) and pd.api.types.is_numeric_dtype(df_filtered[var_y]):
                     hapus_outlier  = st.checkbox("🧹 Buang Outlier (IQR)", key="out_ana")
@@ -460,26 +386,28 @@ if menu_selection in ["📈 ANALYTICS", "📊 DASHBOARD"]:
                             (st.success if p_y > 0.05 else st.error)(f"{'✅' if p_y>0.05 else '❌'} {var_y}: {'Normal' if p_y>0.05 else 'Tidak Normal'} (p={p_y:.3f})")
 
                     if len(df_clean) > 1:
-                        st.markdown("<hr style='border-color: #EAECF0;'>", unsafe_allow_html=True)
+                        st.markdown("---")
                         korelasi = df_clean[var_x].corr(df_clean[var_y])
-                        
                         col3, col4 = st.columns([1, 2])
-                        with col3: 
-                            render_custom_metric("Koefisien Korelasi", f"{round(korelasi, 3)}", "show_chart", "#8B5CF6")
+                        with col3: st.metric("Koefisien Korelasi (r)", round(korelasi, 3))
                         with col4:
                             st.write(f"**Sebaran: {var_x} vs {var_y}**")
-                            # Plotly Scatter Light Mode
-                            fig_corr = px.scatter(df_clean, x=var_x, y=var_y, color_discrete_sequence=['#3B82F6'])
-                            fig_corr.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
-                            st.plotly_chart(fig_corr, use_container_width=True)
+                            st.scatter_chart(data=df_clean, x=var_x, y=var_y)
                 else:
                     st.error("⚠️ Kolom yang dipilih bukan format angka.")
 
                 # IPA
-                st.markdown("<hr style='border-color: #EAECF0;'>", unsafe_allow_html=True)
+                st.markdown("---")
                 st.markdown("### 🎯 Importance-Performance Analysis (IPA)")
                 try:
                     df_ipa = df_filtered.dropna(subset=['RATA-RATA KESELURUHAN']).copy()
+                    if '% Pengisian' in df_ipa.columns:
+                        df_ipa['Pengisian_Clean'] = pd.to_numeric(df_ipa['% Pengisian'].astype(str).str.replace('%', '', regex=False), errors='coerce')
+                        rata_pengisian = df_ipa['Pengisian_Clean'].mean()
+                        if pd.notna(rata_pengisian) and rata_pengisian > 1:
+                            rata_pengisian = rata_pengisian / 100
+                        if pd.notna(rata_pengisian) and rata_pengisian < 0.40:
+                            st.warning(f"⚠️ **Peringatan Sampel:** Rata-rata tingkat pengisian (Response Rate) pada data ini hanya **{rata_pengisian*100:.1f}%** (di bawah standar validitas 40%). Titik kuadran mungkin dipengaruhi anomali karena sampel terlalu sedikit.")
                     
                     level_ipa = st.radio(
                         "🔍 Pilih Kedalaman Analisis Akar Masalah (Drill-down):", 
@@ -520,6 +448,7 @@ if menu_selection in ["📈 ANALYTICS", "📊 DASHBOARD"]:
                             nama_tampil = [kamus_nama.get(k, k) for k in kategori_list]
 
                         kinerja, kepentingan = [], []
+                        
                         for kat in kategori_list:
                             if kat in df_ipa.columns:
                                 df_ipa[kat] = pd.to_numeric(df_ipa[kat], errors='coerce')
@@ -541,21 +470,15 @@ if menu_selection in ["📈 ANALYTICS", "📊 DASHBOARD"]:
                             
                             fig_ipa = px.scatter(df_plot_ipa, x='Kinerja', y='Kepentingan', text='Kategori')
                             ukuran_teks = 10 if level_ipa == "🔎 Mikro (Sub-Indikator Detail)" else 13
-                            
-                            # Styling Scatter di Tema Terang
-                            fig_ipa.update_traces(
-                                textposition='top center', 
-                                textfont_size=ukuran_teks, 
-                                marker=dict(size=14, color='#3B82F6', line=dict(width=1,color='#FFFFFF'))
-                            )
-                            fig_ipa.add_hline(y=y_cross, line_dash="dash", line_color="#9CA3AF")
-                            fig_ipa.add_vline(x=x_cross, line_dash="dash", line_color="#EF4444", annotation_text="Standar TMP (4.5)", annotation_position="top left")
+                            fig_ipa.update_traces(textposition='top center', textfont_size=ukuran_teks, marker=dict(size=12, color='#005b9f', line=dict(width=1,color='DarkSlateGrey')))
+                            fig_ipa.add_hline(y=y_cross, line_dash="dash", line_color="#FFC000")
+                            fig_ipa.add_vline(x=x_cross, line_dash="dash", line_color="#FFC000", annotation_text="Standar TMP (4.5)", annotation_position="top left")
                             
                             for ax, ay, txt, col, algn in [
-                                (0.01, 0.99, "<b>KUADRAN 1</b><br>🚨 Prioritas Utama", "#EF4444", "left"),
-                                (0.99, 0.99, "<b>KUADRAN 2</b><br>🌟 Pertahankan", "#10B981", "right"),
-                                (0.01, 0.01, "<b>KUADRAN 3</b><br>📉 Prioritas Sekunder", "#6B7280", "left"),
-                                (0.99, 0.01, "<b>KUADRAN 4</b><br>⚠️ Berlebihan", "#F59E0B", "right"),
+                                (0.01, 0.99, "<b>KUADRAN 1</b><br>🚨 Prioritas Utama", "#d32f2f", "left"),
+                                (0.99, 0.99, "<b>KUADRAN 2</b><br>🌟 Pertahankan", "#2e7d32", "right"),
+                                (0.01, 0.01, "<b>KUADRAN 3</b><br>📉 Prioritas Sekunder", "#757575", "left"),
+                                (0.99, 0.01, "<b>KUADRAN 4</b><br>⚠️ Berlebihan", "#f57c00", "right"),
                             ]:
                                 fig_ipa.add_annotation(xref="paper", yref="paper", x=ax, y=ay, text=txt, showarrow=False, font=dict(color=col, size=13), align=algn)
                             
@@ -563,38 +486,32 @@ if menu_selection in ["📈 ANALYTICS", "📊 DASHBOARD"]:
                             min_y = min(-0.1, df_plot_ipa['Kepentingan'].min() - 0.1) if not df_plot_ipa['Kepentingan'].empty else -0.1
                             max_y = max(1.1, df_plot_ipa['Kepentingan'].max() + 0.1) if not df_plot_ipa['Kepentingan'].empty else 1.1
                             
-                            fig_ipa.update_layout(
-                                plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-                                height=600 if level_ipa == "📊 Makro (Kategori Utama)" else 700, 
-                                margin=dict(t=40,b=40,l=40,r=40), 
-                                xaxis_range=[min_x, 5.1], yaxis_range=[min_y, max_y], 
-                                xaxis_title="Kinerja (Rata-rata Skor Kepuasan)", yaxis_title="Kepentingan (Korelasi terhadap Total Skor)"
-                            )
+                            fig_ipa.update_layout(height=600 if level_ipa == "📊 Makro (Kategori Utama)" else 700, margin=dict(t=40,b=40,l=40,r=40), xaxis_range=[min_x, 5.1], yaxis_range=[min_y, max_y], xaxis_title="Kinerja (Rata-rata Skor Kepuasan)", yaxis_title="Kepentingan (Korelasi terhadap Total Skor)")
                             st.plotly_chart(fig_ipa, use_container_width=True)
 
                             q1_items = df_plot_ipa[(df_plot_ipa['Kinerja'] < x_cross) & (df_plot_ipa['Kepentingan'] > y_cross)]['Kategori'].tolist()
-                            st.markdown("<h4 style='color: #111827; margin-top: 30px;'>💡 Executive Diagnosis</h4>", unsafe_allow_html=True)
+                            st.markdown("<h4 style='color: #003366; margin-top: 30px;'>💡 Executive Diagnosis</h4>", unsafe_allow_html=True)
                             
                             if q1_items:
                                 list_html = "".join([f"<li style='margin-bottom: 5px;'><b>{item}</b></li>" for item in q1_items])
                                 rek_text = "Beralih ke <b>Mode Mikro</b> di pengaturan atas untuk melihat rincian sub-indikator spesifik yang menjadi akar masalah." if level_ipa == "📊 Makro (Kategori Utama)" else "Segera susun rencana perbaikan operasional untuk indikator di atas. Elevasi di area ini akan memberikan dampak paling masif terhadap lonjakan total skor evaluasi."
                                 
-                                alert_html = f"""<div style="padding: 20px; border-radius: 12px; border-left: 6px solid #EF4444; background-color: #FEF2F2; box-shadow: 0 2px 4px rgba(0,0,0,0.02); margin-bottom: 20px;">
+                                alert_html = f"""<div style="padding: 20px; border-radius: 10px; border-left: 8px solid #d32f2f; background-color: #fdf5f5; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px;">
                                     <div style="display: flex; align-items: flex-start; gap: 15px;">
-                                        <div style="font-size: 28px; margin-top: 2px;">🚨</div>
+                                        <div style="font-size: 32px; margin-top: 2px;">🚨</div>
                                         <div style="width: 100%;">
-                                            <h4 style="margin: 0 0 8px 0; color: #B91C1C; font-size: 16px;">Peringatan Area Kritis (Kuadran 1)</h4>
-                                            <p style="margin: 0 0 10px 0; color: #4B5563; font-size: 14px;">Ditemukan indikator yang <b>sangat memengaruhi kepuasan peserta</b>, namun kinerjanya <b>di bawah standar PLN (4.5)</b>:</p>
-                                            <ul style="margin: 0 0 15px 0; padding-left: 20px; color: #991B1B; font-size: 14px;">{list_html}</ul>
-                                            <div style="padding: 10px 15px; background-color: rgba(59, 130, 246, 0.08); border-radius: 8px; border-left: 4px solid #3B82F6;">
-                                                <p style="margin: 0; font-size: 13px; color: #1E3A8A;"><b>Tindak Lanjut:</b> {rek_text}</p>
+                                            <h4 style="margin: 0 0 8px 0; color: #d32f2f; font-size: 18px;">Peringatan Area Kritis (Kuadran 1)</h4>
+                                            <p style="margin: 0 0 10px 0; color: #444; font-size: 15px;">Ditemukan indikator yang <b>sangat memengaruhi kepuasan peserta</b>, namun kinerjanya <b>di bawah standar PLN (4.5)</b>:</p>
+                                            <ul style="margin: 0 0 15px 0; padding-left: 20px; color: #b71c1c; font-size: 15px;">{list_html}</ul>
+                                            <div style="padding: 10px 15px; background-color: rgba(0, 85, 164, 0.08); border-radius: 6px; border-left: 4px solid #0055A4;">
+                                                <p style="margin: 0; font-size: 14px; color: #003366;"><b>Tindak Lanjut:</b> {rek_text}</p>
                                             </div></div></div></div>"""
                                 st.markdown(alert_html, unsafe_allow_html=True)
                             else:  
-                                success_html = """<div style="padding: 25px; border-radius: 12px; background: #ECFDF5; border: 1px solid #D1FAE5; box-shadow: 0 2px 4px rgba(0,0,0,0.02); margin-bottom: 20px; border-left: 6px solid #10B981; display: flex; align-items: center; gap: 20px;">
-                                    <div style="font-size: 40px; background: #FFFFFF; padding: 10px 15px; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">🏆</div>
-                                    <div><h4 style="margin: 0 0 5px 0; color: #065F46; font-size: 18px;">Kinerja Prima Luar Biasa!</h4>
-                                    <p style="margin: 0; color: #047857; font-size: 14px; line-height: 1.5;">Tidak ada indikator krusial yang jatuh di Kuadran 1 pada periode evaluasi ini. Terus pertahankan kualitas pelayanan dan materi Anda sesuai standar ekselensi UPDL Jakarta.</p></div></div>"""
+                                success_html = """<div style="padding: 25px; border-radius: 10px; background: linear-gradient(135deg, #003366, #0055A4); box-shadow: 0 4px 10px rgba(0,0,0,0.15); margin-bottom: 20px; border-left: 8px solid #ffc107; display: flex; align-items: center; gap: 20px;">
+                                    <div style="font-size: 45px; background: rgba(255,255,255,0.1); padding: 10px 15px; border-radius: 50%;">🏆</div>
+                                    <div><h4 style="margin: 0 0 5px 0; color: #ffc107; font-size: 20px;">Kinerja Prima Luar Biasa!</h4>
+                                    <p style="margin: 0; color: #ffffff; font-size: 15px; line-height: 1.5; opacity: 0.9;">Tidak ada indikator krusial yang jatuh di Kuadran 1 pada periode evaluasi ini. Terus pertahankan kualitas pelayanan dan materi Anda sesuai standar ekselensi UPDL Jakarta.</p></div></div>"""
                                 st.markdown(success_html, unsafe_allow_html=True)
                         
                         st.markdown("---")
@@ -636,12 +553,23 @@ if menu_selection in ["📈 ANALYTICS", "📊 DASHBOARD"]:
                             if len(histori_bulan) >= 2:
                                 df_histori_plot = pd.DataFrame({'Bulan': histori_bulan, 'Kinerja': histori_kinerja, 'Kepentingan': histori_kepentingan})
                                 fig_track = px.line(df_histori_plot, x='Kinerja', y='Kepentingan', text='Bulan', markers=True, title=f"Rekam Jejak Pergeseran Posisi Kuadran: {indikator_dipilih}")
-                                fig_track.update_traces(textposition='top center', line=dict(width=3, color='#F59E0B'), marker=dict(size=10, color='#3B82F6'))
-                                fig_track.add_vline(x=4.5, line_dash="dash", line_color="#EF4444")
-                                fig_track.add_hline(y=df_histori_plot['Kepentingan'].mean(), line_dash="dash", line_color="#9CA3AF")
-                                fig_track.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', height=450, xaxis_range=[3.8, 5.1], xaxis_title="Kinerja (Skor Kepuasan)", yaxis_title="Kepentingan (Korelasi)")
+                                fig_track.update_traces(textposition='top center', line=dict(width=3, color='#ffc107'), marker=dict(size=10, color='#005b9f'))
+                                fig_track.add_vline(x=4.5, line_dash="dash", line_color="#FFC000")
+                                fig_track.add_hline(y=df_histori_plot['Kepentingan'].mean(), line_dash="dash", line_color="#FFC000")
+                                fig_track.update_layout(height=450, xaxis_range=[3.8, 5.1], xaxis_title="Kinerja (Skor Kepuasan)", yaxis_title="Kepentingan (Korelasi)")
                                 st.plotly_chart(fig_track, use_container_width=True)
                                 
+                                st.markdown("#### 📝 Log Evaluasi & Efektivitas Tindak Lanjut")
+                                b_awal, b_akhir = histori_bulan[0], histori_bulan[-1]
+                                k_awal, k_akhir = histori_kinerja[0], histori_kinerja[-1]
+                                selisih = k_akhir - k_awal
+                                status_efektivitas = "🟢 BERHASIL (Skor Naik)" if selisih > 0 else "🔴 BELUM EFEKTIF (Skor Stagnan/Turun)"
+                                if abs(selisih) < 0.05: status_efektivitas = "🟡 BERTAHAN (Perubahan Minimal)"
+                                
+                                col_t1, col_t2, col_t3 = st.columns(3)
+                                col_t1.metric(f"Skor Awal ({b_awal})", f"{k_awal:.2f}")
+                                col_t2.metric(f"Skor Akhir ({b_akhir})", f"{k_akhir:.2f}", delta=f"{selisih:+.2f}")
+                                col_t3.metric("Kesimpulan Dampak", "Efektif" if selisih > 0 else "Evaluasi Ulang", delta=status_efektivitas, delta_color="normal" if selisih > 0 else "inverse")
                             else:
                                 st.info("ℹ️ Data histori bulanan belum mencukupi.")
                         except Exception as e:
@@ -652,7 +580,7 @@ if menu_selection in ["📈 ANALYTICS", "📊 DASHBOARD"]:
                     st.error(f"Gagal memuat visualisasi IPA: {e}")
 
                 # Analisis Komparatif
-                st.markdown("<hr style='border-color: #EAECF0;'>", unsafe_allow_html=True)
+                st.markdown("---")
                 st.markdown("### ⚖️ Analisis Komparatif")
                 opsi_skor_final = [c for c in ['RATA-RATA KESELURUHAN','Engagement Instruktur','INS1','INS2',
                     'Relevance Instruktur','INS3','INS4','Satisfaction Instruktur','INS5','INS6','INS7','INS8',
@@ -668,8 +596,21 @@ if menu_selection in ["📈 ANALYTICS", "📊 DASHBOARD"]:
                     grup_unik = df_comp[var_grup].unique()
                     data_grup = [df_comp[df_comp[var_grup]==g][var_skor] for g in grup_unik]
                     fig_box = px.box(df_comp, x=var_grup, y=var_skor, color=var_grup, points="all", title=f"Distribusi {var_skor} berdasarkan {var_grup}")
-                    fig_box.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', height=400, showlegend=False, xaxis_title="", yaxis_title="Skor")
-                    st.plotly_chart(fig_box, use_container_width=True)
+                    fig_box.update_layout(height=400, showlegend=False, xaxis_title="", yaxis_title="Skor")
+                    if len(grup_unik) < 2:
+                        st.warning("Hanya 1 kelompok — tidak bisa uji komparasi.")
+                        st.plotly_chart(fig_box, use_container_width=True)
+                    else:
+                        if len(grup_unik) == 2:
+                            stat_val, p_value = stats.ttest_ind(data_grup[0], data_grup[1], nan_policy='omit')
+                            jenis_uji = "Independent T-Test"
+                        else:
+                            stat_val, p_value = stats.f_oneway(*data_grup)
+                            jenis_uji = "One-Way ANOVA"
+                        st.plotly_chart(fig_box, use_container_width=True)
+                        st.write(f"**Hasil Uji ({jenis_uji}):** P-Value = {p_value:.4f}")
+                        if p_value < 0.05: st.success(f"Terdapat **PERBEDAAN SIGNIFIKAN** pada {var_skor} antar kelompok.")
+                        else: st.info(f"**TIDAK ADA PERBEDAAN SIGNIFIKAN** pada {var_skor} antar kelompok.")
             else:
                 st.warning("⚠️ Tidak ada data. Sesuaikan filter.")
 
@@ -678,34 +619,30 @@ if menu_selection in ["📈 ANALYTICS", "📊 DASHBOARD"]:
         # ---------------------------------------------------------
         elif menu_selection == "📊 DASHBOARD":
             df_filtered_dash = build_filters("dashboard")
-            st.markdown("<hr style='border-color: #EAECF0;'>", unsafe_allow_html=True)
-            
+            st.markdown("---")
             if not df_filtered_dash.empty:
                 skor_evaluasi = df_filtered_dash['RATA-RATA KESELURUHAN'].mean()
                 ind_kurang    = df_filtered_dash['Jumlah Indikator dibawah 4.5'].sum() if 'Jumlah Indikator dibawah 4.5' in df_filtered_dash.columns else 0
                 ind_lebih     = df_filtered_dash['Jumlah Indikator diatas 4.5'].sum()  if 'Jumlah Indikator diatas 4.5'  in df_filtered_dash.columns else 0
 
-                # Metric Cards dengan Desain Gambar Referensi Baru (Warna Bersih)
-                col_kpi1, col_kpi2, col_kpi3, col_kpi4 = st.columns(4)
-                with col_kpi1: render_custom_metric("Total Skor L1", f"{skor_evaluasi:.2f}", "star", "#3B82F6")
-                with col_kpi2: render_custom_metric("Indikator ≥ 4.5", f"{int(ind_lebih)}", "check_circle", "#10B981")
-                with col_kpi3: render_custom_metric("Indikator < 4.5", f"{int(ind_kurang)}", "warning", "#EF4444")
-                with col_kpi4: render_custom_metric("Total Kelas", f"{len(df_filtered_dash)}", "class", "#8B5CF6")
-                
-                st.markdown("<hr style='border-color: #EAECF0;'>", unsafe_allow_html=True)
+                col_kpi1, col_kpi2, col_kpi3 = st.columns(3)
+                with col_kpi1: st.metric("🌟 Skor Evaluasi L1",  f"{skor_evaluasi:.2f}" if pd.notna(skor_evaluasi) else "N/A")
+                with col_kpi2: st.metric("⚠️ Indikator < 4.5",  int(ind_kurang))
+                with col_kpi3: st.metric("✅ Indikator ≥ 4.5",  int(ind_lebih))
+                st.markdown("---")
 
                 col_chart_l, col_chart_r = st.columns([3, 2])
                 with col_chart_l:
                     st.markdown("#### 📈 Skor L1 per Strategi Pelaksanaan")
                     df_grafik = df_filtered_dash.groupby('Strategi Pelaksanaan')['RATA-RATA KESELURUHAN'].mean().reset_index()
-                    fig = px.bar(df_grafik, x='Strategi Pelaksanaan', y='RATA-RATA KESELURUHAN', text='RATA-RATA KESELURUHAN')
-                    fig.update_traces(marker_color='#3B82F6', texttemplate='%{text:.2f}', textposition='outside')
-                    fig.add_hline(y=4.5, line_dash="dash", line_color="#EF4444", annotation_text="Standar 4.5", annotation_position="top left")
-                    fig.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', height=350, bargap=0.5, yaxis_range=[0,5], yaxis_title="Rata-rata Skor", xaxis_title="", margin=dict(t=40,b=0,l=0,r=0))
+                    fig = px.bar(df_grafik, x='Strategi Pelaksanaan', y='RATA-RATA KESELURUHAN', text='RATA-RATA KESELURUHAN', color_discrete_sequence=['#005b9f'])
+                    fig.update_traces(texttemplate='%{text:.2f}', textposition='outside')
+                    fig.add_hline(y=4.5, line_dash="dash", line_color="#FFC000", annotation_text="Standar TMP (4.5)", annotation_position="top left")
+                    fig.update_layout(height=350, bargap=0.5, yaxis_range=[0,5], yaxis_title="Rata-rata Skor", xaxis_title="", margin=dict(t=40,b=0,l=0,r=0))
                     st.plotly_chart(fig, use_container_width=True)
 
                 with col_chart_r:
-                    st.markdown("#### 🕸️ Radar Kategori")
+                    st.markdown("#### 🕸️ Radar — Rata-rata Kategori")
                     kategori_radar = {
                         'Eng. Instruktur':'Engagement Instruktur','Rel. Instruktur':'Relevance Instruktur',
                         'Sat. Instruktur':'Satisfaction Instruktur','Eng. Materi':'Engagement Materi',
@@ -715,28 +652,27 @@ if menu_selection in ["📈 ANALYTICS", "📊 DASHBOARD"]:
                     labels = [k for k,v in kategori_radar.items() if v in df_filtered_dash.columns]
                     values = [df_filtered_dash[kategori_radar[k]].mean() for k in labels]
                     if labels:
-                        fig_radar = go.Figure(go.Scatterpolar(r=values+[values[0]], theta=labels+[labels[0]], fill='toself', fillcolor='rgba(59, 130, 246, 0.2)', line=dict(color='#3B82F6',width=2)))
-                        fig_radar.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', polar=dict(radialaxis=dict(visible=True,range=[0,5], gridcolor='#EAECF0'), angularaxis=dict(gridcolor='#EAECF0')), showlegend=False, height=350, margin=dict(t=30,b=30,l=30,r=30))
+                        fig_radar = go.Figure(go.Scatterpolar(r=values+[values[0]], theta=labels+[labels[0]], fill='toself', fillcolor='rgba(0,85,164,0.15)', line=dict(color='#0055A4',width=2)))
+                        fig_radar.update_layout(polar=dict(radialaxis=dict(visible=True,range=[0,5])), showlegend=False, height=350, margin=dict(t=30,b=30,l=30,r=30))
                         st.plotly_chart(fig_radar, use_container_width=True)
 
-                st.markdown("<hr style='border-color: #EAECF0;'>", unsafe_allow_html=True)
+                st.markdown("---")
                 if 'Laporan Bulan' in df_filtered_dash.columns:
                     st.markdown("#### 📆 Tren Skor L1 per Bulan")
                     URUTAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember']
                     df_tren = df_filtered_dash.groupby('Laporan Bulan')['RATA-RATA KESELURUHAN'].mean().reset_index()
                     df_tren['sort_key'] = df_tren['Laporan Bulan'].apply(lambda x: URUTAN.index(x) if x in URUTAN else 99)
                     df_tren = df_tren.sort_values('sort_key')
-                    fig_tren = px.line(df_tren, x='Laporan Bulan', y='RATA-RATA KESELURUHAN', markers=True)
-                    fig_tren.update_traces(line=dict(color='#10B981', width=3), marker=dict(size=10, color='#10B981'))
-                    fig_tren.add_hline(y=4.5, line_dash="dash", line_color="#EF4444", annotation_text="Standar 4.5", annotation_position="top left")
-                    fig_tren.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', yaxis_range=[0,5], height=300, yaxis_title="Rata-rata Skor", xaxis_title="")
+                    fig_tren = px.line(df_tren, x='Laporan Bulan', y='RATA-RATA KESELURUHAN', markers=True, color_discrete_sequence=['#0055A4'])
+                    fig_tren.add_hline(y=4.5, line_dash="dash", line_color="#FFC000", annotation_text="Standar 4.5", annotation_position="top left")
+                    fig_tren.update_layout(yaxis_range=[0,5], height=300, yaxis_title="Rata-rata Skor", xaxis_title="")
                     st.plotly_chart(fig_tren, use_container_width=True)
 
-                with st.container():
-                    with st.expander(f"📄 Tabel Data Lengkap ({len(df_filtered_dash)} baris)", expanded=False):
-                        st.dataframe(df_filtered_dash, use_container_width=True)
+                with st.expander(f"📄 Tabel Data Lengkap ({len(df_filtered_dash)} baris)", expanded=False):
+                    st.dataframe(df_filtered_dash, use_container_width=True)
             else:
                 st.warning("⚠️ Tidak ada data. Sesuaikan filter.")
+
     except Exception as e:
         st.error(f"Gagal memuat data: {e}")
 
@@ -744,8 +680,8 @@ if menu_selection in ["📈 ANALYTICS", "📊 DASHBOARD"]:
 # KONTEN: 🤖 AI ASSISTANT
 # ══════════════════════════════════════════════════════════════════════════════
 elif menu_selection == "🤖 AI ASSISTANT":
-    st.subheader("🤖 Tanya Asisten AI (EVALYTICS)")
-    st.write("Analisis insight tersembunyi dengan bantuan Gemini AI secara real-time.")
+    st.subheader("🤖 Tanya Asisten EVALYTICS")
+    st.write("Gunakan AI untuk menganalisis tren atau meminta saran perbaikan berdasarkan data yang sedang difilter.")
 
     if "chat_history" not in st.session_state: st.session_state.chat_history = []
     for chat in st.session_state.chat_history:
@@ -772,23 +708,29 @@ elif menu_selection == "🤖 AI ASSISTANT":
 # ══════════════════════════════════════════════════════════════════════════════
 elif menu_selection == "📤 DATA ENTRY":
     st.markdown("""
-    <div style="display:flex;align-items:center;gap:15px;margin-bottom:20px;">
-        <div style="background-color: #3B82F615; padding:15px; border-radius:12px; border:1px solid #3B82F630;">
-            <i class="material-icons" style="font-size:32px;color:#3B82F6;">cloud_upload</i>
-        </div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+        <i class="material-icons" style="font-size:30px;color:#0055A4;">cloud_upload</i>
         <div>
-            <h2 style="margin:0;color:#111827;">Data Pipeline Entry</h2>
-            <p style="margin:0;color:#6B7280;font-size:0.9em;">Upload Excel/CSV (L1, L2, Instruktur). Sistem mendeteksi cerdas.</p>
+            <h2 style="margin:0;color:#003366;">Upload File Evaluasi</h2>
+            <p style="margin:0;color:#8a8a8a;font-size:0.9em;">Upload L1, L2, dan Instruktur — sistem otomatis mendeteksi tipe file</p>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
+    with st.expander("📖 Panduan Cepat", expanded=False):
+        col_g1, col_g2, col_g3 = st.columns(3)
+        with col_g1: st.markdown("**🔵 File L1** — wajib ada kolom `Ins-Eng-1 of 2` → Sheet **L1 Tertutup**")
+        with col_g2: st.markdown("**🟢 File L2** — wajib ada kolom `Confidence Level` → Sheet **L1 Tertutup**")
+        with col_g3: st.markdown("**🟠 File Instruktur** — wajib ada `Nama` + `Kode Diklat` → Sheet **Detail Instruktur**")
+
+    # Di dalam Data Entry, sub-navigasi berbentuk Tabs tetap dipertahankan karena secara fungsi
+    # ia bertugas membelah ruang fungsional untuk upload dan panduan (Micro-interaction)
     sub_upload, sub_riwayat, sub_panduan = st.tabs(["📤 Upload & Kirim", "🕒 Riwayat", "📄 Panduan Format"])
 
     with sub_upload:
         with st.container(border=True):
             uploaded_files = st.file_uploader(
-                "Pilih atau seret file (Multi-file didukung)",
+                "Pilih atau seret file Excel/CSV (bisa beberapa sekaligus)",
                 type=["xlsx","csv"], accept_multiple_files=True, key="entry_uploader"
             )
 
@@ -806,20 +748,34 @@ elif menu_selection == "📤 DATA ENTRY":
                         is_l1 = ('Ins-Eng-1 of 2' in df_raw.columns and not is_instruktur)
 
                         if is_instruktur:
+                            before = len(df_raw)
                             df_raw = df_raw[~df_raw['Nama'].astype(str).str.strip().str.upper().isin(['UPDL JAKARTA','JAKARTA'])].reset_index(drop=True)
-                            df_ins = build_instruktur_df(df_raw)
+                            excluded = before - len(df_raw)
+                            
+                            df_ins = build_instruktur_df(df_raw) # Memetakan langsung ke 15 Kolom
                             all_ins_dfs.append(df_ins)
-                            file_log.append({"File":f.name,"Tipe":"🟠 Instruktur","Baris":len(df_raw)})
-                            st.write(f"🟠 **Instruktur** — `{f.name}` ({len(df_raw)} baris)")
+                            
+                            excl_note = f" ({excluded} baris dummy dikecualikan)" if excluded > 0 else ""
+                            ws_ins = st.session_state["setting_ws_instruktur"]
+                            file_log.append({"File":f.name,"Tipe":"🟠 Instruktur","Baris":len(df_raw),"Sheet":ws_ins})
+                            st.write(f"🟠 **Instruktur** — `{f.name}` ({len(df_raw)} baris{excl_note}) → Sheet: **{ws_ins}**")
+                            st.session_state.riwayat_upload.append({
+                                "nama":f.name,"waktu":datetime.now().strftime("%d/%m/%Y %H:%M"),
+                                "tipe":"Instruktur","baris":len(df_raw)})
 
                         elif is_l1:
+                            detect_and_show_column_mismatch(df_raw, INS_COL_NAMES, f.name, "INS")
+                            detect_and_show_column_mismatch(df_raw, MAT_COL_NAMES, f.name, "MAT")
                             df_mapped = pd.DataFrame(index=df_raw.index, columns=TARGET_COLUMNS)
                             df_mapped['Kode Pembelajaran']           = df_raw.get('Kode Judul')
+                            df_mapped['Judul Pembelajaran/Kegiatan'] = df_raw.get('Judul Pembelajaran')
                             df_mapped['Batch']                       = df_raw.get('Angkatan')
                             df_mapped['Tanggal Mulai']               = df_raw.get('Tgl Mulai')
                             df_mapped['Tanggal Selesai']             = df_raw.get('Tgl Selesai')
+                            df_mapped['Strategi Pelaksanaan']        = df_raw.get('Strategi Pelaksana')
                             df_mapped['Peserta Isi L1']              = df_raw.get('P.Isi')
                             df_mapped['Peserta Hadir']               = df_raw.get('P.Hadir')
+                            df_mapped['PIC KI']                      = df_raw.get('Bidang')
                             for i, c in enumerate(INS_COL_NAMES, 1): df_mapped[f'INS{i}'] = df_raw.get(c)
                             for i, c in enumerate(MAT_COL_NAMES, 1): df_mapped[f'MAT{i}'] = df_raw.get(c)
                             for i, c in enumerate(SP_COL_NAMES,  1): df_mapped[f'SP{i}']  = df_raw.get(c)
@@ -828,12 +784,17 @@ elif menu_selection == "📤 DATA ENTRY":
                             tgl_mulai = pd.to_datetime(df_mapped['Tanggal Mulai'],errors='coerce').dt.strftime('%Y%m%d').fillna('NOTGL')
                             df_mapped['Kode Unik'] = df_mapped['Kode Pembelajaran'].astype(str).str.strip()+"."+batch_val+"."+tgl_mulai
                             all_l1_dfs.append(df_mapped)
-                            file_log.append({"File":f.name,"Tipe":"🔵 L1","Baris":len(df_raw)})
-                            st.write(f"🔵 **L1** — `{f.name}` ({len(df_raw)} baris)")
+                            ws_l1 = st.session_state["setting_worksheet"]
+                            file_log.append({"File":f.name,"Tipe":"🔵 L1","Baris":len(df_raw),"Sheet":ws_l1})
+                            st.write(f"🔵 **L1** — `{f.name}` ({len(df_raw)} baris) → Sheet: **{ws_l1}**")
+                            st.session_state.riwayat_upload.append({
+                                "nama":f.name,"waktu":datetime.now().strftime("%d/%m/%Y %H:%M"),
+                                "tipe":"L1","baris":len(df_raw)})
 
                         elif is_l2:
                             df_mapped = pd.DataFrame(index=df_raw.index, columns=TARGET_COLUMNS)
                             df_mapped['Kode Pembelajaran']       = df_raw.get('Kode Judul')
+                            df_mapped['Judul Pembelajaran/Kegiatan'] = df_raw.get('Judul')
                             df_mapped['Batch']                   = df_raw.get('Angkatan')
                             df_mapped['Tanggal Mulai']           = df_raw.get('Tgl Mulai')
                             df_mapped['Tanggal Selesai']         = df_raw.get('Tgl Selesai')
@@ -846,12 +807,22 @@ elif menu_selection == "📤 DATA ENTRY":
                             tgl_mulai = pd.to_datetime(df_mapped['Tanggal Mulai'],errors='coerce').dt.strftime('%Y%m%d').fillna('NOTGL')
                             df_mapped['Kode Unik'] = df_mapped['Kode Pembelajaran'].astype(str).str.strip()+"."+batch_val+"."+tgl_mulai
                             all_l2_dfs.append(df_mapped)
-                            file_log.append({"File":f.name,"Tipe":"🟢 L2","Baris":len(df_raw)})
-                            st.write(f"🟢 **L2** — `{f.name}` ({len(df_raw)} baris)")
+                            ws_l2 = st.session_state["setting_worksheet"]
+                            file_log.append({"File":f.name,"Tipe":"🟢 L2","Baris":len(df_raw),"Sheet":ws_l2})
+                            st.write(f"🟢 **L2** — `{f.name}` ({len(df_raw)} baris) → Sheet: **{ws_l2}**")
+                            st.session_state.riwayat_upload.append({
+                                "nama":f.name,"waktu":datetime.now().strftime("%d/%m/%Y %H:%M"),
+                                "tipe":"L2","baris":len(df_raw)})
+                        else:
+                            file_log.append({"File":f.name,"Tipe":"❌ Tidak Dikenal","Baris":len(df_raw),"Sheet":"—"})
+                            st.error(f"❌ **{f.name}** tidak dikenali. Kolom: `{'`, `'.join(list(df_raw.columns[:10]))}`...")
 
-                    status_proc.update(label="✅ Selesai dideteksi!", state="complete", expanded=False)
+                    status_proc.update(label="✅ Selesai!", state="complete", expanded=False)
 
                 if not all_l1_dfs and not all_l2_dfs and not all_ins_dfs: st.stop()
+
+                st.markdown("### 📋 Ringkasan")
+                st.dataframe(pd.DataFrame(file_log), use_container_width=True, hide_index=True)
 
                 has_l1l2 = bool(all_l1_dfs or all_l2_dfs)
                 has_ins  = bool(all_ins_dfs)
@@ -869,8 +840,10 @@ elif menu_selection == "📤 DATA ENTRY":
                                 if col_l2 in df_final.columns:
                                     df_final[col] = df_final[col].combine_first(df_final[col_l2])
                                     df_final.drop(columns=[col_l2], inplace=True)
-                        else: df_final = df_l2_raw.copy()
-                    else: df_final = df_l1.copy()
+                        else:
+                            df_final = df_l2_raw.copy()
+                    else:
+                        df_final = df_l1.copy()
 
                     df_final = df_final.reindex(columns=TARGET_COLUMNS)
                     df_final['Tanggal Selesai'] = pd.to_datetime(df_final['Tanggal Selesai'], errors='coerce')
@@ -878,14 +851,17 @@ elif menu_selection == "📤 DATA ENTRY":
                     df_final['Cut off Data']    = df_final['Tanggal Selesai'] + pd.Timedelta(days=st.session_state["setting_cutoff"])
                     df_final['Laporan Bulan']   = df_final['Cut off Data'].dt.month.map(BULAN_MAP_ID)
                     today = pd.Timestamp.today().normalize()
-                    df_final['Status Pembelajaran'] = df_final['Tanggal Selesai'].apply(lambda x: "Terlaksana" if pd.notna(x) and x<=today else ("Belum Terlaksana" if pd.notna(x) else ""))
-                    for col in ['Peserta Isi L1','Peserta Hadir','Jumlah Peserta Lulus L2','Jumlah Peserta Isi L2']:
+                    df_final['Status Pembelajaran'] = df_final['Tanggal Selesai'].apply(
+                        lambda x: "Terlaksana" if pd.notna(x) and x<=today else ("Belum Terlaksana" if pd.notna(x) else ""))
+                    for col in ['Peserta Isi L1','Peserta Hadir','Jumlah Peserta Lulus L2','Jumlah Peserta Isi L2','Nilai Confidence','Nilai Commitment']:
                         df_final[col] = pd.to_numeric(df_final[col], errors='coerce')
                     df_final['% Pengisian'] = safe_divide(df_final['Peserta Isi L1'], df_final['Peserta Hadir'])
-                    df_final['% Valid'] = df_final['% Pengisian'].apply(lambda x: "VALID" if pd.notna(x) and x>st.session_state["setting_threshold"] else ("TIDAK VALID" if pd.notna(x) else ""))
-                    
+                    df_final['% Valid'] = df_final['% Pengisian'].apply(
+                        lambda x: "VALID" if pd.notna(x) and x>st.session_state["setting_threshold"] else ("TIDAK VALID" if pd.notna(x) else ""))
+                    df_final['% Pengisian L2'] = safe_divide(df_final['Jumlah Peserta Isi L2'], df_final['Jumlah Peserta Lulus L2'])
                     all_indicators = [f'INS{i}' for i in range(1,10)] + [f'MAT{i}' for i in range(1,8)] + [f'SP{i}' for i in range(1,7)] + [f'DS{i}' for i in range(1,7)]
-                    for col in all_indicators: df_final[col] = pd.to_numeric(df_final[col], errors='coerce')
+                    for col in all_indicators:
+                        df_final[col] = pd.to_numeric(df_final[col], errors='coerce')
                     df_final['RATA INST'] = df_final[[f'INS{i}' for i in range(1,9)]].mean(axis=1)
                     df_final['RATA MAT']  = df_final[[f'MAT{i}' for i in range(1,7)]].mean(axis=1)
                     df_final['RATA SP']   = df_final[[f'SP{i}'  for i in range(1,6)]].mean(axis=1)
@@ -893,127 +869,423 @@ elif menu_selection == "📤 DATA ENTRY":
                     df_final['RATA-RATA KESELURUHAN'] = df_final[['RATA INST','RATA MAT','RATA SP','RATA DS']].mean(axis=1)
                     df_final['Jumlah Indikator dibawah 4.5'] = (df_final[all_indicators] < 4.5).sum(axis=1)
                     df_final['Jumlah Indikator diatas 4.5']  = (df_final[all_indicators] >= 4.5).sum(axis=1)
-                    df_to_push = df_final.copy()
+                    df_final.replace([np.inf, -np.inf], np.nan, inplace=True)
 
-                    st.markdown("<br>#### 🗓️ Preview L1 & L2", unsafe_allow_html=True)
-                    rata_l1 = df_to_push['RATA-RATA KESELURUHAN'].mean()
-                    rata_partisipasi = df_to_push['% Pengisian'].mean()
-                    
-                    c_l1, c_l2, c_l3 = st.columns(3)
-                    with c_l1: render_custom_metric("Baris Data", f"{len(df_to_push)}", "table_rows", "#3B82F6")
-                    with c_l2: render_custom_metric("Rata-rata L1", f"{rata_l1:.2f}" if pd.notna(rata_l1) else "N/A", "grade", "#8B5CF6")
-                    with c_l3: render_custom_metric("Partisipasi", f"{rata_partisipasi*100:.1f}%" if pd.notna(rata_partisipasi) else "N/A", "groups", "#10B981")
-                    
-                    with st.expander(f"🔍 Preview L1/L2 ({len(df_to_push)} baris)", expanded=False):
-                        st.dataframe(df_to_push.fillna(""), use_container_width=True)
+                    with st.container(border=True):
+                        st.markdown("#### 🗓️ Filter & Preview — L1 & L2")
+                        if not df_final['Tanggal Mulai'].isnull().all():
+                            min_date = df_final['Tanggal Mulai'].min().date()
+                            max_date = df_final['Tanggal Mulai'].max().date()
+                            c1, c2 = st.columns(2)
+                            start_d = c1.date_input("Mulai", min_date, key="l1l2_start")
+                            end_d   = c2.date_input("Sampai", max_date, key="l1l2_end")
+                            mask = (df_final['Tanggal Mulai'] >= pd.to_datetime(start_d)) & (df_final['Tanggal Mulai'] <= pd.to_datetime(end_d))
+                            df_to_push = df_final.loc[mask].copy()
+                        else:
+                            df_to_push = df_final.copy()
+
+                        m1, m2, m3, m4 = st.columns(4)
+                        rata_l1 = df_to_push['RATA-RATA KESELURUHAN'].mean()
+                        total_lulus = df_to_push['Jumlah Peserta Lulus L2'].sum()
+                        total_hadir = df_to_push['Peserta Hadir'].sum()
+                        pct_lulus   = (total_lulus/total_hadir*100) if total_hadir > 0 else None
+                        rata_partisipasi = df_to_push['% Pengisian'].mean()
+                        m1.metric("📊 Baris Aktif",  f"{len(df_to_push)}")
+                        m2.metric("😊 Rata-rata L1", f"{rata_l1:.2f}" if pd.notna(rata_l1) else "N/A")
+                        m3.metric("🎓 % Lulus L2",   f"{pct_lulus:.1f}%" if pct_lulus else "N/A")
+                        m4.metric("📋 % Pengisian",  f"{rata_partisipasi*100:.1f}%" if pd.notna(rata_partisipasi) else "N/A")
+                        with st.expander(f"🔍 Preview ({len(df_to_push)} baris)", expanded=False):
+                            st.dataframe(df_to_push.fillna(""), use_container_width=True)
 
                 if has_ins:
-                    df_ins_push = pd.concat(all_ins_dfs, ignore_index=True)
-                    st.markdown("<br>#### 🗓️ Preview Instruktur", unsafe_allow_html=True)
-                    rata_ins = df_ins_push['Ins-Rat'].mean()
-                    
-                    c_i1, c_i2 = st.columns(2)
-                    with c_i1: render_custom_metric("Sesi Mengajar", f"{len(df_ins_push)}", "person", "#EF4444")
-                    with c_i2: render_custom_metric("Rata-rata", f"{rata_ins:.2f}" if pd.notna(rata_ins) else "N/A", "star", "#F59E0B")
-                    
-                    with st.expander(f"🔍 Preview Instruktur ({len(df_ins_push)} baris)", expanded=False):
-                        st.dataframe(df_ins_push.fillna(""), use_container_width=True)
+                    df_ins_final = pd.concat(all_ins_dfs, ignore_index=True)
+                    with st.container(border=True):
+                        st.markdown("#### 🗓️ Filter & Preview — Instruktur")
+                        if not df_ins_final['Tgl Mulai'].isnull().all():
+                            min_d, max_d = df_ins_final['Tgl Mulai'].min().date(), df_ins_final['Tgl Mulai'].max().date()
+                            fc1, fc2 = st.columns(2)
+                            start_ins = fc1.date_input("Mulai", min_d, key="ins_start")
+                            end_ins   = fc2.date_input("Sampai", max_d, key="ins_end")
+                            mask_ins = (df_ins_final['Tgl Mulai'] >= pd.to_datetime(start_ins)) & (df_ins_final['Tgl Mulai'] <= pd.to_datetime(end_ins))
+                            df_ins_push = df_ins_final.loc[mask_ins].copy()
+                        else:
+                            df_ins_push = df_ins_final.copy()
+                            
+                        mi1, mi2, mi3 = st.columns(3)
+                        rata_ins = df_ins_push['Ins-Rat'].mean()
+                        mi1.metric("📚 Sesi Mengajar", f"{len(df_ins_push)}")
+                        mi2.metric("⭐ Rata-rata",      f"{rata_ins:.2f}" if pd.notna(rata_ins) else "N/A")
+                        mi3.metric("📊 Min/Max",        f"{df_ins_push['Ins-Rat'].min():.2f} / {df_ins_push['Ins-Rat'].max():.2f}" if pd.notna(rata_ins) else "N/A")
+                        with st.expander(f"🔍 Preview ({len(df_ins_push)} baris)", expanded=False):
+                            st.dataframe(df_ins_push.fillna(""), use_container_width=True)
 
-                st.markdown("<hr style='border-color: #EAECF0;'>", unsafe_allow_html=True)
-                if st.button("🚀 KIRIM KE GOOGLE SHEETS", use_container_width=True, type="primary"):
-                    with st.spinner("Mengirim ke Database (Sheets)..."):
-                        client = init_gsheets_connection()
-                        sheet_name_setting = st.session_state["setting_sheet"]
-                        if has_l1l2:
-                            sht = client.open(sheet_name_setting).worksheet(st.session_state["setting_worksheet"])
-                            max_no = get_sheet_max_no(sht)
-                            df_to_push['No'] = range(max_no+1, max_no+1+len(df_to_push))
-                            rows = [clean_row_for_sheets(r) for r in df_to_push.reindex(columns=TARGET_COLUMNS).values.tolist()]
-                            sht.append_rows(rows, value_input_option='USER_ENTERED')
-                            st.success(f"✅ L1/L2 berhasil dikirim!")
-                        if has_ins:
-                            sht_ins = client.open(sheet_name_setting).worksheet(st.session_state["setting_ws_instruktur"])
-                            df_ins_push_send = df_ins_push.reindex(columns=DETAIL_INSTRUKTUR_COLUMNS)
-                            rows_ins = [clean_row_for_sheets(r) for r in df_ins_push_send.values.tolist()]
-                            sht_ins.append_rows(rows_ins, value_input_option='USER_ENTERED')
-                            st.success(f"✅ Data Instruktur berhasil dikirim!")
-                        st.balloons()
+                st.markdown("---")
+                ws_l1l2    = st.session_state["setting_worksheet"]
+                ws_ins     = st.session_state["setting_ws_instruktur"]
+                sheet_name_setting = st.session_state["setting_sheet"]
+
+                col_info, col_btn = st.columns([2, 1])
+                with col_info:
+                    with st.container(border=True):
+                        parts = []
+                        if has_l1l2: parts.append(f"🔵🟢 **{len(df_to_push)} baris L1/L2** → `{ws_l1l2}`")
+                        if has_ins:  parts.append(f"🟠 **{len(df_ins_push)} baris Instruktur** → `{ws_ins}`")
+                        st.markdown("\n\n".join(parts) or "_Tidak ada data_")
+                        st.caption(f"📁 Google Sheets: **{sheet_name_setting}**")
+
+                with col_btn:
+                    if st.button("🚀 KIRIM KE GOOGLE SHEETS", use_container_width=True, disabled=not(has_l1l2 or has_ins), type="primary", key="btn_kirim"):
+                        with st.spinner("Menghubungkan..."):
+                            client = init_gsheets_connection()
+                            hasil = []
+                            if has_l1l2:
+                                sht = client.open(sheet_name_setting).worksheet(ws_l1l2)
+                                max_no = get_sheet_max_no(sht)
+                                df_to_push['No'] = range(max_no+1, max_no+1+len(df_to_push))
+                                rows = [clean_row_for_sheets(r) for r in df_to_push.reindex(columns=TARGET_COLUMNS).values.tolist()]
+                                sht.append_rows(rows, value_input_option='USER_ENTERED')
+                                hasil.append(f"✅ **L1 & L2**: {len(rows)} baris → sheet **{ws_l1l2}**")
+                                
+                            if has_ins:
+                                sht_ins = client.open(sheet_name_setting).worksheet(ws_ins)
+                                df_ins_push_send = df_ins_push.copy()
+                                df_ins_push_send = df_ins_push_send.reindex(columns=DETAIL_INSTRUKTUR_COLUMNS)
+                                rows_ins = [clean_row_for_sheets(r) for r in df_ins_push_send.values.tolist()]
+                                sht_ins.append_rows(rows_ins, value_input_option='USER_ENTERED')
+                                hasil.append(f"✅ **Instruktur**: {len(rows_ins)} baris → sheet **{ws_ins}**")
+                                
+                            for h in hasil: st.success(h)
+                            st.balloons()
+
             except Exception as e:
                 st.error(f"Terjadi kesalahan: {e}")
+                st.exception(e)
         else:
             st.markdown("""
-            <div style="text-align:center;padding:40px;color:#6B7280; background-color: #FFFFFF; border-radius: 12px; border: 1px dashed #D1D5DB;">
-                <i class="material-icons" style="font-size:60px;color:#9CA3AF;">upload_file</i>
+            <div style="text-align:center;padding:40px;color:#aaa;">
+                <i class="material-icons" style="font-size:60px;color:#ccc;">upload_file</i>
                 <p style="font-size:1.1em;margin-top:10px;">Belum ada file diupload.<br>
-                <span style="font-size:0.9em;">Seret file L1, L2, atau Instruktur ke area upload di atas.</span></p>
+                <span style="font-size:0.9em;">Seret file L1, L2, dan/atau Instruktur ke area upload di atas.</span></p>
             </div>
             """, unsafe_allow_html=True)
+
+    with sub_riwayat:
+        if not st.session_state.riwayat_upload:
+            st.info("Belum ada riwayat upload.")
+        else:
+            for item in reversed(st.session_state.riwayat_upload):
+                badge_color = {"L1":"#0055A4","L2":"#1a7a2e","Instruktur":"#b35900"}.get(item['tipe'],"#666")
+                st.markdown(f"""
+                <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #eee;">
+                    <div style="flex:1;">
+                        <p style="margin:0;font-weight:bold;">{item['nama']}</p>
+                        <p style="margin:0;font-size:0.8em;color:#8a8a8a;">{item['waktu']} &bull; {item['baris']} baris</p>
+                    </div>
+                    <span style="background:{badge_color}20;color:{badge_color};border:1px solid {badge_color}55;
+                                 padding:2px 10px;border-radius:20px;font-size:0.75em;font-weight:bold;">{item['tipe']}</span>
+                </div>""", unsafe_allow_html=True)
+
+    with sub_panduan:
+        with st.expander("📖 File L1 — Evaluasi Reaksi", expanded=True):
+            st.markdown("- Wajib ada kolom `Ins-Eng-1 of 2`\n- Kolom penting: `Kode Judul`, `Judul Pembelajaran`, `Angkatan`, `Tgl Mulai`, `Tgl Selesai`, `Strategi Pelaksana`, `P.Isi`, `P.Hadir`, `Bidang`")
+        with st.expander("📖 File L2 — Evaluasi Pembelajaran", expanded=True):
+            st.markdown("- Wajib ada kolom `Confidence Level` (tanpa `Ins-Eng-1 of 2`)\n- Kolom penting: `Kode Judul`, `Judul`, `Angkatan`, `Tgl Mulai`, `Tgl Selesai`, `Jumlah Peserta Hadir/Lulus/Isi`, `Commitment Level`")
+        with st.expander("📖 File Instruktur — Detail Instruktur", expanded=True):
+            st.markdown("- Wajib ada kolom `Nama` **DAN** `Kode Diklat`\n- Kolom skor: `Ins-Eng-1 of 2`, `Ins-Eng-2 of 2`, `Ins-Rel-1 of 2`, `Ins-Rel-2 of 2`, `Ins-Sat-1 of 4` s.d. `Ins-Sat-4 of 4`, `Ins-Rat`")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # KONTEN: 🚨 EARLY WARNING
 # ══════════════════════════════════════════════════════════════════════════════
 elif menu_selection == "🚨 EARLY WARNING":
-    st.markdown("### 🚨 Analisis Sentimen (Early Warning)")
-    st.write("Mendeteksi keluhan otomatis dari data *Voice of Customer*.")
+    st.markdown("### 🚨 Sentiment Analysis (Deteksi Keluhan Otomatis)")
+    st.write("Sistem melihat komentar peserta secara *real-time* dari Google Sheets menggunakan **Open-Source Sentiment Lexicon**.")
     try:
         sheet_id_komentar = '1IDAmFwTbBQDZcKM3eiiEDcA3KwM9WKqW4zCrk__6-PU'
-        url_komentar = f'https://docs.google.com/spreadsheets/d/{sheet_id_komentar}/gviz/tq?tqx=out:csv&sheet=Detail%20Komentar%20L1'
-        df_komentar = pd.read_csv(url_komentar)
+        sheet_name_komentar = 'Detail%20Komentar%20L1' 
+        url_komentar = f'https://docs.google.com/spreadsheets/d/{sheet_id_komentar}/gviz/tq?tqx=out:csv&sheet={sheet_name_komentar}'
+        
+        @st.cache_data(ttl=300)
+        def load_csv_komentar(url): return pd.read_csv(url)
+        
+        df_komentar = load_csv_komentar(url_komentar)
         
         if not df_komentar.empty:
-            kolom_teks = st.selectbox("🎯 Kolom Komentar:", df_komentar.columns.tolist())
-            opsi_bulan = list(df_komentar['Laporan Bulan'].dropna().unique()) if 'Laporan Bulan' in df_komentar.columns else []
-            filter_bulan = st.multiselect("🎛️ Filter Bulan:", options=opsi_bulan, default=opsi_bulan)
+            st.success(f"✅ Berhasil memuat **{len(df_komentar)} baris komentar** dari sheet 'Detail Komentar L1'.")
+            col_setup1, col_wa_setup2 = st.columns(2)
+            with col_setup1: kolom_teks = st.selectbox("🎯 Pilih Kolom Komentar/Saran Peserta:", df_komentar.columns.tolist(), key="teks_sentimen")
+            with col_wa_setup2:
+                opsi_kolom = df_komentar.columns.tolist()
+                idx_bulan = 0
+                for kandidat in ['Laporan Bulan', 'Bulan', 'bulan', 'LAPORAN BULAN']:
+                    if kandidat in opsi_kolom: idx_bulan = opsi_kolom.index(kandidat); break
+                kolom_bulan = st.selectbox("📅 Pilih Kolom Bulan:", opsi_kolom, index=idx_bulan, key="bulan_kol_sentimen")
             
-            if kolom_teks and filter_bulan:
-                df_analisis = df_komentar[df_komentar['Laporan Bulan'].isin(filter_bulan)].copy()
-                df_analisis['Sentimen'] = df_analisis[kolom_teks].apply(analisis_sentimen_opensource)
-                df_keluhan = df_analisis[df_analisis['Sentimen'] == 'Negatif']
-                
-                if not df_keluhan.empty:
-                    st.error(f"⚠️ Ditemukan **{len(df_keluhan)} keluhan (Sentimen Negatif)**!")
-                    st.dataframe(df_keluhan[[kolom_teks, 'Sentimen']], use_container_width=True)
-                else:
-                    st.success("🎉 Tidak ditemukan keluhan!")
-                    
-                ringkasan = df_analisis['Sentimen'].value_counts().reset_index()
-                ringkasan.columns = ['Kategori', 'Jumlah']
-                fig_pie = px.pie(ringkasan, values='Jumlah', names='Kategori', 
-                                 color='Kategori', color_discrete_map={'Positif':'#10B981', 'Netral':'#9CA3AF', 'Negatif':'#EF4444'}, hole=0.5)
-                fig_pie.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', height=350)
-                st.plotly_chart(fig_pie, use_container_width=True)
-    except Exception as e:
-        st.error(f"Gagal memuat data komentar: {e}")
+            opsi_bulan_tersedia = list(df_komentar[kolom_bulan].dropna().unique())
+            filter_bulan_sentimen = st.multiselect("🎛️ Filter Berdasarkan Bulan Laporan:", options=opsi_bulan_tersedia, default=opsi_bulan_tersedia, key="filter_bulan_sentimen")
+            
+            if kolom_teks and filter_bulan_sentimen:
+                with st.spinner("Sistem sedang memfilter dan menganalisis sentimen komentar..."):
+                    df_analisis = df_komentar[df_komentar[kolom_bulan].isin(filter_bulan_sentimen)].copy()
+                    if not df_analisis.empty:
+                        df_analisis['Sentimen'] = df_analisis[kolom_teks].apply(analisis_sentimen_opensource)
+                        df_keluhan = df_analisis[df_analisis['Sentimen'] == 'Negatif']
+                        st.markdown("---")
+                        
+                        if not df_keluhan.empty:
+                            st.error(f"⚠️ **AWAS!** Ditemukan **{len(df_keluhan)} keluhan (Sentimen Negatif)** pada bulan terpilih!")
+                            kolom_tampil = [kolom_teks, 'Sentimen'] 
+                            for col in ['Judul Pembelajaran/Kegiatan', 'Kode Unik', 'Nama Pelatihan', kolom_bulan]:
+                                if col in df_analisis.columns and col not in kolom_tampil: kolom_tampil.insert(0, col)
+                            st.dataframe(df_keluhan[kolom_tampil], use_container_width=True)
+                            
+                            st.markdown("#### 🚀 Eskalasi Tindak Lanjut Otomatis")
+                            col_wa1, col_wa2 = st.columns(2)
+                            with col_wa1:
+                                if st.button("📱 Kirim Peringatan ke WhatsApp PIC Sarpras", use_container_width=True): st.success("✅ [SIMULASI] Peringatan otomatis berhasil dikirim ke WhatsApp PIC Sarana & Prasarana!"); st.balloons()
+                            with col_wa2:
+                                if st.button("📧 Kirim Peringatan ke Email Evaluator", use_container_width=True): st.success("✅ [SIMULASI] Email rekap keluhan otomatis telah diteruskan ke Tim Evaluator!")
+                        else:
+                            st.success("🎉 **Luar Biasa!** Tidak ditemukan sentimen negatif (keluhan) pada bulan yang dipilih. Semua berjalan prima.")
+                            
+                        st.markdown("---")
+                        st.markdown("#### 📊 Ringkasan Proporsi Sentimen Komentar (Periode Terpilih)")
+                        ringkasan_sentimen = df_analisis['Sentimen'].value_counts().reset_index()
+                        ringkasan_sentimen.columns = ['Kategori Sentimen', 'Jumlah']
+                        fig_pie = px.pie(ringkasan_sentimen, values='Jumlah', names='Kategori Sentimen', color='Kategori Sentimen', color_discrete_map={'Positif':'#2e7d32', 'Netral':'#9e9e9e', 'Negatif':'#d32f2f'}, hole=0.45)
+                        fig_pie.update_traces(textposition='inside', textinfo='percent+label')
+                        fig_pie.update_layout(height=400, showlegend=False, margin=dict(t=10,b=10,l=10,r=10))
+                        
+                        col_pie1, col_pie2 = st.columns([1, 1])
+                        with col_pie1: st.plotly_chart(fig_pie, use_container_width=True)
+                        with col_pie2: st.markdown("<br><br>", unsafe_allow_html=True); st.write("Donut Chart di samping menampilkan rangkuman sentimen dari bulan yang Anda centang pada filter di atas.")
+                    else: st.warning("⚠️ Tidak ada data komentar pada bulan yang dipilih.")
+            else: st.warning("💡 Silakan pilih minimal satu bulan pada filter di atas untuk memulai analisis.")
+        else: st.warning("⚠️ Sheet 'Detail Komentar L1' berhasil diakses, namun datanya kosong.")
+    except Exception as e: st.error(f"❌ Gagal memuat data dari Sheet 'Detail Komentar L1'. Detail error: {e}")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # KONTEN: 📑 REPORT & KATALOG
 # ══════════════════════════════════════════════════════════════════════════════
 elif menu_selection == "📑 REPORT & KATALOG":
-    sub_rep, sub_kat = st.tabs(["📑 Report Generator", "👨‍🏫 Katalog Instruktur"])
-    with sub_rep:
-        st.markdown("### 📑 Laporan Manajemen Otomatis (Ms. Word)")
-        df = pd.read_csv(url)
-        opsi_bulan_rep = list(df['Laporan Bulan'].dropna().unique())
-        if opsi_bulan_rep:
-            bln = st.selectbox("Pilih Periode:", opsi_bulan_rep)
-            if st.button("🚀 Generate Dokumen", type="primary"):
-                st.success(f"Logika Report Generator sukses dijalankan untuk bulan {bln}.")
-                # (Bagian generator word tetap aman sesuai aslinya)
-    with sub_kat:
-        st.markdown("### 👨‍🏫 Katalog Instruktur Terpilih")
+    sub_rep_generator, sub_katalog = st.tabs(["📑 Report Generator", "👨‍🏫 Katalog Instruktur"])
+    
+    # --- SUB TAB 1: REPORT GENERATOR ---
+    with sub_rep_generator:
+        st.markdown("### 📑 Generator Laporan Manajemen (Otomatis)")
+        st.write("Fitur ini menyusun seluruh hasil analitik, IPA, dan sentimen menjadi dokumen naratif resmi (Microsoft Word) yang siap diserahkan ke General Manager.")
+        
         try:
-            url_ins = f'https://docs.google.com/spreadsheets/d/1IDAmFwTbBQDZcKM3eiiEDcA3KwM9WKqW4zCrk__6-PU/gviz/tq?tqx=out:csv&sheet=Detail%20Instruktur'
-            df_katalog = pd.read_csv(url_ins)
-            if not df_katalog.empty:
-                st.dataframe(df_katalog.head(50))
-        except: st.error("Gagal menarik data katalog.")
+            df = pd.read_csv(url)
+            opsi_bulan_rep = list(df['Laporan Bulan'].dropna().unique())
+            
+            if opsi_bulan_rep:
+                with st.container(border=True):
+                    col_r1, col_r2 = st.columns([2, 1])
+                    with col_r1: bulan_pilih = st.selectbox("📅 Pilih Periode Laporan:", opsi_bulan_rep, key="bln_report")
+                    with col_r2: st.markdown("<br>", unsafe_allow_html=True); btn_generate = st.button("🚀 Generate Dokumen Word", type="primary", use_container_width=True)
+                
+                if btn_generate:
+                    with st.spinner(f"Menyusun laporan mutu untuk bulan {bulan_pilih}..."):
+                        df_bln = df[df['Laporan Bulan'] == bulan_pilih].copy()
+                        rata_l1 = df_bln['RATA-RATA KESELURUHAN'].mean() if not df_bln.empty else 0
+                        total_sesi = len(df_bln)
+                        q1_items = []
+                        kategori_list = ['Engagement Instruktur', 'Relevance Instruktur', 'Satisfaction Instruktur', 'Engagement Materi', 'Relevance Materi', 'Satisfaction Materi', 'Satisfaction Sarana Digital', 'Satisfaction Sarana In Class']
+                        
+                        if len(df_bln) > 2:
+                            kinerja_r, kep_r = [], []
+                            for kat in kategori_list:
+                                if kat in df_bln.columns:
+                                    df_bln[kat] = pd.to_numeric(df_bln[kat], errors='coerce')
+                                    kinerja_r.append(df_bln[kat].mean())
+                                    kep_r.append(df_bln[kat].corr(pd.to_numeric(df_bln['RATA-RATA KESELURUHAN'], errors='coerce')) if pd.notna(df_bln[kat].corr(pd.to_numeric(df_bln['RATA-RATA KESELURUHAN'], errors='coerce'))) else 0.5)
+                                else: kinerja_r.append(None); kep_r.append(None)
+                            
+                            df_ipa_rep = pd.DataFrame({'Kat': kategori_list, 'Kin': kinerja_r, 'Kep': kep_r}).dropna()
+                            if not df_ipa_rep.empty:
+                                y_cross = df_ipa_rep['Kep'].mean()
+                                q1_items = df_ipa_rep[(df_ipa_rep['Kin'] < 4.5) & (df_ipa_rep['Kep'] > y_cross)]['Kat'].tolist()
+
+                        sentimen_teks = "Data komentar pelanggan pada periode ini tidak tersedia atau belum ditarik oleh sistem."
+                        contoh_negatif = ""
+                        try:
+                            sheet_id_komentar = '1IDAmFwTbBQDZcKM3eiiEDcA3KwM9WKqW4zCrk__6-PU'
+                            url_k = f'https://docs.google.com/spreadsheets/d/{sheet_id_komentar}/gviz/tq?tqx=out:csv&sheet=Detail%20Komentar%20L1'
+                            df_k = pd.read_csv(url_k)
+                            kol_b_k = next((c for c in ['Laporan Bulan', 'Bulan', 'bulan', 'LAPORAN BULAN'] if c in df_k.columns), None)
+                            
+                            if kol_b_k:
+                                df_k_bln = df_k[df_k[kol_b_k] == bulan_pilih].copy()
+                                if not df_k_bln.empty:
+                                    kol_k_teks = next((c for c in df_k_bln.columns if 'komentar' in c.lower() or 'saran' in c.lower()), df_k_bln.columns[-1])
+                                    df_k_bln['Sentimen'] = df_k_bln[kol_k_teks].apply(analisis_sentimen_opensource)
+                                    jml_pos = len(df_k_bln[df_k_bln['Sentimen']=='Positif'])
+                                    jml_neg = len(df_k_bln[df_k_bln['Sentimen']=='Negatif'])
+                                    sentimen_teks = f"Berdasarkan analisis pemindaian (Lexicon-Based), dari total komentar yang masuk, terdapat <b>{jml_pos} sentimen positif</b> (Apresiasi) dan <b>{jml_neg} sentimen negatif</b> (Keluhan)."
+                                    if jml_neg > 0:
+                                        sample_neg = df_k_bln[df_k_bln['Sentimen']=='Negatif'][kol_k_teks].dropna().head(3).tolist()
+                                        contoh_negatif = "Berikut adalah sorotan (Top 3) suara pelanggan yang membutuhkan eskalasi:<br><ul>" + "".join([f"<li><i>\"{s}\"</i></li>" for s in sample_neg]) + "</ul>"
+                        except: pass
+                        
+                        teks_q1 = "Tidak ditemukan indikator yang berstatus kritis. Seluruh performa elemen layanan berada pada status <b>Prima dan Memuaskan</b>."
+                        teks_rekomendasi = "Manajemen direkomendasikan untuk mempertahankan standar ekselensi mutu layanan (Service Excellence) yang telah tercapai."
+                        if q1_items:
+                            teks_q1 = "Berdasarkan analisis silang (IPA), indikator operasional yang jatuh ke dalam <b>Kuadran 1 (Prioritas Utama)</b>—yakni elemen dengan dampak strategis tinggi namun realisasi kinerjanya di bawah standar PLN (4.50)—adalah sebagai berikut:<ul>" + "".join([f"<li><b>{kat}</b></li>" for kat in q1_items]) + "</ul>"
+                            teks_rekomendasi = "Sistem secara preskriptif merekomendasikan Manajemen UPDL Jakarta untuk <b>segera menyusun Rencana Tindakan Perbaikan (Corrective Action Plan)</b> khususnya pada indikator Kuadran 1 yang disebutkan di atas. Pengalokasian sumber daya pada elemen tersebut akan memberikan eskalasi dan lonjakan tertinggi pada kepuasan total peserta secara efisien."
+
+                        html_content = f"""
+                        <html><head><meta charset="utf-8"></head><body style="font-family: 'Times New Roman', Times, serif; line-height: 1.6; font-size: 12pt;">
+                            <h2 style="text-align:center; color:#003366;">LAPORAN EVALUASI MUTU PEMBELAJARAN L1</h2>
+                            <h3 style="text-align:center;">UPDL JAKARTA - PERIODE {bulan_pilih.upper()}</h3>
+                            <hr style="border: 1.5px solid black; margin-bottom: 20px;">
+                            <h4 style="color:#0055A4;">1. RINGKASAN EKSEKUTIF</h4>
+                            <p style="text-align: justify;">Pada periode <b>{bulan_pilih}</b>, proses evaluasi pembelajaran (Level 1) telah selesai dilaksanakan secara komprehensif. Kinerja mutu secara keseluruhan mencatatkan skor rata-rata sebesar <b>{rata_l1:.2f}</b> (dari skala maksimal 5.0). Laporan ini merangkum indikator kinerja utama, temuan area kritis dari Importance-Performance Analysis (IPA), serta rekapitulasi suara pelanggan (Voice of Customer) sebagai landasan strategis pengambilan keputusan operasional bulan berikutnya.</p>
+                            <h4 style="color:#0055A4;">2. PENCAPAIAN KEY PERFORMANCE INDICATORS (KPI)</h4>
+                            <ul><li><b>Rata-rata Skor L1 Keseluruhan:</b> {rata_l1:.2f}</li><li><b>Total Implementasi Kelas:</b> {total_sesi} sesi/pelatihan tercatat.</li></ul>
+                            <h4 style="color:#0055A4;">3. ANALISIS AREA KRITIS (IMPORTANCE-PERFORMANCE)</h4>
+                            <p style="text-align: justify;">{teks_q1}</p>
+                            <h4 style="color:#0055A4;">4. SOROTAN SUARA PELANGGAN (SENTIMEN KOMENTAR)</h4>
+                            <p style="text-align: justify;">{sentimen_teks}</p>{contoh_negatif}
+                            <h4 style="color:#0055A4;">5. REKOMENDASI TINDAK LANJUT OPERASIONAL</h4>
+                            <p style="text-align: justify;">{teks_rekomendasi}</p>
+                            <br><br><br>
+                            <table style="width:100%; text-align:center; border: none;"><tr>
+                                    <td style="width:50%; border: none;"></td>
+                                    <td style="width:50%; border: none;">
+                                        Disusun secara otomatis oleh sistem <b>EVALYTICS</b><br>
+                                        UPDL Jakarta, {datetime.now().strftime('%d %B %Y')}<br><br><br><br>
+                                        <b>( _________________________ )</b><br>Manajemen Mutu
+                                    </td></tr></table></body></html>"""
+                        
+                        st.success("✅ Dokumen Laporan berhasil disusun!")
+                        st.download_button(label="📥 DOWNLOAD LAPORAN WORD (.doc)", data=html_content.encode('utf-8'), file_name=f"Laporan_Mutu_EVALYTICS_{bulan_pilih}.doc", mime="application/msword", type="primary")
+                        with st.expander("👀 Pratinjau Teks Laporan (Preview)"): st.markdown(html_content, unsafe_allow_html=True)
+            else: st.info("Belum ada data bulan yang tersedia untuk dibuatkan laporan.")
+        except Exception as e:
+            st.error(f"Gagal memuat data sumber untuk laporan: {e}")
+
+    # --- SUB TAB 2: KATALOG INSTRUKTUR ---
+    with sub_katalog:
+        st.markdown("### 👨‍🏫 Katalog & Rapor Instruktur")
+        st.write("Temukan instruktur terbaik berdasarkan riwayat nilai dan jam terbang untuk setiap mata diklat.")
+        
+        sheet_id_ins = '1IDAmFwTbBQDZcKM3eiiEDcA3KwM9WKqW4zCrk__6-PU'
+        url_ins_katalog = f'https://docs.google.com/spreadsheets/d/{sheet_id_ins}/gviz/tq?tqx=out:csv&sheet=Detail%20Instruktur'
+        
+        try:
+            df_katalog_raw = pd.read_csv(url_ins_katalog)
+            
+            if not df_katalog_raw.empty:
+                df_katalog_raw['Ins-Eng'] = pd.to_numeric(df_katalog_raw['Ins-Eng'], errors='coerce')
+                df_katalog_raw['Ins-Rel'] = pd.to_numeric(df_katalog_raw['Ins-Rel'], errors='coerce')
+                df_katalog_raw['Ins-Sat'] = pd.to_numeric(df_katalog_raw['Ins-Sat'], errors='coerce')
+                df_katalog_raw['Ins-Rat'] = pd.to_numeric(df_katalog_raw['Ins-Rat'], errors='coerce')
+                
+                col_f1, col_f2 = st.columns(2)
+                with col_f1:
+                    if 'UPDL' in df_katalog_raw.columns:
+                        list_updl = ["Semua UPDL"] + list(df_katalog_raw['UPDL'].dropna().unique())
+                        selected_updl = st.selectbox("🏢 Pilih UPDL Penyelenggara:", list_updl, key="k_updl")
+                    else:
+                        selected_updl = "Semua UPDL"
+                        st.info("ℹ️ Kolom UPDL belum terdeteksi. Silakan upload data baru.")
+                        
+                with col_f2:
+                    if selected_updl != "Semua UPDL" and 'UPDL' in df_katalog_raw.columns:
+                        df_filt_updl = df_katalog_raw[df_katalog_raw['UPDL'] == selected_updl]
+                    else:
+                        df_filt_updl = df_katalog_raw
+                        
+                    if 'Judul Diklat' in df_filt_updl.columns:
+                        list_diklat = ["Semua Pembelajaran"] + list(df_filt_updl['Judul Diklat'].dropna().unique())
+                    else:
+                        list_diklat = ["Semua Pembelajaran"]
+                    selected_diklat = st.selectbox("📚 Pilih Judul Pembelajaran:", list_diklat, key="k_diklat")
+                    
+                if selected_diklat != "Semua Pembelajaran":
+                    df_final_kat = df_filt_updl[df_filt_updl['Judul Diklat'] == selected_diklat]
+                else:
+                    df_final_kat = df_filt_updl
+                    
+                if not df_final_kat.empty and 'Nama' in df_final_kat.columns:
+                    df_kat_grouped = df_final_kat.groupby(['Nama']).agg(
+                        Skor_Akhir_InsRat=('Ins-Rat', 'mean'),
+                        Avg_Engagement=('Ins-Eng', 'mean'),
+                        Avg_Relevance=('Ins-Rel', 'mean'),
+                        Avg_Satisfaction=('Ins-Sat', 'mean'),
+                        Frekuensi_Mengajar=('Nama', 'count')
+                    ).reset_index()
+                    
+                    df_kat_grouped = df_kat_grouped.sort_values(by='Skor_Akhir_InsRat', ascending=False).reset_index(drop=True)
+                    
+                    if selected_diklat != "Semua Pembelajaran" and len(df_kat_grouped) > 0:
+                        st.markdown("### 🏆 Top 3 Instruktur Rekomendasi")
+                        top_n = min(3, len(df_kat_grouped))
+                        cols = st.columns(top_n)
+                        for i in range(top_n):
+                            with cols[i]:
+                                st.metric(
+                                    label=f"Peringkat {i+1}: {df_kat_grouped['Nama'].iloc[i]}",
+                                    value=f"{df_kat_grouped['Skor_Akhir_InsRat'].iloc[i]:.2f} ⭐",
+                                    delta=f"{df_kat_grouped['Frekuensi_Mengajar'].iloc[i]} kali mengajar",
+                                    delta_color="normal"
+                                )
+                        st.markdown("---")
+                        
+                    st.subheader("📋 Detail Rapor Instruktur")
+                    show_kategori = st.checkbox("Tampilkan Detail Kategori (Ins-Eng, Ins-Rel, Ins-Sat)", value=True, key="k_showkat")
+                    
+                    display_cols = ['Nama', 'Frekuensi_Mengajar', 'Skor_Akhir_InsRat']
+                    if show_kategori: display_cols += ['Avg_Engagement', 'Avg_Relevance', 'Avg_Satisfaction']
+                        
+                    st.dataframe(
+                        df_kat_grouped[display_cols],
+                        use_container_width=True,
+                        hide_index=True,
+                        column_config={
+                            "Nama": st.column_config.TextColumn("Nama Instruktur"),
+                            "Frekuensi_Mengajar": st.column_config.NumberColumn("Jam Terbang (Kali)"),
+                            "Skor_Akhir_InsRat": st.column_config.NumberColumn("Skor Akhir (Ins-Rat)", format="%.2f ⭐"),
+                            "Avg_Engagement": st.column_config.NumberColumn("Engagement", format="%.2f"),
+                            "Avg_Relevance": st.column_config.NumberColumn("Relevance", format="%.2f"),
+                            "Avg_Satisfaction": st.column_config.NumberColumn("Satisfaction", format="%.2f"),
+                        }
+                    )
+                else:
+                    st.info("⚠️ Data instruktur tidak ditemukan untuk pencarian ini.")
+            else:
+                st.warning("⚠️ Database Instruktur kosong atau belum ditarik dari Google Sheets.")
+        except Exception as e:
+            st.error(f"Gagal memuat data Katalog Instruktur: {e}")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # KONTEN: ⚙️ PENGATURAN
 # ══════════════════════════════════════════════════════════════════════════════
 elif menu_selection == "⚙️ PENGATURAN":
-    st.subheader("⚙️ System Settings")
+    st.subheader("⚙️ Pengaturan Data Entry")
     with st.container(border=True):
-        st.text_input("Nama File Google Sheets", value=st.session_state["setting_sheet"])
-        st.slider("Minimal % Pengisian Valid", 0.1, 1.0, value=st.session_state["setting_threshold"])
-        st.info("Pengaturan ini menggunakan sesi memori.")
+        st.markdown("#### 🔗 Konfigurasi Google Sheets")
+        nama_sheet = st.text_input("Nama File Google Sheets", value=st.session_state["setting_sheet"])
+
+        st.markdown("---")
+        st.markdown("#### 📋 Nama Tab (Worksheet)")
+        col_ws1, col_ws2 = st.columns(2)
+        with col_ws1: nama_worksheet     = st.text_input("Tab — L1 & L2 Tertutup",    value=st.session_state["setting_worksheet"])
+        with col_ws2: nama_ws_instruktur = st.text_input("Tab — Detail Instruktur",  value=st.session_state["setting_ws_instruktur"])
+
+        st.markdown("---")
+        st.markdown("#### 📅 Cut-off & Threshold")
+        col_s1, col_s2 = st.columns(2)
+        with col_s1:
+            cutoff_hari = st.number_input("Hari Cut-off setelah Tanggal Selesai", min_value=1, max_value=30, value=st.session_state["setting_cutoff"])
+        with col_s2:
+            threshold_valid = st.slider("Minimal % pengisian → VALID", 0.10, 1.0, value=st.session_state["setting_threshold"], step=0.01, format="%.2f")
+            st.info(f"Pengisian ≥ {threshold_valid:.0%} = **VALID**")
+
+        if st.button("💾 Simpan Pengaturan", use_container_width=True):
+            st.session_state["setting_sheet"]         = nama_sheet
+            st.session_state["setting_worksheet"]     = nama_worksheet
+            st.session_state["setting_ws_instruktur"] = nama_ws_instruktur
+            st.session_state["setting_cutoff"]        = cutoff_hari
+            st.session_state["setting_threshold"]     = threshold_valid
+            st.success("✅ Pengaturan berhasil disimpan!")
