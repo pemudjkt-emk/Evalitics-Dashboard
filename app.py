@@ -711,7 +711,7 @@ elif menu_selection == "📤 DATA ENTRY":
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
         <i class="material-icons" style="font-size:30px;color:#0055A4;">cloud_upload</i>
         <div>
-            <h2 style="margin:0;color:#003366;">Upload File Evaluasi</h2>
+            <h2 style="margin:0;color:#003366;">Upload File</h2>
             <p style="margin:0;color:#8a8a8a;font-size:0.9em;">Upload L1, L2, dan Instruktur — sistem otomatis mendeteksi tipe file</p>
         </div>
     </div>
