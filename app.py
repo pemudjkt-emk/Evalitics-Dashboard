@@ -66,7 +66,7 @@ st.markdown(f"""
             &#9889; Smart Evaluation Analytics
         </h1>
         <p style="margin:0;color:rgba(255,255,255,0.8) !important;font-size:0.85em;">
-            Dashboard Analitik Interaktif Evaluasi Pembelajaran &bull; UPDL Jakarta
+            Website Analitik Interaktif Evaluasi Pembelajaran UPDL Jakarta
         </p>
     </div>
     <div style="flex:1;display:flex;align-items:center;justify-content:flex-end;">{img_pln}</div>
