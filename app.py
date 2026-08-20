@@ -1097,8 +1097,10 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                 if kat in df_bln.columns:
                                     df_bln[kat] = pd.to_numeric(df_bln[kat], errors='coerce')
                                     kinerja_r.append(df_bln[kat].mean())
-                                    kep_r.append(df_bln[kat].corr(pd.to_numeric(df_bln['RATA-RATA KESELURUHAN'], errors='coerce')) if pd.notna(df_bln[kat].corr(pd.to_numeric(df_bln['RATA-RATA KESELURUHAN'], errors='coerce'))) else 0.5)
-                                else: kinerja_r.append(None); kep_r.append(None)
+                                    corr_val = df_bln[kat].corr(pd.to_numeric(df_bln['RATA-RATA KESELURUHAN'], errors='coerce'))
+                                    kep_r.append(corr_val if pd.notna(corr_val) else 0.5)
+                                else:
+                                    kinerja_r.append(None); kep_r.append(None)
                             
                             df_ipa_rep = pd.DataFrame({'Kat': kategori_list, 'Kin': kinerja_r, 'Kep': kep_r}).dropna()
                             if not df_ipa_rep.empty:
@@ -1165,8 +1167,8 @@ elif menu_selection == "📑 REPORT & KATALOG":
 
     # --- SUB TAB 2: KATALOG INSTRUKTUR ---
     with sub_katalog:
-        st.markdown("### 👨‍🏫 Katalog & Rapor Instruktur")
-        st.write("Temukan instruktur terbaik berdasarkan riwayat nilai dan jam terbang untuk setiap mata diklat.")
+        st.markdown("### 👨‍🏫 Katalog & Rapor Instruktur Terbobot")
+        st.write("Sistem rekomendasi objektif berbasis **Composite Performance Index** yang menggabungkan kepuasan mutu (`Ins-Rat`) dan stabilitas jam terbang.")
         
         sheet_id_ins = '1IDAmFwTbBQDZcKM3eiiEDcA3KwM9WKqW4zCrk__6-PU'
         url_ins_katalog = f'https://docs.google.com/spreadsheets/d/{sheet_id_ins}/gviz/tq?tqx=out:csv&sheet=Detail%20Instruktur'
@@ -1179,7 +1181,10 @@ elif menu_selection == "📑 REPORT & KATALOG":
                 df_katalog_raw['Ins-Rel'] = pd.to_numeric(df_katalog_raw['Ins-Rel'], errors='coerce')
                 df_katalog_raw['Ins-Sat'] = pd.to_numeric(df_katalog_raw['Ins-Sat'], errors='coerce')
                 df_katalog_raw['Ins-Rat'] = pd.to_numeric(df_katalog_raw['Ins-Rat'], errors='coerce')
+                if 'Durasi Mengajar' in df_katalog_raw.columns:
+                    df_katalog_raw['Durasi Mengajar'] = pd.to_numeric(df_katalog_raw['Durasi Mengajar'], errors='coerce')
                 
+                # --- FILTER SELEKSI ---
                 col_f1, col_f2 = st.columns(2)
                 with col_f1:
                     if 'UPDL' in df_katalog_raw.columns:
@@ -1200,58 +1205,119 @@ elif menu_selection == "📑 REPORT & KATALOG":
                     else:
                         list_diklat = ["Semua Pembelajaran"]
                     selected_diklat = st.selectbox("📚 Pilih Judul Pembelajaran:", list_diklat, key="k_diklat")
-                    
+                
+                # --- PENGATURAN PEMBOBOTAN INTERAKTIF ---
+                with st.expander("⚖️ Konfigurasi Pembobotan & Ambang Batas Rekomendasi", expanded=False):
+                    col_w1, col_w2 = st.columns([3, 2])
+                    with col_w1:
+                        bobot_skor = st.slider("Bobot Skor Mutu Kepuasan (%):", min_value=10, max_value=90, value=70, step=5, key="w_skor")
+                        bobot_jam = 100 - bobot_skor
+                        st.caption(f"Proporsi: **{bobot_skor}% Mutu Evaluasi** : **{bobot_jam}% Jam Terbang**")
+                    with col_w2:
+                        min_jam_terbang = st.number_input("Syarat Minimal Mengajar (Threshold Top Rekomendasi):", min_value=1, max_value=10, value=2, step=1, key="min_jt")
+                        st.caption(f"Instruktur dengan jam terbang < {min_jam_terbang} kali akan ditandai sebagai *Evaluasi Awal*.")
+
                 if selected_diklat != "Semua Pembelajaran":
                     df_final_kat = df_filt_updl[df_filt_updl['Judul Diklat'] == selected_diklat]
                 else:
                     df_final_kat = df_filt_updl
                     
                 if not df_final_kat.empty and 'Nama' in df_final_kat.columns:
-                    df_kat_grouped = df_final_kat.groupby(['Nama']).agg(
-                        Skor_Akhir_InsRat=('Ins-Rat', 'mean'),
-                        Avg_Engagement=('Ins-Eng', 'mean'),
-                        Avg_Relevance=('Ins-Rel', 'mean'),
-                        Avg_Satisfaction=('Ins-Sat', 'mean'),
-                        Frekuensi_Mengajar=('Nama', 'count')
-                    ).reset_index()
+                    agg_dict = {
+                        'Skor_Akhir_InsRat': ('Ins-Rat', 'mean'),
+                        'Avg_Engagement': ('Ins-Eng', 'mean'),
+                        'Avg_Relevance': ('Ins-Rel', 'mean'),
+                        'Avg_Satisfaction': ('Ins-Sat', 'mean'),
+                        'Frekuensi_Mengajar': ('Nama', 'count')
+                    }
+                    if 'Durasi Mengajar' in df_final_kat.columns:
+                        agg_dict['Total_Durasi_Jam'] = ('Durasi Mengajar', 'sum')
+
+                    df_kat_grouped = df_final_kat.groupby(['Nama']).agg(**agg_dict).reset_index()
                     
-                    df_kat_grouped = df_kat_grouped.sort_values(by='Skor_Akhir_InsRat', ascending=False).reset_index(drop=True)
+                    # --- KALKULASI PEMBOBOTAN COMPOSITE PERFORMANCE INDEX ---
+                    w_mutu_dec = bobot_skor / 100.0
+                    w_jam_dec = bobot_jam / 100.0
                     
-                    if selected_diklat != "Semua Pembelajaran" and len(df_kat_grouped) > 0:
-                        st.markdown("### 🏆 Top 3 Instruktur Rekomendasi")
-                        top_n = min(3, len(df_kat_grouped))
-                        cols = st.columns(top_n)
-                        for i in range(top_n):
-                            with cols[i]:
-                                st.metric(
-                                    label=f"Peringkat {i+1}: {df_kat_grouped['Nama'].iloc[i]}",
-                                    value=f"{df_kat_grouped['Skor_Akhir_InsRat'].iloc[i]:.2f} ⭐",
-                                    delta=f"{df_kat_grouped['Frekuensi_Mengajar'].iloc[i]} kali mengajar",
-                                    delta_color="normal"
-                                )
+                    # Normalisasi Skor Mutu (Skala 0 - 1 terhadap max 5.0)
+                    df_kat_grouped['Norm_Skor'] = df_kat_grouped['Skor_Akhir_InsRat'] / 5.0
+                    
+                    # Normalisasi Jam Terbang (Skala 0 - 1 terhadap max di grup saat ini)
+                    max_frek = df_kat_grouped['Frekuensi_Mengajar'].max()
+                    if pd.isna(max_frek) or max_frek == 0: max_frek = 1
+                    df_kat_grouped['Norm_Jam'] = df_kat_grouped['Frekuensi_Mengajar'] / max_frek
+                    
+                    # Indeks Skor Gabungan (Skala 0 - 100)
+                    df_kat_grouped['Indeks_Rekomendasi'] = (
+                        (df_kat_grouped['Norm_Skor'] * w_mutu_dec) + 
+                        (df_kat_grouped['Norm_Jam'] * w_jam_dec)
+                    ) * 100.0
+                    
+                    # Status Kelayakan (Threshold)
+                    df_kat_grouped['Status_Eligible'] = df_kat_grouped['Frekuensi_Mengajar'].apply(
+                        lambda x: "Eligible" if x >= min_jam_terbang else f"Evaluasi Awal (< {min_jam_terbang}x)"
+                    )
+                    
+                    # Urutkan berdasarkan Indeks Rekomendasi tertinggi
+                    df_kat_grouped = df_kat_grouped.sort_values(by='Indeks_Rekomendasi', ascending=False).reset_index(drop=True)
+                    
+                    # --- TOP 3 REKOMENDASI (HANYA YANG ELIGIBLE >= THRESHOLD) ---
+                    df_eligible = df_kat_grouped[df_kat_grouped['Status_Eligible'] == "Eligible"]
+                    
+                    if selected_diklat != "Semua Pembelajaran":
+                        st.markdown("### 🏆 Top Rekomendasi Instruktur")
+                        if not df_eligible.empty:
+                            top_n = min(3, len(df_eligible))
+                            cols = st.columns(top_n)
+                            for i in range(top_n):
+                                with cols[i]:
+                                    nama_ins = df_eligible['Nama'].iloc[i]
+                                    skor_ins = df_eligible['Skor_Akhir_InsRat'].iloc[i]
+                                    jam_ins = df_eligible['Frekuensi_Mengajar'].iloc[i]
+                                    indeks_ins = df_eligible['Indeks_Rekomendasi'].iloc[i]
+                                    
+                                    st.metric(
+                                        label=f"🥇 Peringkat {i+1}: {nama_ins}",
+                                        value=f"{indeks_ins:.1f} Poin",
+                                        delta=f"{skor_ins:.2f} ⭐ | {jam_ins}x Mengajar",
+                                        delta_color="normal"
+                                    )
+                        else:
+                            st.warning(f"⚠️ Belum ada instruktur yang memenuhi syarat minimal {min_jam_terbang} kali mengajar untuk pembelajaran ini.")
                         st.markdown("---")
                         
-                    st.subheader("📋 Detail Rapor Instruktur")
-                    show_kategori = st.checkbox("Tampilkan Detail Kategori (Ins-Eng, Ins-Rel, Ins-Sat)", value=True, key="k_showkat")
+                    # --- DETAIL TABEL RAPOR INSTRUKTUR ---
+                    st.subheader("📋 Detail Rapor & Peringkat Komposit")
+                    show_kategori = st.checkbox("Tampilkan Detail Sub-Kategori (Ins-Eng, Ins-Rel, Ins-Sat)", value=True, key="k_showkat")
                     
-                    display_cols = ['Nama', 'Frekuensi_Mengajar', 'Skor_Akhir_InsRat']
-                    if show_kategori: display_cols += ['Avg_Engagement', 'Avg_Relevance', 'Avg_Satisfaction']
+                    display_cols = ['Nama', 'Indeks_Rekomendasi', 'Skor_Akhir_InsRat', 'Frekuensi_Mengajar', 'Status_Eligible']
+                    if 'Total_Durasi_Jam' in df_kat_grouped.columns:
+                        display_cols.insert(4, 'Total_Durasi_Jam')
                         
+                    if show_kategori:
+                        display_cols += ['Avg_Engagement', 'Avg_Relevance', 'Avg_Satisfaction']
+                        
+                    col_cfg = {
+                        "Nama": st.column_config.TextColumn("Nama Instruktur"),
+                        "Indeks_Rekomendasi": st.column_config.NumberColumn("Indeks Rekomendasi", format="%.1f 🎯", help="Hasil gabungan terbobot Mutu Evaluasi dan Jam Terbang"),
+                        "Skor_Akhir_InsRat": st.column_config.NumberColumn("Skor Mutu (Ins-Rat)", format="%.2f ⭐"),
+                        "Frekuensi_Mengajar": st.column_config.NumberColumn("Jam Terbang (Kali)"),
+                        "Status_Eligible": st.column_config.TextColumn("Status Kualifikasi"),
+                        "Avg_Engagement": st.column_config.NumberColumn("Engagement", format="%.2f"),
+                        "Avg_Relevance": st.column_config.NumberColumn("Relevance", format="%.2f"),
+                        "Avg_Satisfaction": st.column_config.NumberColumn("Satisfaction", format="%.2f"),
+                    }
+                    if 'Total_Durasi_Jam' in df_kat_grouped.columns:
+                        col_cfg["Total_Durasi_Jam"] = st.column_config.NumberColumn("Total Jam Mengajar (JP/Jam)", format="%.1f")
+
                     st.dataframe(
                         df_kat_grouped[display_cols],
                         use_container_width=True,
                         hide_index=True,
-                        column_config={
-                            "Nama": st.column_config.TextColumn("Nama Instruktur"),
-                            "Frekuensi_Mengajar": st.column_config.NumberColumn("Jam Terbang (Kali)"),
-                            "Skor_Akhir_InsRat": st.column_config.NumberColumn("Skor Akhir (Ins-Rat)", format="%.2f ⭐"),
-                            "Avg_Engagement": st.column_config.NumberColumn("Engagement", format="%.2f"),
-                            "Avg_Relevance": st.column_config.NumberColumn("Relevance", format="%.2f"),
-                            "Avg_Satisfaction": st.column_config.NumberColumn("Satisfaction", format="%.2f"),
-                        }
+                        column_config=col_cfg
                     )
                 else:
-                    st.info("⚠️ Data instruktur tidak ditemukan untuk pencarian ini.")
+                    st.info("⚠️ Data instruktur tidak ditemukan untuk kriteria pencarian ini.")
             else:
                 st.warning("⚠️ Database Instruktur kosong atau belum ditarik dari Google Sheets.")
         except Exception as e:
