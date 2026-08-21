@@ -1063,7 +1063,7 @@ elif menu_selection == "🚨 EARLY WARNING":
     except Exception as e: st.error(f"❌ Gagal memuat data dari Sheet 'Detail Komentar L1'. Detail error: {e}")
 
 # ══════════════════════════════════════════════════════════════════════════════
-# KONTEN: 📑 REPORT & KATALOG (WITH AI-DRIVEN ACTION PLAN & DETAILED RESOLUTION)
+# KONTEN: 📑 REPORT & KATALOG (ADJUSTED KOLOM E JUDUL DIKLAT & ROBUST PIPELINE)
 # ══════════════════════════════════════════════════════════════════════════════
 elif menu_selection == "📑 REPORT & KATALOG":
     sub_rep_generator, sub_katalog = st.tabs(["📑 Report Generator", "👨‍🏫 Katalog Instruktur"])
@@ -1157,7 +1157,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
                         if 'RATA-RATA KESELURUHAN' not in df_bln.columns or df_bln['RATA-RATA KESELURUHAN'].dropna().empty:
                             df_bln['RATA-RATA KESELURUHAN'] = df_bln[['Engagement Instruktur', 'Relevance Instruktur', 'Satisfaction Instruktur', 'Engagement Materi', 'Relevance Materi', 'Satisfaction Materi', 'Satisfaction Sarana Digital', 'Satisfaction Sarana In Class']].mean(axis=1)
 
-                        # 3. Analisis IPA & HTML Canvas Rendering
+                        # 3. Analisis IPA & Visual Canvas Modern
                         kategori_ipa_list = [
                             'Engagement Instruktur', 'Relevance Instruktur', 'Satisfaction Instruktur', 
                             'Engagement Materi', 'Relevance Materi', 'Satisfaction Materi', 
@@ -1285,10 +1285,10 @@ elif menu_selection == "📑 REPORT & KATALOG":
                         else:
                             penjelasan_q1_html = "<div style='background:#f0fdf4; border:1px solid #bbf7d0; padding:10px 14px; border-radius:6px; color:#166534; font-size:10pt;'><b>Status Mutu Prima:</b> Tidak ditemukan indikator yang jatuh ke dalam Kuadran 1. Seluruh variabel strategis berhasil memenuhi atau melampaui standar kinerja korporat (TMP 4.50).</div>"
 
-                        # 5. Suara Pelanggan (Tabel Konsultan Bersih & Penarikan List Masukan)
+                        # 5. Suara Pelanggan (Target: Kolom E = Judul Diklat, Kolom D = Bulan, Kolom K = Komentar, Kolom N = Jenis)
                         jml_pos, jml_neg = 0, 0
                         tabel_suara_pelanggan_html = ""
-                        list_semua_masukan_raw = []  # Digunakan untuk prompt Gemini AI
+                        list_semua_masukan_raw = []
                         
                         try:
                             sheet_id_komentar = '1IDAmFwTbBQDZcKM3eiiEDcA3KwM9WKqW4zCrk__6-PU'
@@ -1296,11 +1296,13 @@ elif menu_selection == "📑 REPORT & KATALOG":
                             df_k_raw = pd.read_csv(url_k)
                             df_k_raw.columns = df_k_raw.columns.astype(str).str.strip()
                             
-                            col_bulan_k = df_k_raw.columns[3] if len(df_k_raw.columns) > 3 else 'Bulan'
-                            col_teks_k  = df_k_raw.columns[10] if len(df_k_raw.columns) > 10 else 'Komentar'
-                            col_jenis_k = df_k_raw.columns[13] if len(df_k_raw.columns) > 13 else 'Jenis'
-                            col_judul_k = next((c for c in ['Judul Pembelajaran/Kegiatan', 'Judul Pembelajaran', 'Judul', 'Nama Pelatihan'] if c in df_k_raw.columns), df_k_raw.columns[0])
+                            # Penyesuaian Kolom Berdasarkan Indeks & Nama Kolom Google Sheets
+                            col_bulan_k = df_k_raw.columns[3] if len(df_k_raw.columns) > 3 else 'Bulan'       # Kolom D
+                            col_judul_k = df_k_raw.columns[4] if len(df_k_raw.columns) > 4 else 'Judul Diklat' # Kolom E (Judul Diklat)
+                            col_teks_k  = df_k_raw.columns[10] if len(df_k_raw.columns) > 10 else 'Komentar'    # Kolom K
+                            col_jenis_k = df_k_raw.columns[13] if len(df_k_raw.columns) > 13 else 'Jenis'       # Kolom N
 
+                            # Filter dan Pembersihan Data
                             df_k_raw[col_bulan_k] = df_k_raw[col_bulan_k].astype(str).str.strip()
                             df_k_bln = df_k_raw[df_k_raw[col_bulan_k].str.lower() == str(bulan_pilih).strip().lower()].copy()
 
@@ -1318,7 +1320,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                 jml_neg = len(df_k_bln[df_k_bln['Kategori_Final'] == 'Negatif'])
                                 
                                 baris_tabel_komentar = ""
-                                daftar_judul_k = df_k_bln[col_judul_k].dropna().unique()
+                                daftar_judul_k = [j for j in df_k_bln[col_judul_k].dropna().unique() if str(j).strip() not in ["", "nan", "None"]]
                                 
                                 for idx, jdl in enumerate(daftar_judul_k, 1):
                                     sub_df = df_k_bln[df_k_bln[col_judul_k] == jdl]
@@ -1328,11 +1330,12 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                     for item_neg in neg_list:
                                         list_semua_masukan_raw.append(f"[{jdl}] {item_neg}")
                                     
+                                    # Pencocokan PIC KI dari sheet L1
                                     pic_jdl = "-"
                                     col_judul_l1 = next((c for c in ['Judul Pembelajaran/Kegiatan', 'Judul Pembelajaran', 'Judul'] if c in df_bln.columns), None)
                                     col_pic_l1   = next((c for c in ['PIC KI', 'Bidang'] if c in df_bln.columns), None)
                                     if col_judul_l1 and col_pic_l1:
-                                        match_pic = df_bln[df_bln[col_judul_l1] == jdl][col_pic_l1].dropna()
+                                        match_pic = df_bln[df_bln[col_judul_l1].astype(str).str.strip().str.lower() == str(jdl).strip().lower()][col_pic_l1].dropna()
                                         if not match_pic.empty:
                                             pic_jdl = str(match_pic.iloc[0])
                                             
@@ -1388,7 +1391,6 @@ elif menu_selection == "📑 REPORT & KATALOG":
                             teks_masukan_input = "\n".join([f"- {m}" for m in sample_masukan])
                             rows_plan = ""
                             
-                            # Coba generate solusi preskriptif via Gemini AI
                             try:
                                 prompt_action_plan = f"""
 Bertindaklah sebagai Senior Quality Management Specialist di PLN UPDL Jakarta.
@@ -1413,7 +1415,6 @@ Tuliskan 3 hingga 5 baris isu paling utama dengan bahasa korporat baku PLN.
                             except Exception as e_ai:
                                 rows_plan = ""
 
-                            # Fallback Otomatis jika AI tidak merespons (Menjamin tabel tetap terbentuk sempurna)
                             if not rows_plan or "<tr" not in rows_plan:
                                 fallback_rows = []
                                 for idx_m, item_m in enumerate(sample_masukan[:4], 1):
