@@ -1068,34 +1068,16 @@ elif menu_selection == "🚨 EARLY WARNING":
 elif menu_selection == "📑 REPORT & KATALOG":
     sub_rep_generator, sub_katalog = st.tabs(["📑 Report Generator", "👨‍🏫 Katalog Instruktur"])
     
-   v# ─────────────────────────────────────────────────────────────────────────
+    # ─────────────────────────────────────────────────────────────────────────
     # --- SUB TAB 1: REPORT GENERATOR ---
     # ─────────────────────────────────────────────────────────────────────────
     with sub_rep_generator:
         st.markdown("### 📑 Generator Laporan Manajemen Mutu (Otomatis)")
-        st.write("Menyusun laporan evaluasi mutu L1 komprehensif...")
+        st.write("Menyusun laporan evaluasi mutu L1 komprehensif, mencakup capaian kategori, analisis IPA, seluruh komentar apresiasi/masukan per judul pembelajaran, PIC KI, serta narasi AI Executive Summary.")
         
         try:
-            # ⬇️ TEMPATKAN KODE PERBAIKAN DI SINI (Gantikan df = pd.read_csv(url) lama) ⬇️
-            # 1. Tarik data fresh langsung dari sumber sheet utama
-            df_rep_raw = pd.read_csv(url)
-            
-            # 2. Bersihkan teks kolom bulan dari spasi tersembunyi
-            if 'Laporan Bulan' in df_rep_raw.columns:
-                df_rep_raw['Laporan Bulan'] = df_rep_raw['Laporan Bulan'].astype(str).str.strip()
-            
-            # 3. Urutkan berdasarkan urutan kalender resmi
-            URUTAN_BULAN_STD = [
-                'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-                'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-            ]
-            
-            bulan_di_data = df_rep_raw['Laporan Bulan'].dropna().unique().tolist()
-            opsi_bulan_rep = [b for b in URUTAN_BULAN_STD if b in bulan_di_data]
-            
-            sisa_bulan = [b for b in bulan_di_data if b not in URUTAN_BULAN_STD and b not in ['nan', 'None', '']]
-            opsi_bulan_rep.extend(sisa_bulan)
-            # ⬆️ BATAS AKHIR KODE PERBAIKAN ⬆️
+            df = pd.read_csv(url)
+            opsi_bulan_rep = list(df['Laporan Bulan'].dropna().unique())
             
             if opsi_bulan_rep:
                 with st.container(border=True):
@@ -1106,9 +1088,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
                         st.markdown("<br>", unsafe_allow_html=True)
                         btn_generate = st.button("🚀 Generate Dokumen Word", type="primary", use_container_width=True)
                 
-                # Gunakan df_rep_raw sebagai basis pembuatan laporan saat tombol diklik
                 if btn_generate:
-                    df = df_rep_raw  # memastikan pemrosesan di bawah menggunakan data fresh
                     with st.spinner(f"Menyusun analisis dan laporan mutu periode {bulan_pilih}..."):
                         df_bln = df[df['Laporan Bulan'] == bulan_pilih].copy()
                         rata_l1 = df_bln['RATA-RATA KESELURUHAN'].mean() if not df_bln.empty else 0
