@@ -1063,15 +1063,17 @@ elif menu_selection == "🚨 EARLY WARNING":
     except Exception as e: st.error(f"❌ Gagal memuat data dari Sheet 'Detail Komentar L1'. Detail error: {e}")
 
 # ══════════════════════════════════════════════════════════════════════════════
-# KONTEN: 📑 REPORT & KATALOG
+# KONTEN: 📑 REPORT & KATALOG (UPDATED DENGAN AI & DETAIL KOMENTAR LENGKAP)
 # ══════════════════════════════════════════════════════════════════════════════
 elif menu_selection == "📑 REPORT & KATALOG":
     sub_rep_generator, sub_katalog = st.tabs(["📑 Report Generator", "👨‍🏫 Katalog Instruktur"])
     
+    # ─────────────────────────────────────────────────────────────────────────
     # --- SUB TAB 1: REPORT GENERATOR ---
+    # ─────────────────────────────────────────────────────────────────────────
     with sub_rep_generator:
-        st.markdown("### 📑 Generator Laporan Manajemen (Otomatis)")
-        st.write("Fitur ini menyusun seluruh hasil analitik, IPA, dan sentimen menjadi dokumen naratif resmi (Microsoft Word) yang siap diserahkan ke General Manager.")
+        st.markdown("### 📑 Generator Laporan Manajemen Mutu (Otomatis)")
+        st.write("Menyusun laporan evaluasi mutu L1 komprehensif, mencakup capaian kategori, analisis IPA, seluruh komentar apresiasi/masukan per judul pembelajaran, PIC KI, serta narasi AI Executive Summary.")
         
         try:
             df = pd.read_csv(url)
@@ -1080,16 +1082,33 @@ elif menu_selection == "📑 REPORT & KATALOG":
             if opsi_bulan_rep:
                 with st.container(border=True):
                     col_r1, col_r2 = st.columns([2, 1])
-                    with col_r1: bulan_pilih = st.selectbox("📅 Pilih Periode Laporan:", opsi_bulan_rep, key="bln_report")
-                    with col_r2: st.markdown("<br>", unsafe_allow_html=True); btn_generate = st.button("🚀 Generate Dokumen Word", type="primary", use_container_width=True)
+                    with col_r1:
+                        bulan_pilih = st.selectbox("📅 Pilih Periode Laporan:", opsi_bulan_rep, key="bln_report")
+                    with col_r2:
+                        st.markdown("<br>", unsafe_allow_html=True)
+                        btn_generate = st.button("🚀 Generate Dokumen Word", type="primary", use_container_width=True)
                 
                 if btn_generate:
-                    with st.spinner(f"Menyusun laporan mutu untuk bulan {bulan_pilih}..."):
+                    with st.spinner(f"Menyusun analisis dan laporan mutu periode {bulan_pilih}..."):
                         df_bln = df[df['Laporan Bulan'] == bulan_pilih].copy()
                         rata_l1 = df_bln['RATA-RATA KESELURUHAN'].mean() if not df_bln.empty else 0
                         total_sesi = len(df_bln)
+                        
+                        # Ambil daftar PIC KI yang bertugas di bulan ini
+                        list_pic_ki = [str(p) for p in df_bln['PIC KI'].dropna().unique() if str(p).strip() != ""] if 'PIC KI' in df_bln.columns else []
+                        teks_pic_ki = ", ".join(list_pic_ki) if list_pic_ki else "Seluruh Bidang / PIC Terkait"
+
+                        # Perhitungan Rata-rata 4 Pilar Utama
+                        skor_instruktur = df_bln['RATA INST'].mean() if 'RATA INST' in df_bln.columns else np.nan
+                        skor_materi     = df_bln['RATA MAT'].mean() if 'RATA MAT' in df_bln.columns else np.nan
+                        skor_sarpras    = df_bln['RATA SP'].mean() if 'RATA SP' in df_bln.columns else np.nan
+                        skor_digital    = df_bln['RATA DS'].mean() if 'RATA DS' in df_bln.columns else np.nan
+
+                        # Analisis Kuadran IPA
                         q1_items = []
-                        kategori_list = ['Engagement Instruktur', 'Relevance Instruktur', 'Satisfaction Instruktur', 'Engagement Materi', 'Relevance Materi', 'Satisfaction Materi', 'Satisfaction Sarana Digital', 'Satisfaction Sarana In Class']
+                        kategori_list = ['Engagement Instruktur', 'Relevance Instruktur', 'Satisfaction Instruktur', 
+                                         'Engagement Materi', 'Relevance Materi', 'Satisfaction Materi', 
+                                         'Satisfaction Sarana Digital', 'Satisfaction Sarana In Class']
                         
                         if len(df_bln) > 2:
                             kinerja_r, kep_r = [], []
@@ -1107,8 +1126,9 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                 y_cross = df_ipa_rep['Kep'].mean()
                                 q1_items = df_ipa_rep[(df_ipa_rep['Kin'] < 4.5) & (df_ipa_rep['Kep'] > y_cross)]['Kat'].tolist()
 
-                        sentimen_teks = "Data komentar pelanggan pada periode ini tidak tersedia atau belum ditarik oleh sistem."
-                        contoh_negatif = ""
+                        # Analisis Komentar Per Judul Pembelajaran (Sheet: Detail Komentar L1)
+                        jml_pos, jml_neg = 0, 0
+                        komentar_per_judul_html = ""
                         try:
                             sheet_id_komentar = '1IDAmFwTbBQDZcKM3eiiEDcA3KwM9WKqW4zCrk__6-PU'
                             url_k = f'https://docs.google.com/spreadsheets/d/{sheet_id_komentar}/gviz/tq?tqx=out:csv&sheet=Detail%20Komentar%20L1'
@@ -1119,53 +1139,171 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                 df_k_bln = df_k[df_k[kol_b_k] == bulan_pilih].copy()
                                 if not df_k_bln.empty:
                                     kol_k_teks = next((c for c in df_k_bln.columns if 'komentar' in c.lower() or 'saran' in c.lower()), df_k_bln.columns[-1])
+                                    kol_judul = next((c for c in ['Judul Pembelajaran/Kegiatan', 'Judul Pembelajaran', 'Judul', 'Nama Pelatihan'] if c in df_k_bln.columns), df_k_bln.columns[0])
+                                    
                                     df_k_bln['Sentimen'] = df_k_bln[kol_k_teks].apply(analisis_sentimen_opensource)
-                                    jml_pos = len(df_k_bln[df_k_bln['Sentimen']=='Positif'])
-                                    jml_neg = len(df_k_bln[df_k_bln['Sentimen']=='Negatif'])
-                                    sentimen_teks = f"Berdasarkan analisis pemindaian (Lexicon-Based), dari total komentar yang masuk, terdapat <b>{jml_pos} sentimen positif</b> (Apresiasi) dan <b>{jml_neg} sentimen negatif</b> (Keluhan)."
-                                    if jml_neg > 0:
-                                        sample_neg = df_k_bln[df_k_bln['Sentimen']=='Negatif'][kol_k_teks].dropna().head(3).tolist()
-                                        contoh_negatif = "Berikut adalah sorotan (Top 3) suara pelanggan yang membutuhkan eskalasi:<br><ul>" + "".join([f"<li><i>\"{s}\"</i></li>" for s in sample_neg]) + "</ul>"
-                        except: pass
-                        
-                        teks_q1 = "Tidak ditemukan indikator yang berstatus kritis. Seluruh performa elemen layanan berada pada status <b>Prima dan Memuaskan</b>."
+                                    jml_pos = len(df_k_bln[df_k_bln['Sentimen'] == 'Positif'])
+                                    jml_neg = len(df_k_bln[df_k_bln['Sentimen'] == 'Negatif'])
+                                    
+                                    # Render HTML tabel komentar per judul
+                                    judul_list = df_k_bln[kol_judul].dropna().unique()
+                                    for jdl in judul_list:
+                                        sub_df = df_k_bln[df_k_bln[kol_judul] == jdl]
+                                        pos_texts = sub_df[sub_df['Sentimen'] == 'Positif'][kol_k_teks].dropna().tolist()
+                                        neg_texts = sub_df[sub_df['Sentimen'] == 'Negatif'][kol_k_teks].dropna().tolist()
+                                        
+                                        # Cari PIC KI terkait judul ini jika tersedia di sheet L1
+                                        pic_jdl = ""
+                                        if 'Judul Pembelajaran/Kegiatan' in df_bln.columns and 'PIC KI' in df_bln.columns:
+                                            match_pic = df_bln[df_bln['Judul Pembelajaran/Kegiatan'] == jdl]['PIC KI'].dropna()
+                                            if not match_pic.empty:
+                                                pic_jdl = f" &bull; <b>PIC KI:</b> {match_pic.iloc[0]}"
+                                        
+                                        pos_html = "".join([f"<li style='margin-bottom:4px;color:#1b5e20;'>{t}</li>" for t in pos_texts]) if pos_texts else "<i>Tidak ada komentar apresiasi.</i>"
+                                        neg_html = "".join([f"<li style='margin-bottom:4px;color:#b71c1c;'>{t}</li>" for t in neg_texts]) if neg_texts else "<i>Tidak ada komentar masukan.</i>"
+                                        
+                                        komentar_per_judul_html += f"""
+                                        <div style="margin-bottom: 20px; border: 1px solid #d0d7de; padding: 12px; border-radius: 6px; background-color: #fcfcfc;">
+                                            <h4 style="margin: 0 0 6px 0; color: #003366;">📚 {jdl} <span style="font-size:11pt; font-weight:normal; color:#555;">{pic_jdl}</span></h4>
+                                            <p style="margin: 6px 0 2px 0;"><b>🟢 Komentar Apresiasi:</b></p>
+                                            <ul style="margin: 0 0 10px 0; padding-left: 20px;">{pos_html}</ul>
+                                            <p style="margin: 6px 0 2px 0;"><b>🔴 Komentar Masukan:</b></p>
+                                            <ul style="margin: 0 0 5px 0; padding-left: 20px;">{neg_html}</ul>
+                                        </div>
+                                        """
+                        except Exception as e_k:
+                            komentar_per_judul_html = f"<p><i>Gagal memuat rincian komentar: {e_k}</i></p>"
+
+                        # Narasi Kuadran & Rekomendasi
+                        teks_q1 = "Tidak ditemukan indikator yang berstatus kritis (Kuadran 1). Seluruh performa elemen layanan berada pada status <b>Prima dan Memuaskan</b>."
                         teks_rekomendasi = "Manajemen direkomendasikan untuk mempertahankan standar ekselensi mutu layanan (Service Excellence) yang telah tercapai."
                         if q1_items:
-                            teks_q1 = "Berdasarkan analisis silang (IPA), indikator operasional yang jatuh ke dalam <b>Kuadran 1 (Prioritas Utama)</b>—yakni elemen dengan dampak strategis tinggi namun realisasi kinerjanya di bawah standar PLN (4.50)—adalah sebagai berikut:<ul>" + "".join([f"<li><b>{kat}</b></li>" for kat in q1_items]) + "</ul>"
-                            teks_rekomendasi = "Sistem secara preskriptif merekomendasikan Manajemen UPDL Jakarta untuk <b>segera menyusun Rencana Tindakan Perbaikan (Corrective Action Plan)</b> khususnya pada indikator Kuadran 1 yang disebutkan di atas. Pengalokasian sumber daya pada elemen tersebut akan memberikan eskalasi dan lonjakan tertinggi pada kepuasan total peserta secara efisien."
+                            teks_q1 = "Berdasarkan analisis IPA, indikator yang jatuh ke dalam <b>Kuadran 1 (Prioritas Utama)</b>—dengan dampak strategis tinggi namun realisasi kinerjanya di bawah standar PLN (4.50)—adalah:<ul>" + "".join([f"<li><b>{kat}</b></li>" for kat in q1_items]) + "</ul>"
+                            teks_rekomendasi = "Manajemen UPDL Jakarta bersama PIC KI terkait direkomendasikan untuk <b>segera menyusun Rencana Tindakan Korektif (Corrective Action Plan)</b> pada indikator Kuadran 1 tersebut guna mendorong peningkatan mutu secara terarah."
 
+                        # PENGGUNAAN GEMINI AI: Generate Executive Summary
+                        narasi_eksekutif_ai = ""
+                        try:
+                            prompt_ai = f"""
+                            Sebagai Quality Management Specialist PLN UPDL Jakarta, buatkan 1 paragraf Ringkasan Eksekutif (Executive Summary) formal dan ringkas untuk Laporan Evaluasi Mutu Pembelajaran Level 1.
+                            Data Periode: {bulan_pilih}
+                            - Total Pelaksanaan: {total_sesi} sesi/kelas
+                            - Skor Rata-rata L1 Keseluruhan: {rata_l1:.2f} (Standar: 4.50)
+                            - Skor Instruktur: {skor_instruktur:.2f}, Materi: {skor_materi:.2f}, Sarana In-Class: {skor_sarpras:.2f}, Sarana Digital: {skor_digital:.2f}
+                            - Indikator Kritis Kuadran 1: {', '.join(q1_items) if q1_items else 'Nihil / Tidak Ada'}
+                            - Rekap Komentar: {jml_pos} Apresiasi, {jml_neg} Masukan/Keluhan
+                            - PIC KI yang bertugas: {teks_pic_ki}
+                            Tuliskan dalam Bahasa Indonesia baku, objektif, berorientasi solusi, dan tanpa formatting markdown asteris tebal berlebih.
+                            """
+                            ai_resp = model.generate_content(prompt_ai)
+                            narasi_eksekutif_ai = ai_resp.text.strip()
+                        except Exception as ai_e:
+                            narasi_eksekutif_ai = f"Pada periode {bulan_pilih}, proses evaluasi mutu pembelajaran L1 mencatatkan skor rata-rata sebesar {rata_l1:.2f} dari total {total_sesi} sesi pelatihan. Koordinasi berkelanjutan bersama PIC KI ({teks_pic_ki}) menjadi landasan utama dalam menjaga pemenuhan standar mutu layanan pembelajaran di UPDL Jakarta."
+
+                        # TEMPLATE DOKUMEN WORD (.DOC)
                         html_content = f"""
-                        <html><head><meta charset="utf-8"></head><body style="font-family: 'Times New Roman', Times, serif; line-height: 1.6; font-size: 12pt;">
-                            <h2 style="text-align:center; color:#003366;">LAPORAN EVALUASI MUTU PEMBELAJARAN L1</h2>
-                            <h3 style="text-align:center;">UPDL JAKARTA - PERIODE {bulan_pilih.upper()}</h3>
-                            <hr style="border: 1.5px solid black; margin-bottom: 20px;">
-                            <h4 style="color:#0055A4;">1. RINGKASAN EKSEKUTIF</h4>
-                            <p style="text-align: justify;">Pada periode <b>{bulan_pilih}</b>, proses evaluasi pembelajaran (Level 1) telah selesai dilaksanakan secara komprehensif. Kinerja mutu secara keseluruhan mencatatkan skor rata-rata sebesar <b>{rata_l1:.2f}</b> (dari skala maksimal 5.0). Laporan ini merangkum indikator kinerja utama, temuan area kritis dari Importance-Performance Analysis (IPA), serta rekapitulasi suara pelanggan (Voice of Customer) sebagai landasan strategis pengambilan keputusan operasional bulan berikutnya.</p>
-                            <h4 style="color:#0055A4;">2. PENCAPAIAN KEY PERFORMANCE INDICATORS (KPI)</h4>
-                            <ul><li><b>Rata-rata Skor L1 Keseluruhan:</b> {rata_l1:.2f}</li><li><b>Total Implementasi Kelas:</b> {total_sesi} sesi/pelatihan tercatat.</li></ul>
-                            <h4 style="color:#0055A4;">3. ANALISIS AREA KRITIS (IMPORTANCE-PERFORMANCE)</h4>
-                            <p style="text-align: justify;">{teks_q1}</p>
-                            <h4 style="color:#0055A4;">4. SOROTAN SUARA PELANGGAN (SENTIMEN KOMENTAR)</h4>
-                            <p style="text-align: justify;">{sentimen_teks}</p>{contoh_negatif}
-                            <h4 style="color:#0055A4;">5. REKOMENDASI TINDAK LANJUT OPERASIONAL</h4>
-                            <p style="text-align: justify;">{teks_rekomendasi}</p>
-                            <br><br><br>
-                            <table style="width:100%; text-align:center; border: none;"><tr>
+                        <html><head><meta charset="utf-8"></head><body style="font-family: 'Times New Roman', Times, serif; line-height: 1.5; font-size: 11.5pt;">
+                            <h2 style="text-align:center; color:#003366; margin-bottom: 2px;">LAPORAN EVALUASI MUTU PEMBELAJARAN L1</h2>
+                            <h3 style="text-align:center; margin-top: 0;">UPDL JAKARTA - PERIODE {bulan_pilih.upper()}</h3>
+                            <hr style="border: 1.5px solid black; margin-bottom: 15px;">
+                            
+                            <table style="width:100%; border:none; margin-bottom:15px; font-size:11pt;">
+                                <tr>
+                                    <td style="width:25%;"><b>Periode Laporan</b></td><td style="width:2%;">:</td><td style="width:73%;">{bulan_pilih}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>PIC KI / Bidang Terkait</b></td><td>:</td><td>{teks_pic_ki}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>Total Kelas Terlaksana</b></td><td>:</td><td>{total_sesi} Pelatihan / Batch</td>
+                                </tr>
+                            </table>
+
+                            <h4 style="color:#0055A4; margin-bottom: 5px;">1. RINGKASAN EKSEKUTIF (EXECUTIVE SUMMARY)</h4>
+                            <p style="text-align: justify; margin-top: 0;">{narasi_eksekutif_ai}</p>
+
+                            <h4 style="color:#0055A4; margin-bottom: 5px;">2. PENCAPAIAN SKOR EVALUASI PER KATEGORI PEMBELAJARAN</h4>
+                            <table style="width:100%; border-collapse: collapse; text-align:left; font-size:11pt; margin-bottom: 15px;" border="1">
+                                <tr style="background-color:#003366; color:white;">
+                                    <th style="padding: 6px 10px;">Pilar Evaluasi</th>
+                                    <th style="padding: 6px 10px; text-align:center;">Realisasi Skor</th>
+                                    <th style="padding: 6px 10px; text-align:center;">Standar TMP</th>
+                                    <th style="padding: 6px 10px; text-align:center;">Status Mutu</th>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 5px 10px;">Kinerja Instruktur (Engagement, Relevance, Satisfaction)</td>
+                                    <td style="padding: 5px 10px; text-align:center;"><b>{skor_instruktur:.2f}</b></td>
+                                    <td style="padding: 5px 10px; text-align:center;">4.50</td>
+                                    <td style="padding: 5px 10px; text-align:center;">{'🟢 Memenuhi' if skor_instruktur >= 4.5 else '🔴 Di Bawah TMP'}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 5px 10px;">Materi Pembelajaran (Engagement, Relevance, Satisfaction)</td>
+                                    <td style="padding: 5px 10px; text-align:center;"><b>{skor_materi:.2f}</b></td>
+                                    <td style="padding: 5px 10px; text-align:center;">4.50</td>
+                                    <td style="padding: 5px 10px; text-align:center;">{'🟢 Memenuhi' if skor_materi >= 4.5 else '🔴 Di Bawah TMP'}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 5px 10px;">Sarana & Prasarana In-Class (Kenyamanan, Fasilitas)</td>
+                                    <td style="padding: 5px 10px; text-align:center;"><b>{skor_sarpras:.2f}</b></td>
+                                    <td style="padding: 5px 10px; text-align:center;">4.50</td>
+                                    <td style="padding: 5px 10px; text-align:center;">{'🟢 Memenuhi' if skor_sarpras >= 4.5 else '🔴 Di Bawah TMP'}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 5px 10px;">Sarana Digital (Aplikasi, Modul, Jaringan)</td>
+                                    <td style="padding: 5px 10px; text-align:center;"><b>{skor_digital:.2f}</b></td>
+                                    <td style="padding: 5px 10px; text-align:center;">4.50</td>
+                                    <td style="padding: 5px 10px; text-align:center;">{'🟢 Memenuhi' if skor_digital >= 4.5 else '🔴 Di Bawah TMP'}</td>
+                                </tr>
+                                <tr style="background-color:#f2f2f2;">
+                                    <td style="padding: 6px 10px;"><b>RATA-RATA TOTAL KESELURUHAN</b></td>
+                                    <td style="padding: 6px 10px; text-align:center;"><b>{rata_l1:.2f}</b></td>
+                                    <td style="padding: 6px 10px; text-align:center;"><b>4.50</b></td>
+                                    <td style="padding: 6px 10px; text-align:center;"><b>{'🟢 PRIMA' if rata_l1 >= 4.5 else '🔴 EVALUASI'}</b></td>
+                                </tr>
+                            </table>
+
+                            <h4 style="color:#0055A4; margin-bottom: 5px;">3. PEMETAAN AREA KRITIS (IMPORTANCE-PERFORMANCE ANALYSIS)</h4>
+                            <p style="text-align: justify; margin-top: 0;">{teks_q1}</p>
+
+                            <h4 style="color:#0055A4; margin-bottom: 5px;">4. SUARA PELANGGAN (KOMENTAR APRESIASI & MASUKAN PER JUDUL PEMBELAJARAN)</h4>
+                            <p style="text-align: justify; margin-top: 0;">Total terdapat <b>{jml_pos} komentar apresiasi</b> dan <b>{jml_neg} komentar masukan</b> yang tercatat pada periode {bulan_pilih}:</p>
+                            {komentar_per_judul_html}
+
+                            <h4 style="color:#0055A4; margin-bottom: 5px;">5. REKOMENDASI TINDAK LANJUT OPERASIONAL</h4>
+                            <p style="text-align: justify; margin-top: 0;">{teks_rekomendasi}</p>
+                            
+                            <br><br>
+                            <table style="width:100%; text-align:center; border: none;">
+                                <tr>
                                     <td style="width:50%; border: none;"></td>
                                     <td style="width:50%; border: none;">
                                         Disusun secara otomatis oleh sistem <b>EVALYTICS</b><br>
                                         UPDL Jakarta, {datetime.now().strftime('%d %B %Y')}<br><br><br><br>
-                                        <b>( _________________________ )</b><br>Manajemen Mutu
-                                    </td></tr></table></body></html>"""
+                                        <b>( _________________________ )</b><br>Tim Pengendalian Mutu & Kinerja
+                                    </td>
+                                </tr>
+                            </table>
+                        </body></html>
+                        """
                         
-                        st.success("✅ Dokumen Laporan berhasil disusun!")
-                        st.download_button(label="📥 DOWNLOAD LAPORAN WORD (.doc)", data=html_content.encode('utf-8'), file_name=f"Laporan_Mutu_EVALYTICS_{bulan_pilih}.doc", mime="application/msword", type="primary")
-                        with st.expander("👀 Pratinjau Teks Laporan (Preview)"): st.markdown(html_content, unsafe_allow_html=True)
-            else: st.info("Belum ada data bulan yang tersedia untuk dibuatkan laporan.")
+                        st.success("✅ Dokumen Laporan Manajemen berhasil disusun!")
+                        st.download_button(
+                            label="📥 DOWNLOAD LAPORAN WORD (.doc)",
+                            data=html_content.encode('utf-8'),
+                            file_name=f"Laporan_Mutu_EVALYTICS_{bulan_pilih}.doc",
+                            mime="application/msword",
+                            type="primary"
+                        )
+                        with st.expander("👀 Pratinjau Teks Laporan (Live Preview)"):
+                            st.markdown(html_content, unsafe_allow_html=True)
+            else:
+                st.info("Belum ada data bulan yang tersedia untuk dibuatkan laporan.")
         except Exception as e:
             st.error(f"Gagal memuat data sumber untuk laporan: {e}")
 
+    # ─────────────────────────────────────────────────────────────────────────
     # --- SUB TAB 2: KATALOG INSTRUKTUR ---
+    # ─────────────────────────────────────────────────────────────────────────
     with sub_katalog:
         st.markdown("### 👨‍🏫 Katalog & Rapor Instruktur Terbobot")
         st.write("Sistem rekomendasi objektif berbasis **Composite Performance Index** yang menggabungkan kepuasan mutu (`Ins-Rat`) dan stabilitas jam terbang.")
@@ -1184,7 +1322,6 @@ elif menu_selection == "📑 REPORT & KATALOG":
                 if 'Durasi Mengajar' in df_katalog_raw.columns:
                     df_katalog_raw['Durasi Mengajar'] = pd.to_numeric(df_katalog_raw['Durasi Mengajar'], errors='coerce')
                 
-                # --- FILTER SELEKSI ---
                 col_f1, col_f2 = st.columns(2)
                 with col_f1:
                     if 'UPDL' in df_katalog_raw.columns:
@@ -1206,7 +1343,6 @@ elif menu_selection == "📑 REPORT & KATALOG":
                         list_diklat = ["Semua Pembelajaran"]
                     selected_diklat = st.selectbox("📚 Pilih Judul Pembelajaran:", list_diklat, key="k_diklat")
                 
-                # --- PENGATURAN PEMBOBOTAN INTERAKTIF ---
                 with st.expander("⚖️ Konfigurasi Pembobotan & Ambang Batas Rekomendasi", expanded=False):
                     col_w1, col_w2 = st.columns([3, 2])
                     with col_w1:
@@ -1235,33 +1371,24 @@ elif menu_selection == "📑 REPORT & KATALOG":
 
                     df_kat_grouped = df_final_kat.groupby(['Nama']).agg(**agg_dict).reset_index()
                     
-                    # --- KALKULASI PEMBOBOTAN COMPOSITE PERFORMANCE INDEX ---
                     w_mutu_dec = bobot_skor / 100.0
                     w_jam_dec = bobot_jam / 100.0
                     
-                    # Normalisasi Skor Mutu (Skala 0 - 1 terhadap max 5.0)
                     df_kat_grouped['Norm_Skor'] = df_kat_grouped['Skor_Akhir_InsRat'] / 5.0
-                    
-                    # Normalisasi Jam Terbang (Skala 0 - 1 terhadap max di grup saat ini)
                     max_frek = df_kat_grouped['Frekuensi_Mengajar'].max()
                     if pd.isna(max_frek) or max_frek == 0: max_frek = 1
                     df_kat_grouped['Norm_Jam'] = df_kat_grouped['Frekuensi_Mengajar'] / max_frek
                     
-                    # Indeks Skor Gabungan (Skala 0 - 100)
                     df_kat_grouped['Indeks_Rekomendasi'] = (
                         (df_kat_grouped['Norm_Skor'] * w_mutu_dec) + 
                         (df_kat_grouped['Norm_Jam'] * w_jam_dec)
                     ) * 100.0
                     
-                    # Status Kelayakan (Threshold)
                     df_kat_grouped['Status_Eligible'] = df_kat_grouped['Frekuensi_Mengajar'].apply(
                         lambda x: "Eligible" if x >= min_jam_terbang else f"Evaluasi Awal (< {min_jam_terbang}x)"
                     )
                     
-                    # Urutkan berdasarkan Indeks Rekomendasi tertinggi
                     df_kat_grouped = df_kat_grouped.sort_values(by='Indeks_Rekomendasi', ascending=False).reset_index(drop=True)
-                    
-                    # --- TOP 3 REKOMENDASI (HANYA YANG ELIGIBLE >= THRESHOLD) ---
                     df_eligible = df_kat_grouped[df_kat_grouped['Status_Eligible'] == "Eligible"]
                     
                     if selected_diklat != "Semua Pembelajaran":
@@ -1286,7 +1413,6 @@ elif menu_selection == "📑 REPORT & KATALOG":
                             st.warning(f"⚠️ Belum ada instruktur yang memenuhi syarat minimal {min_jam_terbang} kali mengajar untuk pembelajaran ini.")
                         st.markdown("---")
                         
-                    # --- DETAIL TABEL RAPOR INSTRUKTUR ---
                     st.subheader("📋 Detail Rapor & Peringkat Komposit")
                     show_kategori = st.checkbox("Tampilkan Detail Sub-Kategori (Ins-Eng, Ins-Rel, Ins-Sat)", value=True, key="k_showkat")
                     
