@@ -1063,7 +1063,7 @@ elif menu_selection == "🚨 EARLY WARNING":
     except Exception as e: st.error(f"❌ Gagal memuat data dari Sheet 'Detail Komentar L1'. Detail error: {e}")
 
 # ══════════════════════════════════════════════════════════════════════════════
-# KONTEN: 📑 REPORT & KATALOG (UPDATED - FULL DATA PIPELINE & AI FIX)
+# KONTEN: 📑 REPORT & KATALOG (DEFENSIVE FIX & AUTO-CALCULATE)
 # ══════════════════════════════════════════════════════════════════════════════
 elif menu_selection == "📑 REPORT & KATALOG":
     sub_rep_generator, sub_katalog = st.tabs(["📑 Report Generator", "👨‍🏫 Katalog Instruktur"])
@@ -1076,8 +1076,9 @@ elif menu_selection == "📑 REPORT & KATALOG":
         st.write("Menyusun laporan evaluasi mutu L1 komprehensif, mencakup capaian kategori, analisis IPA Kuadran 1, seluruh komentar apresiasi & masukan per judul pembelajaran, PIC KI, serta narasi AI Executive Summary.")
         
         try:
-            # 1. Tarik data fresh sheet L1 Tertutup
             df_rep_raw = pd.read_csv(url)
+            df_rep_raw.columns = df_rep_raw.columns.astype(str).str.strip()
+            
             if 'Laporan Bulan' in df_rep_raw.columns:
                 df_rep_raw['Laporan Bulan'] = df_rep_raw['Laporan Bulan'].astype(str).str.strip()
             
@@ -1087,7 +1088,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
             ]
             bulan_di_data = df_rep_raw['Laporan Bulan'].dropna().unique().tolist()
             opsi_bulan_rep = [b for b in URUTAN_BULAN_STD if b in bulan_di_data]
-            sisa_bulan = [b for b in bulan_di_data if b not in URUTAN_BULAN_STD and b not in ['nan', 'None', '']]
+            sisa_bulan = [b for b in bulan_di_data if b not in URUTAN_BULAN_STD and b not in ['nan', 'None', '', 'Laporan Bulan']]
             opsi_bulan_rep.extend(sisa_bulan)
             
             if opsi_bulan_rep:
@@ -1101,20 +1102,64 @@ elif menu_selection == "📑 REPORT & KATALOG":
                 
                 if btn_generate:
                     with st.spinner(f"Memproses kalkulasi data & menyusun laporan periode {bulan_pilih}..."):
-                        df_bln = df_rep_raw[df_rep_raw['Laporan Bulan'] == bulan_pilih].copy()
+                        df_bln = df_rep_raw[df_rep_raw['Laporan Bulan'].str.lower() == str(bulan_pilih).strip().lower()].copy()
                         total_sesi = len(df_bln)
                         
-                        # A. Konversi Numerik Kolom-Kolom Kritis L1
-                        kolom_angka = [
-                            'RATA-RATA KESELURUHAN', 'RATA INST', 'RATA MAT', 'RATA SP', 'RATA DS',
-                            'INS1','INS2','INS3','INS4','INS5','INS6','INS7','INS8',
-                            'MAT1','MAT2','MAT3','MAT4','MAT5','MAT6'
-                        ]
-                        for c in kolom_angka:
+                        # Parsing numerik butir indikator
+                        semua_butir = [f'INS{i}' for i in range(1, 10)] + [f'MAT{i}' for i in range(1, 8)] + [f'SP{i}' for i in range(1, 7)] + [f'DS{i}' for i in range(1, 7)]
+                        kolom_skor_tambahan = ['RATA-RATA KESELURUHAN', 'RATA INST', 'RATA MAT', 'RATA SP', 'RATA DS']
+                        for c in semua_butir + kolom_skor_tambahan:
                             if c in df_bln.columns:
                                 df_bln[c] = pd.to_numeric(df_bln[c], errors='coerce')
                         
-                        # Kalkulasi 8 Kategori Utama untuk Analisis & IPA
+                        # Perhitungan aman pilar evaluasi (Fallback dinamis)
+                        ins_cols_aktif = [f'INS{i}' for i in range(1, 9) if f'INS{i}' in df_bln.columns]
+                        mat_cols_aktif = [f'MAT{i}' for i in range(1, 7) if f'MAT{i}' in df_bln.columns]
+                        sp_cols_aktif  = [f'SP{i}' for i in range(1, 6) if f'SP{i}' in df_bln.columns]
+                        ds_cols_aktif  = [f'DS{i}' for i in range(1, 6) if f'DS{i}' in df_bln.columns]
+                        
+                        if 'RATA INST' in df_bln.columns and not df_bln['RATA INST'].dropna().empty:
+                            skor_instruktur = df_bln['RATA INST'].mean()
+                        elif ins_cols_aktif:
+                            skor_instruktur = df_bln[ins_cols_aktif].mean(axis=1).mean()
+                        else:
+                            skor_instruktur = np.nan
+                            
+                        if 'RATA MAT' in df_bln.columns and not df_bln['RATA MAT'].dropna().empty:
+                            skor_materi = df_bln['RATA MAT'].mean()
+                        elif mat_cols_aktif:
+                            skor_materi = df_bln[mat_cols_aktif].mean(axis=1).mean()
+                        else:
+                            skor_materi = np.nan
+                            
+                        if 'RATA SP' in df_bln.columns and not df_bln['RATA SP'].dropna().empty:
+                            skor_sarpras = df_bln['RATA SP'].mean()
+                        elif sp_cols_aktif:
+                            skor_sarpras = df_bln[sp_cols_aktif].mean(axis=1).mean()
+                        else:
+                            skor_sarpras = np.nan
+                            
+                        if 'RATA DS' in df_bln.columns and not df_bln['RATA DS'].dropna().empty:
+                            skor_digital = df_bln['RATA DS'].mean()
+                        elif ds_cols_aktif:
+                            skor_digital = df_bln[ds_cols_aktif].mean(axis=1).mean()
+                        else:
+                            skor_digital = np.nan
+                            
+                        if 'RATA-RATA KESELURUHAN' in df_bln.columns and not df_bln['RATA-RATA KESELURUHAN'].dropna().empty:
+                            rata_l1 = df_bln['RATA-RATA KESELURUHAN'].mean()
+                        else:
+                            rata_l1 = np.nanmean([skor_instruktur, skor_materi, skor_sarpras, skor_digital])
+
+                        # Ambil data PIC KI
+                        list_pic_ki = []
+                        if 'PIC KI' in df_bln.columns:
+                            list_pic_ki = [str(p).strip() for p in df_bln['PIC KI'].dropna().unique() if str(p).strip() not in ["", "nan", "None"]]
+                        elif 'Bidang' in df_bln.columns:
+                            list_pic_ki = [str(p).strip() for p in df_bln['Bidang'].dropna().unique() if str(p).strip() not in ["", "nan", "None"]]
+                        teks_pic_ki = ", ".join(list_pic_ki) if list_pic_ki else "Seluruh Bidang / PIC Terkait"
+
+                        # Rekonstruksi 8 Kategori untuk Analisis IPA
                         if 'INS1' in df_bln.columns and 'INS2' in df_bln.columns:
                             df_bln['Engagement Instruktur'] = df_bln[['INS1','INS2']].mean(axis=1)
                         if 'INS3' in df_bln.columns and 'INS4' in df_bln.columns:
@@ -1129,36 +1174,23 @@ elif menu_selection == "📑 REPORT & KATALOG":
                             df_bln['Satisfaction Materi'] = df_bln[['MAT5','MAT6']].mean(axis=1)
                         if 'RATA DS' in df_bln.columns:
                             df_bln['Satisfaction Sarana Digital'] = df_bln['RATA DS']
+                        elif ds_cols_aktif:
+                            df_bln['Satisfaction Sarana Digital'] = df_bln[ds_cols_aktif].mean(axis=1)
                         if 'RATA SP' in df_bln.columns:
                             df_bln['Satisfaction Sarana In Class'] = df_bln['RATA SP']
+                        elif sp_cols_aktif:
+                            df_bln['Satisfaction Sarana In Class'] = df_bln[sp_cols_aktif].mean(axis=1)
 
-                        # Hitung Rata-Rata Pilar (Fallback jika RATA INST/MAT/SP/DS kosong)
-                        skor_instruktur = df_bln['RATA INST'].mean()
-                        if pd.isna(skor_instruktur) and 'INS1' in df_bln.columns:
-                            skor_instruktur = df_bln[[f'INS{i}' for i in range(1,9) if f'INS{i}' in df_bln.columns]].mean(axis=1).mean()
-                            
-                        skor_materi = df_bln['RATA MAT'].mean()
-                        if pd.isna(skor_materi) and 'MAT1' in df_bln.columns:
-                            skor_materi = df_bln[[f'MAT{i}' for i in range(1,7) if f'MAT{i}' in df_bln.columns]].mean(axis=1).mean()
-                            
-                        skor_sarpras = df_bln['RATA SP'].mean()
-                        skor_digital = df_bln['RATA DS'].mean()
-                        rata_l1 = df_bln['RATA-RATA KESELURUHAN'].mean()
-                        if pd.isna(rata_l1):
-                            rata_l1 = np.nanmean([skor_instruktur, skor_materi, skor_sarpras, skor_digital])
+                        if 'RATA-RATA KESELURUHAN' not in df_bln.columns or df_bln['RATA-RATA KESELURUHAN'].dropna().empty:
+                            df_bln['RATA-RATA KESELURUHAN'] = df_bln[['Engagement Instruktur', 'Relevance Instruktur', 'Satisfaction Instruktur', 'Engagement Materi', 'Relevance Materi', 'Satisfaction Materi', 'Satisfaction Sarana Digital', 'Satisfaction Sarana In Class']].mean(axis=1)
 
-                        # Ambil PIC KI
-                        list_pic_ki = [str(p).strip() for p in df_bln['PIC KI'].dropna().unique() if str(p).strip() not in ["", "nan", "None"]] if 'PIC KI' in df_bln.columns else []
-                        teks_pic_ki = ", ".join(list_pic_ki) if list_pic_ki else "Seluruh Bidang / PIC Terkait"
-
-                        # B. Perhitungan Importance-Performance Analysis (IPA) yang Sinkron
+                        # Kalkulasi Kuadran 1 IPA
                         q1_items = []
                         kategori_ipa_list = [
                             'Engagement Instruktur', 'Relevance Instruktur', 'Satisfaction Instruktur', 
                             'Engagement Materi', 'Relevance Materi', 'Satisfaction Materi', 
                             'Satisfaction Sarana Digital', 'Satisfaction Sarana In Class'
                         ]
-                        
                         df_bln_ipa = df_bln.dropna(subset=['RATA-RATA KESELURUHAN']).copy()
                         if len(df_bln_ipa) >= 2:
                             kinerja_list, kep_list, kat_valid = [], [], []
@@ -1170,58 +1202,53 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                         kinerja_list.append(k_val)
                                         kep_list.append(corr_val if pd.notna(corr_val) else 0.5)
                                         kat_valid.append(kat)
-                            
                             if kat_valid:
                                 df_ipa_res = pd.DataFrame({'Kat': kat_valid, 'Kinerja': kinerja_list, 'Kepentingan': kep_list})
-                                x_cross = 4.50  # Standar TMP PLN
+                                x_cross = 4.50
                                 y_cross = df_ipa_res['Kepentingan'].mean()
                                 q1_items = df_ipa_res[(df_ipa_res['Kinerja'] < x_cross) & (df_ipa_res['Kepentingan'] > y_cross)]['Kat'].tolist()
 
-                        # C. Tarik Data Komentar Berdasarkan Mapping Kolom D, K, dan N
+                        # Pengambilan Komentar dari Sheet Detail Komentar L1
                         jml_pos, jml_neg = 0, 0
                         komentar_per_judul_html = ""
                         try:
                             sheet_id_komentar = '1IDAmFwTbBQDZcKM3eiiEDcA3KwM9WKqW4zCrk__6-PU'
                             url_k = f'https://docs.google.com/spreadsheets/d/{sheet_id_komentar}/gviz/tq?tqx=out:csv&sheet=Detail%20Komentar%20L1'
                             df_k_raw = pd.read_csv(url_k)
+                            df_k_raw.columns = df_k_raw.columns.astype(str).str.strip()
                             
-                            # Identifikasi Kolom Berdasarkan Posisi / Nama
-                            # Kolom D = index 3 (Bulan), Kolom K = index 10 (Komentar), Kolom N = index 13 (Jenis Komentar)
                             col_bulan_k = df_k_raw.columns[3] if len(df_k_raw.columns) > 3 else 'Bulan'
                             col_teks_k  = df_k_raw.columns[10] if len(df_k_raw.columns) > 10 else 'Komentar'
                             col_jenis_k = df_k_raw.columns[13] if len(df_k_raw.columns) > 13 else 'Jenis'
                             col_judul_k = next((c for c in ['Judul Pembelajaran/Kegiatan', 'Judul Pembelajaran', 'Judul', 'Nama Pelatihan'] if c in df_k_raw.columns), df_k_raw.columns[0])
 
-                            # Bersihkan dan filter berdasarkan bulan
                             df_k_raw[col_bulan_k] = df_k_raw[col_bulan_k].astype(str).str.strip()
                             df_k_bln = df_k_raw[df_k_raw[col_bulan_k].str.lower() == str(bulan_pilih).strip().lower()].copy()
 
                             if not df_k_bln.empty:
-                                # Normalisasi Jenis Komentar (Kolom N / Fallback Lexicon)
                                 def tentukan_kategori_komentar(row):
                                     val_n = str(row.get(col_jenis_k, '')).strip().lower()
                                     if 'positif' in val_n or 'apresiasi' in val_n:
                                         return 'Positif'
                                     elif 'negatif' in val_n or 'masukan' in val_n or 'keluhan' in val_n or 'saran' in val_n:
                                         return 'Negatif'
-                                    # Fallback jika kolom N kosong: gunakan lexicon analysis
                                     return analisis_sentimen_opensource(row.get(col_teks_k, ''))
 
                                 df_k_bln['Kategori_Final'] = df_k_bln.apply(tentukan_kategori_komentar, axis=1)
                                 jml_pos = len(df_k_bln[df_k_bln['Kategori_Final'] == 'Positif'])
                                 jml_neg = len(df_k_bln[df_k_bln['Kategori_Final'] == 'Negatif'])
                                 
-                                # Susun HTML Rincian Komentar per Judul
                                 daftar_judul_k = df_k_bln[col_judul_k].dropna().unique()
                                 for jdl in daftar_judul_k:
                                     sub_df = df_k_bln[df_k_bln[col_judul_k] == jdl]
                                     pos_list = sub_df[sub_df['Kategori_Final'] == 'Positif'][col_teks_k].dropna().tolist()
                                     neg_list = sub_df[sub_df['Kategori_Final'] == 'Negatif'][col_teks_k].dropna().tolist()
                                     
-                                    # Cari PIC KI terkait judul ini
                                     pic_jdl = ""
-                                    if 'Judul Pembelajaran/Kegiatan' in df_bln.columns and 'PIC KI' in df_bln.columns:
-                                        match_pic = df_bln[df_bln['Judul Pembelajaran/Kegiatan'] == jdl]['PIC KI'].dropna()
+                                    col_judul_l1 = next((c for c in ['Judul Pembelajaran/Kegiatan', 'Judul Pembelajaran', 'Judul'] if c in df_bln.columns), None)
+                                    col_pic_l1   = next((c for c in ['PIC KI', 'Bidang'] if c in df_bln.columns), None)
+                                    if col_judul_l1 and col_pic_l1:
+                                        match_pic = df_bln[df_bln[col_judul_l1] == jdl][col_pic_l1].dropna()
                                         if not match_pic.empty:
                                             pic_jdl = f" | <b>PIC KI:</b> {match_pic.iloc[0]}"
                                             
@@ -1244,7 +1271,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
                         except Exception as e_k:
                             komentar_per_judul_html = f"<p><i>Gagal memproses data komentar: {e_k}</i></p>"
 
-                        # D. Narasi Kuadran IPA & Rekomendasi Preskriptif
+                        # Narasi Kuadran
                         if q1_items:
                             teks_q1 = "Berdasarkan pemetaan <i>Importance-Performance Analysis</i> (IPA), ditemukan indikator strategis yang masuk ke dalam <b>Kuadran 1 (Prioritas Utama)</b>, yaitu memiliki pengaruh korelasi tinggi terhadap kepuasan peserta namun realisasi kinerjanya masih berada di bawah standar TMP PLN (4.50):<ul style='margin-top:5px;'>" + "".join([f"<li><b>{kat}</b></li>" for kat in q1_items]) + "</ul>"
                             teks_rekomendasi = "Manajemen UPDL Jakarta bersama PIC KI terkait direkomendasikan untuk <b>segera menyusun Rencana Tindakan Korektif (Corrective Action Plan)</b> dengan memprioritaskan alokasi perbaikan pada indikator Kuadran 1 tersebut di atas guna mendongkrak indeks kepuasan mutu secara efektif pada siklus pembelajaran berikutnya."
@@ -1252,7 +1279,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
                             teks_q1 = "Berdasarkan analisis IPA, <b>tidak ditemukan indikator kritis yang jatuh ke dalam Kuadran 1</b>. Seluruh variabel mutu layanan berada pada tingkat kepuasan yang selaras dengan ekspektasi peserta."
                             teks_rekomendasi = "Manajemen direkomendasikan untuk mempertahankan konsistensi mutu layanan (<i>Service Excellence</i>) dan melakukan pemantauan berkala terhadap kestabilan performa sarana maupun instruktur."
 
-                        # E. GEMINI AI: Executive Summary Preskriptif & Informatif
+                        # Narasi Gemini AI
                         narasi_eksekutif_ai = ""
                         try:
                             prompt_ai = f"""
@@ -1276,7 +1303,6 @@ elif menu_selection == "📑 REPORT & KATALOG":
                         except Exception as ai_err:
                             narasi_eksekutif_ai = f"Pada periode {bulan_pilih}, pelaksanaan evaluasi mutu pembelajaran Level 1 mencatatkan skor rata-rata keseluruhan sebesar {rata_l1:.2f} dari total {total_sesi} sesi pelatihan yang diselenggarakan bersama PIC KI ({teks_pic_ki}). Capaian mutu tercatat pada pilar Instruktur ({skor_instruktur:.2f}), Materi ({skor_materi:.2f}), Sarana In-Class ({skor_sarpras:.2f}), dan Sarana Digital ({skor_digital:.2f}).<br><br>Pemetaan analitik IPA mengidentifikasi fokus perbaikan pada area strategis dengan dukungan {jml_pos} komentar apresiasi dan {jml_neg} komentar masukan sebagai dasar perbaikan berkelanjutan di UPDL Jakarta."
 
-                        # Format Visual Status Tabel (Bebas dari Emoji Corrupt di Word)
                         def format_status_badge(skor):
                             if pd.isna(skor): return "Data Belum Ada"
                             return "[ Memenuhi TMP ]" if skor >= 4.50 else "[ Di Bawah TMP ]"
@@ -1284,7 +1310,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
                         def format_skor(val):
                             return f"{val:.2f}" if pd.notna(val) else "-"
 
-                        # F. TEMPLATE DOKUMEN WORD (.DOC)
+                        # Rakit Template Word (.doc)
                         html_content = f"""
                         <html><head><meta charset="utf-8"></head><body style="font-family: 'Times New Roman', Times, serif; line-height: 1.5; font-size: 11.5pt;">
                             <h2 style="text-align:center; color:#003366; margin-bottom: 2px;">LAPORAN EVALUASI MUTU PEMBELAJARAN L1</h2>
@@ -1397,14 +1423,12 @@ elif menu_selection == "📑 REPORT & KATALOG":
         
         try:
             df_katalog_raw = pd.read_csv(url_ins_katalog)
+            df_katalog_raw.columns = df_katalog_raw.columns.astype(str).str.strip()
             
             if not df_katalog_raw.empty:
-                df_katalog_raw['Ins-Eng'] = pd.to_numeric(df_katalog_raw['Ins-Eng'], errors='coerce')
-                df_katalog_raw['Ins-Rel'] = pd.to_numeric(df_katalog_raw['Ins-Rel'], errors='coerce')
-                df_katalog_raw['Ins-Sat'] = pd.to_numeric(df_katalog_raw['Ins-Sat'], errors='coerce')
-                df_katalog_raw['Ins-Rat'] = pd.to_numeric(df_katalog_raw['Ins-Rat'], errors='coerce')
-                if 'Durasi Mengajar' in df_katalog_raw.columns:
-                    df_katalog_raw['Durasi Mengajar'] = pd.to_numeric(df_katalog_raw['Durasi Mengajar'], errors='coerce')
+                for c in ['Ins-Eng', 'Ins-Rel', 'Ins-Sat', 'Ins-Rat', 'Durasi Mengajar']:
+                    if c in df_katalog_raw.columns:
+                        df_katalog_raw[c] = pd.to_numeric(df_katalog_raw[c], errors='coerce')
                 
                 col_f1, col_f2 = st.columns(2)
                 with col_f1:
