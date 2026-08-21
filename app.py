@@ -1381,55 +1381,93 @@ elif menu_selection == "📑 REPORT & KATALOG":
                         gap_tmp_text = f"Fokus utama perbaikan ditargetkan pada pilar dengan realisasi skor di bawah target korporat 4.50, yaitu: <b>{', '.join(pilar_kurang_tmp)}</b>. Manajemen perlu memberlakukan standardisasi kesiapan kurikulum, refreshment metode pengajaran instruktur, dan audit sarana berkala." if pilar_kurang_tmp else "Seluruh 4 pilar utama telah melampaui batas TMP (≥ 4.50). Manajemen dianjurkan memperkuat SOP guna mempertahankan stabilitas mutu operasional."
                         q1_action_text = f"Berdasarkan prinsip efisiensi sumber daya (Pareto Principle), alokasi anggaran dan intervensi wajib difokuskan pada area <b>Kuadran 1 ({', '.join(q1_items)})</b>. Perbaikan di area ini memberikan daya ungkit (leverage) paling masif terhadap lonjakan indeks kepuasan pelanggan." if q1_items else "Tidak ada area kritis di Kuadran 1. Pengendalian mutu difokuskan pada pengawasan preventif."
 
-                        # 7. GENERASI TINDAK LANJUT MENDALAM VIA GEMINI AI
+                        # 7. GENERASI TINDAK LANJUT MENDALAM VIA GEMINI AI (DENGAN SAFE FALLBACK)
                         tabel_tindak_lanjut_ai_html = ""
                         if list_semua_masukan_raw:
+                            sample_masukan = list_semua_masukan_raw[:25]
+                            teks_masukan_input = "\n".join([f"- {m}" for m in sample_masukan])
+                            rows_plan = ""
+                            
+                            # Coba generate solusi preskriptif via Gemini AI
                             try:
-                                sample_masukan = list_semua_masukan_raw[:25]
                                 prompt_action_plan = f"""
-                                Anda adalah Senior Quality Management Specialist di PLN UPDL Jakarta.
-                                Berdasarkan daftar suara masukan/keluhan peserta diklat berikut:
-                                {chr(10).join(sample_masukan)}
+Bertindaklah sebagai Senior Quality Management Specialist di PLN UPDL Jakarta.
+Berikut adalah rekaman suara masukan/keluhan peserta pelatihan:
+{teks_masukan_input}
 
-                                Buatkan tabel Rencana Tindak Lanjut Perbaikan Operasional (Action Plan) yang konkret dan solutif.
-                                Klasifikasikan isu-isu tersebut ke dalam kelompok kategori (misal: Instruktur, Materi & Silabus, Sarana Ruang Kelas/In-Class, Sarana Digital/Aplikasi).
+Buatkan tabel Rencana Tindak Lanjut Operasional (Action Plan) konkret dari UPDL Jakarta untuk menjawab isu-isu di atas.
+Klasifikasikan ke dalam kategori area yang relevan (misal: Instruktur & Pengajaran, Materi & Silabus Diklat, Sarana Ruang Kelas/In-Class, atau Sarana Digital & Jaringan).
 
-                                Format output WAJIB HANYA berupa baris-baris HTML <tr> berikut (tanpa blok markdown ```html):
-                                <tr>
-                                    <td style="padding: 7px 10px; vertical-align: top; font-weight: 600; color: #003366;">[Nama Kategori/Pilar]</td>
-                                    <td style="padding: 7px 10px; vertical-align: top; color: #b91c1c;">[Ringkasan Poin Masukan/Keluhan Terkait]</td>
-                                    <td style="padding: 7px 10px; vertical-align: top; color: #15803d; font-weight: 500;">[Rencana Tindak Lanjut Konkret UPDL Jakarta]</td>
-                                    <td style="padding: 7px 10px; vertical-align: top; text-align: center; font-weight: 600; color: #0284c7;">[PIC Terkait: Sarpras / Akademik / Instruktur / PIC KI]</td>
-                                </tr>
-                                Tuliskan 3 hingga 5 baris isu paling krusial, bernada preskriptif korporat PLN, dan operasional.
-                                """
+Output WAJIB HANYA berupa baris-baris tag HTML <tr>...</tr> (tanpa pembungkus ```html):
+<tr>
+    <td style="padding: 8px 10px; vertical-align: top; font-weight: 600; color: #003366;">[Nama Kategori/Pilar]</td>
+    <td style="padding: 8px 10px; vertical-align: top; color: #b91c1c;">[Ringkasan Poin Masukan Terkait]</td>
+    <td style="padding: 8px 10px; vertical-align: top; color: #15803d; font-weight: 500;">[Rencana Tindak Lanjut Operasional UPDL Jakarta]</td>
+    <td style="padding: 8px 10px; vertical-align: top; text-align: center; font-weight: 600; color: #0284c7;">[PIC: Sarpras / Akademik / Instruktur / PIC KI]</td>
+</tr>
+Tuliskan 3 hingga 5 baris isu paling utama dengan bahasa korporat baku PLN.
+"""
                                 ai_plan_resp = model.generate_content(prompt_action_plan)
-                                rows_plan = ai_plan_resp.text.strip().replace('```html', '').replace('```', '')
-                                
-                                tabel_tindak_lanjut_ai_html = f"""
-                                <div style="margin-top: 14px;">
-                                    <div style="font-weight: 700; color: #003366; font-size: 10pt; margin-bottom: 6px; text-transform: uppercase;">
-                                        Matriks Tindak Lanjut & Resolusi Keluhan Peserta (Action Item Tracker - UPDL Jakarta)
-                                    </div>
-                                    <table style="width: 100%; border-collapse: collapse; font-size: 9pt; border: 1px solid #cbd5e1;" border="1">
-                                        <thead>
-                                            <tr style="background-color: #003366; color: #ffffff; text-align: left;">
-                                                <th style="padding: 7px 10px; width: 18%;">Kategori Area</th>
-                                                <th style="padding: 7px 10px; width: 32%;">Isu / Masukan Peserta</th>
-                                                <th style="padding: 7px 10px; width: 35%;">Rencana Tindak Lanjut Operasional (UPDL Jakarta)</th>
-                                                <th style="padding: 7px 10px; width: 15%; text-align: center;">PIC Penanggung Jawab</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {rows_plan}
-                                        </tbody>
-                                    </table>
+                                if ai_plan_resp and hasattr(ai_plan_resp, 'text'):
+                                    rows_plan = ai_plan_resp.text.strip().replace('```html', '').replace('```', '')
+                            except Exception as e_ai:
+                                rows_plan = ""
+
+                            # Fallback Otomatis jika AI tidak merespons (Menjamin tabel tetap terbentuk sempurna)
+                            if not rows_plan or "<tr" not in rows_plan:
+                                fallback_rows = []
+                                for idx_m, item_m in enumerate(sample_masukan[:4], 1):
+                                    txt_clean = item_m.strip()
+                                    kat_area = "Sarana & Prasarana"
+                                    pic_area = "PIC Sarpras"
+                                    solusi_area = "Pemeriksaan dan perbaikan fasilitas kelas, AC, dan perlengkapan praktikum sebelum sesi dimulai."
+                                    
+                                    lower_m = txt_clean.lower()
+                                    if any(w in lower_m for w in ['instruktur', 'pengajar', 'suara', 'bicara', 'waktu', 'jadwal']):
+                                        kat_area = "Kinerja Instruktur"
+                                        pic_area = "Pengelola Instruktur"
+                                        solusi_area = "Briefing pengajar terkait alokasi waktu dan peningkatan interaksi aktif bersama peserta."
+                                    elif any(w in lower_m for w in ['materi', 'modul', 'ppt', 'studi kasus', 'silabus', 'teori']):
+                                        kat_area = "Materi Pembelajaran"
+                                        pic_area = "PIC Akademik"
+                                        solusi_area = "Pemutakhiran studi kasus aktual dan penyesuaian bobot latihan modul."
+                                    elif any(w in lower_m for w in ['aplikasi', 'jaringan', 'wifi', 'internet', 'web', 'login']):
+                                        kat_area = "Sarana Digital"
+                                        pic_area = "Tim TI & Media"
+                                        solusi_area = "Optimalisasi bandwidth internet dan pengecekan aksesibilitas platform e-learning."
+
+                                    fallback_rows.append(f"""
+                                    <tr style="background-color: {'#ffffff' if idx_m % 2 != 0 else '#f8fafc'};">
+                                        <td style="padding: 8px 10px; vertical-align: top; font-weight: 600; color: #003366;">{kat_area}</td>
+                                        <td style="padding: 8px 10px; vertical-align: top; color: #b91c1c;">{txt_clean}</td>
+                                        <td style="padding: 8px 10px; vertical-align: top; color: #15803d; font-weight: 500;">{solusi_area}</td>
+                                        <td style="padding: 8px 10px; vertical-align: top; text-align: center; font-weight: 600; color: #0284c7;">{pic_area}</td>
+                                    </tr>
+                                    """)
+                                rows_plan = "".join(fallback_rows)
+
+                            tabel_tindak_lanjut_ai_html = f"""
+                            <div style="margin-top: 14px;">
+                                <div style="font-weight: 700; color: #003366; font-size: 10pt; margin-bottom: 6px; text-transform: uppercase;">
+                                    Matriks Tindak Lanjut & Resolusi Keluhan Peserta (Action Item Tracker - UPDL Jakarta)
                                 </div>
-                                """
-                            except Exception as e_plan:
-                                tabel_tindak_lanjut_ai_html = f"<p style='font-size:9pt; color:#64748b;'><i>[Tindak lanjut otomatis: PIC Akademik dan Sarpras wajib mengevaluasi {jml_neg} masukan peserta pada rapat tinjauan mutu].</i></p>"
+                                <table style="width: 100%; border-collapse: collapse; font-size: 9.5pt; border: 1px solid #cbd5e1;" border="1">
+                                    <thead>
+                                        <tr style="background-color: #003366; color: #ffffff; text-align: left;">
+                                            <th style="padding: 8px 10px; width: 18%;">Kategori Area</th>
+                                            <th style="padding: 8px 10px; width: 32%;">Isu / Masukan Peserta</th>
+                                            <th style="padding: 8px 10px; width: 35%;">Rencana Tindak Lanjut Operasional (UPDL Jakarta)</th>
+                                            <th style="padding: 8px 10px; width: 15%; text-align: center;">PIC Terkait</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {rows_plan}
+                                    </tbody>
+                                </table>
+                            </div>
+                            """
                         else:
-                            tabel_tindak_lanjut_ai_html = "<div style='background:#f0fdf4; border:1px solid #bbf7d0; padding:8px 12px; border-radius:4px; color:#166534; font-size:9pt; margin-top:8px;'><b>Zero Defect:</b> Tidak terdapat rekaman keluhan atau masukan negatif pada periode ini. Tindak lanjut berfokus pada pemeliharaan standar layanan prima.</div>"
+                            tabel_tindak_lanjut_ai_html = "<div style='background:#f0fdf4; border:1px solid #bbf7d0; padding:10px 14px; border-radius:6px; color:#166534; font-size:9.5pt; margin-top:8px;'><b>Zero Defect:</b> Tidak terdapat rekaman keluhan atau masukan negatif pada periode ini. Tindak lanjut berfokus pada pemeliharaan standar layanan prima.</div>"
 
                         # 8. Gemini AI: Executive Summary Berstandar Konsultan
                         narasi_eksekutif_ai = ""
