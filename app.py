@@ -1063,7 +1063,7 @@ elif menu_selection == "🚨 EARLY WARNING":
     except Exception as e: st.error(f"❌ Gagal memuat data dari Sheet 'Detail Komentar L1'. Detail error: {e}")
 
 # ══════════════════════════════════════════════════════════════════════════════
-# KONTEN: 📑 REPORT & KATALOG (HTML CANVAS IPA & TABEL SUARA PELANGGAN)
+# KONTEN: 📑 REPORT & KATALOG (CONSULTING-GRADE EXECUTIVE DESIGN)
 # ══════════════════════════════════════════════════════════════════════════════
 elif menu_selection == "📑 REPORT & KATALOG":
     sub_rep_generator, sub_katalog = st.tabs(["📑 Report Generator", "👨‍🏫 Katalog Instruktur"])
@@ -1072,8 +1072,8 @@ elif menu_selection == "📑 REPORT & KATALOG":
     # --- SUB TAB 1: REPORT GENERATOR ---
     # ─────────────────────────────────────────────────────────────────────────
     with sub_rep_generator:
-        st.markdown("### 📑 Generator Laporan Manajemen Mutu (Otomatis)")
-        st.write("Menyusun laporan evaluasi mutu L1 komprehensif, mencakup capaian kategori, peta matriks kuadran IPA, tabel komentar apresiasi & masukan per judul pembelajaran, PIC KI, serta narasi AI Executive Summary.")
+        st.markdown("### 📑 Generator Laporan Manajemen Mutu (Executive Edition)")
+        st.write("Menyusun laporan evaluasi mutu komprehensif berstandar konsultan manajemen (McKinsey/PwC style) mencakup Executive Summary, Scorecard Pilar, Peta Matriks IPA, Voice of Customer, dan Strategic Roadmap.")
         
         try:
             df_rep_raw = pd.read_csv(url)
@@ -1098,10 +1098,10 @@ elif menu_selection == "📑 REPORT & KATALOG":
                         bulan_pilih = st.selectbox("📅 Pilih Periode Laporan:", opsi_bulan_rep, key="bln_report")
                     with col_r2:
                         st.markdown("<br>", unsafe_allow_html=True)
-                        btn_generate = st.button("🚀 Generate Dokumen Word", type="primary", use_container_width=True)
+                        btn_generate = st.button("🚀 Generate Laporan Eksekutif", type="primary", use_container_width=True)
                 
                 if btn_generate:
-                    with st.spinner(f"Memproses kalkulasi data & menyusun laporan periode {bulan_pilih}..."):
+                    with st.spinner(f"Menyusun laporan manajemen mutu berstandar konsultan untuk periode {bulan_pilih}..."):
                         df_bln = df_rep_raw[df_rep_raw['Laporan Bulan'].str.lower() == str(bulan_pilih).strip().lower()].copy()
                         total_sesi = len(df_bln)
                         
@@ -1112,7 +1112,6 @@ elif menu_selection == "📑 REPORT & KATALOG":
                             if c in df_bln.columns:
                                 df_bln[c] = pd.to_numeric(df_bln[c], errors='coerce')
                         
-                        # Fallback dinamis pilar evaluasi
                         ins_cols_aktif = [f'INS{i}' for i in range(1, 9) if f'INS{i}' in df_bln.columns]
                         mat_cols_aktif = [f'MAT{i}' for i in range(1, 7) if f'MAT{i}' in df_bln.columns]
                         sp_cols_aktif  = [f'SP{i}' for i in range(1, 6) if f'SP{i}' in df_bln.columns]
@@ -1125,13 +1124,13 @@ elif menu_selection == "📑 REPORT & KATALOG":
                         
                         rata_l1 = df_bln['RATA-RATA KESELURUHAN'].mean() if ('RATA-RATA KESELURUHAN' in df_bln.columns and not df_bln['RATA-RATA KESELURUHAN'].dropna().empty) else np.nanmean([skor_instruktur, skor_materi, skor_sarpras, skor_digital])
 
-                        # Ambil data PIC KI
+                        # PIC KI
                         list_pic_ki = []
                         if 'PIC KI' in df_bln.columns:
                             list_pic_ki = [str(p).strip() for p in df_bln['PIC KI'].dropna().unique() if str(p).strip() not in ["", "nan", "None"]]
                         elif 'Bidang' in df_bln.columns:
                             list_pic_ki = [str(p).strip() for p in df_bln['Bidang'].dropna().unique() if str(p).strip() not in ["", "nan", "None"]]
-                        teks_pic_ki = ", ".join(list_pic_ki) if list_pic_ki else "Seluruh Bidang / PIC Terkait"
+                        teks_pic_ki = ", ".join(list_pic_ki) if list_pic_ki else "Seluruh Bidang Terkait"
 
                         # 2. Rekonstruksi 8 Kategori untuk Analisis IPA
                         if 'INS1' in df_bln.columns and 'INS2' in df_bln.columns:
@@ -1158,7 +1157,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
                         if 'RATA-RATA KESELURUHAN' not in df_bln.columns or df_bln['RATA-RATA KESELURUHAN'].dropna().empty:
                             df_bln['RATA-RATA KESELURUHAN'] = df_bln[['Engagement Instruktur', 'Relevance Instruktur', 'Satisfaction Instruktur', 'Engagement Materi', 'Relevance Materi', 'Satisfaction Materi', 'Satisfaction Sarana Digital', 'Satisfaction Sarana In Class']].mean(axis=1)
 
-                        # 3. Analisis IPA & HTML Canvas Rendering
+                        # 3. Analisis IPA & Visual Canvas Modern
                         kategori_ipa_list = [
                             'Engagement Instruktur', 'Relevance Instruktur', 'Satisfaction Instruktur', 
                             'Engagement Materi', 'Relevance Materi', 'Satisfaction Materi', 
@@ -1189,7 +1188,6 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                 df_q1_detail = df_plot_rep[(df_plot_rep['Kinerja'] < x_cross) & (df_plot_rep['Kepentingan'] > y_cross)].copy()
                                 q1_items = df_q1_detail['Kategori'].tolist()
                                 
-                                # Render Matriks Visual IPA via HTML/CSS Murni (Bebas Kaleido)
                                 min_x = min(3.8, df_plot_rep['Kinerja'].min() - 0.1)
                                 max_x = 5.05
                                 min_y = min(-0.1, df_plot_rep['Kepentingan'].min() - 0.1)
@@ -1198,7 +1196,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                 def hitung_pos_canvas(k, r):
                                     px_left = ((k - min_x) / (max_x - min_x)) * 100
                                     px_top = (1 - ((r - min_y) / (max_y - min_y))) * 100
-                                    return max(2, min(95, px_left)), max(5, min(92, px_top))
+                                    return max(3, min(94, px_left)), max(6, min(90, px_top))
                                 
                                 cross_x_pct, _ = hitung_pos_canvas(x_cross, y_cross)
                                 _, cross_y_pct = hitung_pos_canvas(x_cross, y_cross)
@@ -1207,82 +1205,89 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                 for _, r_pt in df_plot_rep.iterrows():
                                     pos_l, pos_t = hitung_pos_canvas(r_pt['Kinerja'], r_pt['Kepentingan'])
                                     is_q1 = (r_pt['Kinerja'] < x_cross) and (r_pt['Kepentingan'] > y_cross)
-                                    dot_bg = "#d32f2f" if is_q1 else "#0055A4"
+                                    dot_bg = "#dc2626" if is_q1 else "#0f172a"
+                                    badge_bg = "#fee2e2" if is_q1 else "#e2e8f0"
+                                    badge_border = "#ef4444" if is_q1 else "#94a3b8"
+                                    
                                     titik_html += f"""
                                     <div style="position: absolute; left: {pos_l:.1f}%; top: {pos_t:.1f}%; transform: translate(-50%, -50%);">
-                                        <div style="width: 12px; height: 12px; background-color: {dot_bg}; border: 1.5px solid white; border-radius: 50%; box-shadow: 0 0 3px rgba(0,0,0,0.5); margin: auto;"></div>
-                                        <div style="font-size: 8pt; font-weight: bold; color: {dot_bg}; white-space: nowrap; text-shadow: 1px 1px 2px white; margin-top: 1px;">{r_pt['Kategori']} ({r_pt['Kinerja']:.2f})</div>
+                                        <div style="width: 10px; height: 10px; background-color: {dot_bg}; border: 2px solid #ffffff; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.3); margin: auto;"></div>
+                                        <div style="font-size: 7.5pt; font-weight: 600; color: {dot_bg}; background: {badge_bg}; border: 1px solid {badge_border}; padding: 1px 4px; border-radius: 3px; white-space: nowrap; margin-top: 2px;">
+                                            {r_pt['Kategori']} ({r_pt['Kinerja']:.2f})
+                                        </div>
                                     </div>
                                     """
                                 
                                 ipa_canvas_html = f"""
-                                <div style="margin: 15px 0 10px 0; border: 1.5px solid #003366; background-color: #fdfdfd; border-radius: 6px; padding: 10px;">
-                                    <div style="text-align: center; font-weight: bold; color: #003366; font-size: 11pt; margin-bottom: 8px;">
-                                        MATRIKS IMPORTANCE-PERFORMANCE ANALYSIS (IPA)
+                                <div style="margin: 16px 0 12px 0; border: 1px solid #cbd5e1; background-color: #f8fafc; border-radius: 8px; padding: 14px;">
+                                    <div style="font-size: 10pt; font-weight: 700; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
+                                        Visualisasi Matriks Importance-Performance Analysis (IPA)
                                     </div>
-                                    <div style="position: relative; width: 100%; height: 360px; background-color: #ffffff; border: 1px solid #d0d7de;">
-                                        <!-- Garis Batas Kuadran -->
-                                        <div style="position: absolute; left: {cross_x_pct:.1f}%; top: 0; bottom: 0; width: 2px; border-left: 2px dashed #FFC000;"></div>
-                                        <div style="position: absolute; top: {cross_y_pct:.1f}%; left: 0; right: 0; height: 2px; border-top: 2px dashed #FFC000;"></div>
+                                    <div style="position: relative; width: 100%; height: 350px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px;">
+                                        <!-- Garis Crosshair -->
+                                        <div style="position: absolute; left: {cross_x_pct:.1f}%; top: 0; bottom: 0; width: 2px; border-left: 2px dashed #f59e0b;"></div>
+                                        <div style="position: absolute; top: {cross_y_pct:.1f}%; left: 0; right: 0; height: 2px; border-top: 2px dashed #f59e0b;"></div>
                                         
-                                        <!-- Label Kuadran -->
-                                        <div style="position: absolute; top: 6px; left: 8px; font-size: 9pt; font-weight: bold; color: #d32f2f; background: rgba(255,255,255,0.85); padding: 2px 4px; border-radius: 3px;">
-                                            KUADRAN 1<br><span style="font-size: 8pt; font-weight: normal;">🚨 Prioritas Utama (Kritis)</span>
+                                        <!-- Label Kuadran Konsultan -->
+                                        <div style="position: absolute; top: 8px; left: 10px; font-size: 8pt; font-weight: 700; color: #b91c1c; background: #fff1f2; border: 1px solid #fecdd3; padding: 3px 6px; border-radius: 4px;">
+                                            KUADRAN I: PRIORITAS UTAMA (KRITIS)
                                         </div>
-                                        <div style="position: absolute; top: 6px; right: 8px; font-size: 9pt; font-weight: bold; color: #2e7d32; background: rgba(255,255,255,0.85); padding: 2px 4px; border-radius: 3px; text-align: right;">
-                                            KUADRAN 2<br><span style="font-size: 8pt; font-weight: normal;">🌟 Pertahankan Kinerja</span>
+                                        <div style="position: absolute; top: 8px; right: 10px; font-size: 8pt; font-weight: 700; color: #15803d; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 3px 6px; border-radius: 4px; text-align: right;">
+                                            KUADRAN II: PERTAHANKAN PRESTASI
                                         </div>
-                                        <div style="position: absolute; bottom: 6px; left: 8px; font-size: 9pt; font-weight: bold; color: #757575; background: rgba(255,255,255,0.85); padding: 2px 4px; border-radius: 3px;">
-                                            KUADRAN 3<br><span style="font-size: 8pt; font-weight: normal;">📉 Prioritas Rendah</span>
+                                        <div style="position: absolute; bottom: 8px; left: 10px; font-size: 8pt; font-weight: 700; color: #475569; background: #f1f5f9; border: 1px solid #cbd5e1; padding: 3px 6px; border-radius: 4px;">
+                                            KUADRAN III: PRIORITAS RENDAH
                                         </div>
-                                        <div style="position: absolute; bottom: 6px; right: 8px; font-size: 9pt; font-weight: bold; color: #f57c00; background: rgba(255,255,255,0.85); padding: 2px 4px; border-radius: 3px; text-align: right;">
-                                            KUADRAN 4<br><span style="font-size: 8pt; font-weight: normal;">⚠️ Berlebihan / Cukup</span>
+                                        <div style="position: absolute; bottom: 8px; right: 10px; font-size: 8pt; font-weight: 700; color: #c2410c; background: #fff7ed; border: 1px solid #fed7aa; padding: 3px 6px; border-radius: 4px; text-align: right;">
+                                            KUADRAN IV: BERLEBIHAN (MAINTAIN)
                                         </div>
                                         
-                                        <!-- Titik-titik Indikator -->
                                         {titik_html}
                                     </div>
-                                    <div style="display: flex; justify-content: space-between; font-size: 8.5pt; color: #555; margin-top: 4px;">
-                                        <span>← Sumbu Kinerja Rendah</span>
-                                        <span>Garis Batas TMP PLN (Kinerja = 4.50) | Garis Rata-rata Kepentingan ({y_cross:.2f})</span>
-                                        <span>Sumbu Kinerja Tinggi →</span>
+                                    <div style="display: flex; justify-content: space-between; font-size: 8pt; color: #64748b; margin-top: 6px;">
+                                        <span>← Kinerja Rendah (Di Bawah Harapan)</span>
+                                        <span><b>Batas TMP PLN (4.50)</b> | <b>Garis Tengah Korelasi ({y_cross:.2f})</b></span>
+                                        <span>Kinerja Tinggi (Sangat Memuaskan) →</span>
                                     </div>
                                 </div>
                                 """
 
-                        # 4. Penjelasan Rinci Indikator Kuadran 1
+                        # 4. Diagnosis Mendalam Indikator Kuadran 1
                         penjelasan_q1_html = ""
                         kamus_deskripsi_indikator = {
-                            'Engagement Instruktur': "Tingkat partisipasi interaktif, kemampuan melibatkan peserta dalam diskusi, dan dinamika pengajaran di kelas.",
-                            'Relevance Instruktur': "Kesesuaian contoh kasus, aplikasi praktis di unit kerja PLN, dan relevansi pengalaman instruktur terhadap materi.",
-                            'Satisfaction Instruktur': "Metode penyampaian pengajaran, penguasaan studi kasus, manajemen alokasi waktu, serta profesionalisme instruktur.",
-                            'Engagement Materi': "Daya tarik bahan ajar, stimulasi diskusi aktif peserta, dan motivasi belajar yang dibangun melalui modul.",
-                            'Relevance Materi': "Aplikabilitas materi terhadap pekerjaan nyata di unit, kedalaman silabus, dan peningkatan kompetensi langsung.",
-                            'Satisfaction Materi': "Kualitas visual materi, kemudahan memahami konsep modul, serta bobot referensi ajar.",
-                            'Satisfaction Sarana Digital': "Kestabilan platform pembelajaran online, akses modul digital, media interaktif, dan keandalan jaringan internet.",
-                            'Satisfaction Sarana In Class': "Kenyamanan fisik ruang kelas, peralatan laboratorium/praktik, kebersihan, dan fasilitas pendukung pembelajaran di UPDL."
+                            'Engagement Instruktur': "Tingkat partisipasi interaktif dan kemampuan melibatkan peserta dalam diskusi kelas.",
+                            'Relevance Instruktur': "Aplikabilitas materi terhadap pekerjaan nyata di unit kerja serta kejelasan contoh kasus.",
+                            'Satisfaction Instruktur': "Metode penyampaian materi, penguasaan studi kasus, dan manajemen waktu pengajaran.",
+                            'Engagement Materi': "Daya tarik bahan ajar dan kemampuan menstimulasi motivasi belajar peserta.",
+                            'Relevance Materi': "Relevansi silabus terhadap peningkatan kompetensi dan kebutuhan operasional di lapangan.",
+                            'Satisfaction Materi': "Kualitas estetika visual bahan tayang dan kejelasan struktur modul.",
+                            'Satisfaction Sarana Digital': "Kestabilan platform online, aksesibilitas modul digital, dan keandalan jaringan internet.",
+                            'Satisfaction Sarana In Class': "Kenyamanan fisik ruang kelas, peralatan praktikum, dan fasilitas penunjang di UPDL."
                         }
 
                         if not df_q1_detail.empty:
-                            penjelasan_q1_html += "<p style='text-align: justify; margin-bottom: 6px;'>Berikut adalah diagnosis mendalam terhadap indikator yang masuk ke dalam <b>Kuadran 1 (Prioritas Utama)</b>:</p><ol style='margin-top:0; padding-left: 20px; text-align: justify;'>"
+                            penjelasan_q1_html += "<div style='margin-top: 10px;'>"
                             for _, r_q1 in df_q1_detail.iterrows():
                                 kat_name = r_q1['Kategori']
                                 kin_val = r_q1['Kinerja']
                                 kep_val = r_q1['Kepentingan']
                                 gap_val = 4.50 - kin_val
                                 desc_text = kamus_deskripsi_indikator.get(kat_name, "Elemen pembelajaran utama yang memerlukan evaluasi.")
+                                
                                 penjelasan_q1_html += f"""
-                                <li style="margin-bottom: 8px;">
-                                    <b>{kat_name}</b> (Realisasi Skor: <b>{kin_val:.2f}</b> | Korelasi: <b>{kep_val:.3f}</b> | Gap TMP: <b>-{gap_val:.2f}</b>)<br>
-                                    <i>Definisi Fokus:</i> {desc_text}<br>
-                                    <i>Akar Masalah:</i> Indikator ini memiliki sensitivitas pengaruh tinggi terhadap kepuasan peserta (korelasi > {y_cross:.2f}), namun realisasi kinerjanya belum memenuhi target TMP PLN (4.50). Area ini wajib diprioritaskan dalam siklus perbaikan operasional berikutnya.
-                                </li>
+                                <div style="border-left: 4px solid #dc2626; background: #fff8f8; padding: 10px 14px; border-radius: 0 6px 6px 0; margin-bottom: 8px; border: 1px solid #fee2e2; border-left-width: 4px;">
+                                    <div style="font-weight: 700; color: #991b1b; font-size: 10.5pt; margin-bottom: 2px;">
+                                        {kat_name} <span style="font-weight: 400; color: #475569; font-size: 9.5pt;">(Realisasi: <b>{kin_val:.2f}</b> / 5.00 | Korelasi: <b>{kep_val:.3f}</b> | Gap TMP: <b style="color:#b91c1c;">-{gap_val:.2f}</b>)</span>
+                                    </div>
+                                    <div style="font-size: 9.5pt; color: #334155; margin-bottom: 2px;"><b>Fokus Elemen:</b> {desc_text}</div>
+                                    <div style="font-size: 9.5pt; color: #7f1d1d;"><b>Akar Masalah:</b> Indikator ini merupakan <i>Key Driver</i> yang sangat sensitif terhadap kepuasan akhir peserta (Korelasi > {y_cross:.2f}), namun skor riilnya berada di bawah standar TMP (4.50). Mengabaikan indikator ini berpotensi menurunkan citra kualitas pembelajaran secara signifikan.</div>
+                                </div>
                                 """
-                            penjelasan_q1_html += "</ol>"
+                            penjelasan_q1_html += "</div>"
                         else:
-                            penjelasan_q1_html = "<p style='text-align: justify;'>Berdasarkan analisis IPA, <b>tidak ditemukan indikator kritis yang jatuh ke dalam Kuadran 1</b>. Seluruh variabel mutu layanan berada pada tingkat kepuasan yang selaras dengan standar TMP PLN.</p>"
+                            penjelasan_q1_html = "<div style='background:#f0fdf4; border:1px solid #bbf7d0; padding:10px 14px; border-radius:6px; color:#166534; font-size:10pt;'><b>Status Mutu Prima:</b> Tidak ditemukan indikator yang jatuh ke dalam Kuadran 1. Seluruh variabel strategis berhasil memenuhi atau melampaui standar kinerja korporat (TMP 4.50).</div>"
 
-                        # 5. Rekapitulasi Suara Pelanggan (TABEL BERSIH TANPA TANGGAL)
+                        # 5. Suara Pelanggan (Tabel Konsultan Bersih)
                         jml_pos, jml_neg = 0, 0
                         tabel_suara_pelanggan_html = ""
                         try:
@@ -1320,7 +1325,6 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                     pos_list = sub_df[sub_df['Kategori_Final'] == 'Positif'][col_teks_k].dropna().tolist()
                                     neg_list = sub_df[sub_df['Kategori_Final'] == 'Negatif'][col_teks_k].dropna().tolist()
                                     
-                                    # Cari PIC KI terkait judul
                                     pic_jdl = "-"
                                     col_judul_l1 = next((c for c in ['Judul Pembelajaran/Kegiatan', 'Judul Pembelajaran', 'Judul'] if c in df_bln.columns), None)
                                     col_pic_l1   = next((c for c in ['PIC KI', 'Bidang'] if c in df_bln.columns), None)
@@ -1329,28 +1333,29 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                         if not match_pic.empty:
                                             pic_jdl = str(match_pic.iloc[0])
                                             
-                                    pos_html = "<ul style='margin: 0; padding-left: 16px;'>" + "".join([f"<li style='margin-bottom: 2px; color: #1b5e20;'>{t}</li>" for t in pos_list]) + "</ul>" if pos_list else "<span style='color: #888;'>-</span>"
-                                    neg_html = "<ul style='margin: 0; padding-left: 16px;'>" + "".join([f"<li style='margin-bottom: 2px; color: #b71c1c;'>{t}</li>" for t in neg_list]) + "</ul>" if neg_list else "<span style='color: #888;'>-</span>"
+                                    pos_html = "<ul style='margin: 0; padding-left: 14px; font-size: 9pt;'>" + "".join([f"<li style='margin-bottom: 2px; color: #15803d;'>{t}</li>" for t in pos_list]) + "</ul>" if pos_list else "<span style='color: #94a3b8; font-size: 9pt;'>-</span>"
+                                    neg_html = "<ul style='margin: 0; padding-left: 14px; font-size: 9pt;'>" + "".join([f"<li style='margin-bottom: 2px; color: #b91c1c;'>{t}</li>" for t in neg_list]) + "</ul>" if neg_list else "<span style='color: #94a3b8; font-size: 9pt;'>-</span>"
                                     
+                                    bg_row = "#ffffff" if idx % 2 != 0 else "#f8fafc"
                                     baris_tabel_komentar += f"""
-                                    <tr style="background-color: {'#ffffff' if idx % 2 != 0 else '#f9f9f9'};">
-                                        <td style="padding: 6px 8px; text-align: center; vertical-align: top;">{idx}</td>
-                                        <td style="padding: 6px 8px; vertical-align: top;"><b>{jdl}</b></td>
-                                        <td style="padding: 6px 8px; text-align: center; vertical-align: top;">{pic_jdl}</td>
-                                        <td style="padding: 6px 8px; vertical-align: top;">{pos_html}</td>
-                                        <td style="padding: 6px 8px; vertical-align: top;">{neg_html}</td>
+                                    <tr style="background-color: {bg_row}; border-bottom: 1px solid #e2e8f0;">
+                                        <td style="padding: 8px 6px; text-align: center; vertical-align: top; font-weight: bold; color: #64748b;">{idx}</td>
+                                        <td style="padding: 8px 10px; vertical-align: top; color: #0f172a; font-weight: 600;">{jdl}</td>
+                                        <td style="padding: 8px 6px; text-align: center; vertical-align: top; color: #0284c7; font-weight: 600;">{pic_jdl}</td>
+                                        <td style="padding: 8px 10px; vertical-align: top;">{pos_html}</td>
+                                        <td style="padding: 8px 10px; vertical-align: top;">{neg_html}</td>
                                     </tr>
                                     """
                                 
                                 tabel_suara_pelanggan_html = f"""
-                                <table style="width: 100%; border-collapse: collapse; font-size: 10pt; margin-top: 8px; margin-bottom: 12px;" border="1">
+                                <table style="width: 100%; border-collapse: collapse; font-size: 9.5pt; margin-top: 10px; margin-bottom: 12px; border: 1px solid #cbd5e1;" border="1">
                                     <thead>
-                                        <tr style="background-color: #003366; color: white; text-align: center;">
-                                            <th style="padding: 6px 8px; width: 4%;">No</th>
-                                            <th style="padding: 6px 8px; width: 32%;">Judul Pembelajaran</th>
-                                            <th style="padding: 6px 8px; width: 10%;">PIC KI</th>
-                                            <th style="padding: 6px 8px; width: 27%;">Komentar Apresiasi</th>
-                                            <th style="padding: 6px 8px; width: 27%;">Komentar Masukan / Evaluasi</th>
+                                        <tr style="background-color: #0f172a; color: #ffffff; text-align: center;">
+                                            <th style="padding: 8px 6px; width: 4%;">No</th>
+                                            <th style="padding: 8px 10px; width: 32%; text-align: left;">Judul Pembelajaran</th>
+                                            <th style="padding: 8px 6px; width: 10%;">PIC KI</th>
+                                            <th style="padding: 8px 10px; width: 27%; text-align: left;">Komentar Apresiasi</th>
+                                            <th style="padding: 8px 10px; width: 27%; text-align: left;">Komentar Masukan / Evaluasi</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -1359,176 +1364,234 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                 </table>
                                 """
                             else:
-                                tabel_suara_pelanggan_html = "<p><i>Tidak ada data komentar peserta untuk periode ini.</i></p>"
+                                tabel_suara_pelanggan_html = "<p style='color: #64748b;'><i>Tidak ada rekaman komentar peserta untuk periode ini.</i></p>"
                         except Exception as e_k:
                             tabel_suara_pelanggan_html = f"<p><i>Gagal memproses data komentar: {e_k}</i></p>"
 
-                        # 6. Rekomendasi Preskriptif Menjawab TMP < 4.5 & Kuadran 1
+                        # 6. Strategic Roadmap & Rekomendasi Solutif
                         pilar_kurang_tmp = []
                         if pd.notna(skor_instruktur) and skor_instruktur < 4.50: pilar_kurang_tmp.append(f"Kinerja Instruktur ({skor_instruktur:.2f})")
                         if pd.notna(skor_materi) and skor_materi < 4.50: pilar_kurang_tmp.append(f"Materi Pembelajaran ({skor_materi:.2f})")
                         if pd.notna(skor_sarpras) and skor_sarpras < 4.50: pilar_kurang_tmp.append(f"Sarana In-Class ({skor_sarpras:.2f})")
                         if pd.notna(skor_digital) and skor_digital < 4.50: pilar_kurang_tmp.append(f"Sarana Digital ({skor_digital:.2f})")
 
-                        teks_rekomendasi_html = "<ol style='margin-top:5px; padding-left:20px; text-align:justify;'>"
-                        
-                        if pilar_kurang_tmp:
-                            teks_rekomendasi_html += f"""
-                            <li style='margin-bottom:8px;'>
-                                <b>Pemenuhan Standar Minimum TMP PLN (Skor < 4.50):</b><br>
-                                Ditemukan pilar mutu yang belum mencapai target TMP yaitu: <b>{', '.join(pilar_kurang_tmp)}</b>. 
-                                Manajemen UPDL Jakarta bersama PIC KI terkait ({teks_pic_ki}) perlu melakukan <i>gap analysis</i> kurikulum, refreshment teknik mengajar instruktur, serta audit kesiapan sarana sebelum kelas dimulai agar rata-rata capaian kembali melampaui target korporat 4.50.
-                            </li>
-                            """
-                        else:
-                            teks_rekomendasi_html += "<li style='margin-bottom:8px;'><b>Pemenuhan Standar TMP PLN:</b> Seluruh 4 pilar utama telah mencapai dan melampaui batas TMP (≥ 4.50). Manajemen direkomendasikan mempertahankan standar operasional (SOP) yang sudah berjalan prima.</li>"
-                        
-                        if q1_items:
-                            teks_rekomendasi_html += f"""
-                            <li style='margin-bottom:8px;'>
-                                <b>Intervensi Area Kritis Kuadran 1 ({', '.join(q1_items)}):</b><br>
-                                Berdasarkan prinsip efisiensi sumber daya (Pareto Improvement), alokasi perbaikan <b>wajib diprioritaskan pada indikator Kuadran 1</b>. Tindakan korektif meliputi pemutakhiran modul studi kasus aktual, pelatihan interaksi aktif instruktur, serta optimalisasi peralatan penunjang pembelajaran. Perbaikan di area ini memberikan daya ungkit terbesar terhadap lonjakan kepuasan peserta.
-                            </li>
-                            """
-                        else:
-                            teks_rekomendasi_html += "<li style='margin-bottom:8px;'><b>Optimasi Kuadran Mutu:</b> Tidak ditemukan area kritis di Kuadran 1. Pengendalian mutu difokuskan pada pemantauan preventif terhadap potensi penurunan skor di kuadran lainnya.</li>"
+                        gap_tmp_text = f"Fokus utama perbaikan ditargetkan pada pilar dengan realisasi skor di bawah target korporat 4.50, yaitu: <b>{', '.join(pilar_kurang_tmp)}</b>. Manajemen perlu memberlakukan standardisasi kesiapan kurikulum, refreshment metode pengajaran instruktur, dan audit sarana berkala." if pilar_kurang_tmp else "Seluruh 4 pilar utama telah melampaui batas TMP (≥ 4.50). Manajemen dianjurkan memperkuat SOP guna mempertahankan stabilitas mutu operasional."
+                        q1_action_text = f"Berdasarkan prinsip efisiensi sumber daya (Pareto Principle), alokasi anggaran dan intervensi wajib difokuskan pada area <b>Kuadran 1 ({', '.join(q1_items)})</b>. Perbaikan di area ini memberikan daya ungkit (leverage) paling masif terhadap lonjakan indeks kepuasan pelanggan." if q1_items else "Tidak ada area kritis di Kuadran 1. Pengendalian mutu difokuskan pada pengawasan preventif."
 
-                        teks_rekomendasi_html += f"""
-                        <li style='margin-bottom:8px;'>
-                            <b>Resolusi Suara Pelanggan (Voice of Customer):</b><br>
-                            Merespons <b>{jml_neg} komentar masukan/keluhan</b> pada tabel di atas, PIC KI dan pengelola diklat diwajibkan menyusun <i>Action Plan</i> penanganan keluhan spesifik per judul pembelajaran dan mengevaluasi efektivitasnya pada siklus evaluasi bulan berikutnya.
-                        </li>
-                        </ol>
-                        """
-
-                        # 7. Gemini AI: Executive Summary Preskriptif
+                        # 7. Gemini AI: Executive Summary Berstandar Konsultan
                         narasi_eksekutif_ai = ""
                         try:
                             prompt_ai = f"""
-                            Anda adalah Senior Quality Management Specialist di PLN UPDL Jakarta. Buatkan Ringkasan Eksekutif (Executive Summary) formal, berbobot, dan padat (2 paragraf) untuk Laporan Mutu Pembelajaran Level 1.
+                            Bertindaklah sebagai Senior Management Consultant (McKinsey/PwC style) untuk PLN UPDL Jakarta. Buatkan Ringkasan Eksekutif (Executive Summary) formal, berbobot, padat, dan analitis (maksimal 2 paragraf) untuk Laporan Evaluasi Mutu Pembelajaran Level 1.
                             
                             Fakta Data Periode {bulan_pilih}:
                             - Total Pelaksanaan: {total_sesi} sesi/pelatihan.
                             - Rata-rata Skor L1 Keseluruhan: {rata_l1:.2f} (Standar TMP PLN: 4.50).
                             - Capaian Pilar: Instruktur = {skor_instruktur:.2f}, Materi = {skor_materi:.2f}, Sarana In-Class = {skor_sarpras:.2f}, Sarana Digital = {skor_digital:.2f}.
-                            - Pilar di Bawah TMP: {', '.join(pilar_kurang_tmp) if pilar_kurang_tmp else 'Nihil (Semua Memenuhi)'}.
-                            - Indikator Kritis Kuadran 1 (Prioritas Utama): {', '.join(q1_items) if q1_items else 'Nihil / Tidak Ada'}.
-                            - Suara Pelanggan: {jml_pos} Apresiasi dan {jml_neg} Masukan/Keluhan.
+                            - Pilar di Bawah TMP: {', '.join(pilar_kurang_tmp) if pilar_kurang_tmp else 'Semua Pilar Memenuhi TMP'}.
+                            - Indikator Kritis Kuadran 1: {', '.join(q1_items) if q1_items else 'Nihil (Tidak Ada)'}.
+                            - Voice of Customer: {jml_pos} Apresiasi dan {jml_neg} Masukan/Keluhan.
                             - PIC KI yang bertugas: {teks_pic_ki}.
                             
-                            Pedoman Penulisan:
-                            1. Paragraf 1: Analisis capaian skor total vs TMP 4.50, gap pilar evaluasi, dan koordinasi dengan PIC KI.
-                            2. Paragraf 2: Paparkan temuan kritis Kuadran 1 IPA, sintesis suara pelanggan, dan arah kebijakan perbaikan operasional ke depan.
-                            3. Gunakan Bahasa Indonesia baku korporat PLN, lugas, preskriptif, tanpa markdown bintang tebal.
+                            Struktur Narasi:
+                            - Paragraf 1: Analisis komprehensif performa mutu pembelajaran periode berjalan, perbandingan terhadap standar korporat (TMP 4.50), serta peran kolaborasi bersama PIC KI.
+                            - Paragraf 2: Diagnosis area kritis Kuadran 1 IPA, sintesis suara pelanggan, dan arah kebijakan prioritas perbaikan mutu.
+                            - Gaya Bahasa: Profesional, tajam, berbasis bukti data, tanpa markdown bintang tebal.
                             """
                             ai_resp = model.generate_content(prompt_ai)
                             narasi_eksekutif_ai = ai_resp.text.strip().replace('\n', '<br>')
                         except Exception as ai_err:
-                            narasi_eksekutif_ai = f"Pada periode {bulan_pilih}, pelaksanaan evaluasi mutu pembelajaran Level 1 mencatatkan skor rata-rata sebesar {rata_l1:.2f} dari total {total_sesi} sesi pelatihan. Koordinasi diselenggarakan bersama PIC KI ({teks_pic_ki}). Capaian mutu tercatat pada pilar Instruktur ({skor_instruktur:.2f}), Materi ({skor_materi:.2f}), Sarana In-Class ({skor_sarpras:.2f}), dan Sarana Digital ({skor_digital:.2f}).<br><br>Pemetaan analitik IPA mengidentifikasi fokus perbaikan pada area strategis dengan dukungan {jml_pos} komentar apresiasi dan {jml_neg} komentar masukan sebagai dasar perbaikan berkelanjutan di UPDL Jakarta."
+                            narasi_eksekutif_ai = f"Pada periode {bulan_pilih}, evaluasi mutu pembelajaran Level 1 mencatatkan skor rata-rata sebesar {rata_l1:.2f} dari {total_sesi} batch pelatihan yang diselenggarakan bersama PIC KI ({teks_pic_ki}). Capaian mutu mencakup pilar Instruktur ({skor_instruktur:.2f}), Materi ({skor_materi:.2f}), Sarana In-Class ({skor_sarpras:.2f}), dan Sarana Digital ({skor_digital:.2f}).<br><br>Pemetaan analitik IPA mengidentifikasi fokus perbaikan pada area strategis dengan dukungan {jml_pos} komentar apresiasi dan {jml_neg} masukan sebagai landasan perbaikan mutu berkesinambungan di UPDL Jakarta."
 
-                        def format_status_badge(skor):
-                            if pd.isna(skor): return "Data Belum Ada"
-                            return "[ Memenuhi TMP ]" if skor >= 4.50 else "[ Di Bawah TMP ]"
+                        def format_pill_badge(skor):
+                            if pd.isna(skor): return "<span style='color:#64748b;'>N/A</span>"
+                            if skor >= 4.50:
+                                return "<span style='background-color:#dcfce7; color:#15803d; padding:2px 8px; border-radius:12px; font-weight:600; font-size:8.5pt;'>Memenuhi TMP</span>"
+                            return "<span style='background-color:#fee2e2; color:#b91c1c; padding:2px 8px; border-radius:12px; font-weight:600; font-size:8.5pt;'>Di Bawah TMP</span>"
 
-                        def format_skor(val):
+                        def format_skor_val(val):
                             return f"{val:.2f}" if pd.notna(val) else "-"
 
-                        # 8. Rakit Template Word (.doc)
+                        # 8. Template Dokumen Word Berstandar Konsultan Global (.DOC)
                         html_content = f"""
-                        <html><head><meta charset="utf-8"></head><body style="font-family: 'Times New Roman', Times, serif; line-height: 1.5; font-size: 11.5pt;">
-                            <h2 style="text-align:center; color:#003366; margin-bottom: 2px;">LAPORAN EVALUASI MUTU PEMBELAJARAN L1</h2>
-                            <h3 style="text-align:center; margin-top: 0;">UPDL JAKARTA - PERIODE {bulan_pilih.upper()}</h3>
-                            <hr style="border: 1.5px solid black; margin-bottom: 15px;">
-                            
-                            <table style="width:100%; border:none; margin-bottom:15px; font-size:11pt;">
-                                <tr>
-                                    <td style="width:25%;"><b>Periode Laporan</b></td><td style="width:2%;">:</td><td style="width:73%;">{bulan_pilih}</td>
-                                </tr>
-                                <tr>
-                                    <td><b>PIC KI Terkait</b></td><td>:</td><td>{teks_pic_ki}</td>
-                                </tr>
-                                <tr>
-                                    <td><b>Total Kelas Terlaksana</b></td><td>:</td><td>{total_sesi} Pelatihan / Batch</td>
-                                </tr>
+                        <html>
+                        <head>
+                            <meta charset="utf-8">
+                            <style>
+                                body {{ font-family: 'Segoe UI', Arial, Helvetica, sans-serif; line-height: 1.5; color: #1e293b; font-size: 11pt; }}
+                                h2, h3, h4 {{ font-family: 'Segoe UI', Arial, sans-serif; }}
+                                table {{ border-collapse: collapse; width: 100%; }}
+                            </style>
+                        </head>
+                        <body>
+                            <!-- HEADER UTAMA KONSULTAN -->
+                            <div style="border-bottom: 3px solid #0055A4; padding-bottom: 12px; margin-bottom: 20px;">
+                                <table style="width: 100%; border: none;">
+                                    <tr>
+                                        <td style="vertical-align: middle; border: none;">
+                                            <div style="font-size: 8.5pt; font-weight: 700; color: #0055A4; text-transform: uppercase; letter-spacing: 1px;">
+                                                PLN CORPORATE UNIVERSITY &bull; UPDL JAKARTA
+                                            </div>
+                                            <h2 style="margin: 2px 0 0 0; color: #003366; font-size: 17pt;">
+                                                LAPORAN EVALUASI MUTU PEMBELAJARAN (LEVEL 1)
+                                            </h2>
+                                            <div style="font-size: 11pt; color: #64748b; margin-top: 2px;">
+                                                Executive Performance Report &bull; Periode: <b>{bulan_pilih.upper()}</b>
+                                            </div>
+                                        </td>
+                                        <td style="text-align: right; vertical-align: middle; border: none; width: 30%;">
+                                            <div style="background: #f1f5f9; padding: 6px 12px; border-radius: 6px; display: inline-block; text-align: right;">
+                                                <div style="font-size: 8pt; color: #64748b;">Grand Average Score</div>
+                                                <div style="font-size: 16pt; font-weight: 800; color: {'#15803d' if rata_l1 >= 4.50 else '#b91c1c'};">
+                                                    {format_skor_val(rata_l1)} <span style="font-size: 9pt; font-weight: normal; color: #64748b;">/ 5.00</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+
+                            <!-- METADATA PROYEK -->
+                            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 14px; margin-bottom: 18px;">
+                                <table style="width: 100%; border: none; font-size: 9.5pt;">
+                                    <tr>
+                                        <td style="width: 20%; color: #64748b; border: none;"><b>Periode Analisis:</b></td>
+                                        <td style="width: 30%; color: #0f172a; border: none;"><b>{bulan_pilih}</b></td>
+                                        <td style="width: 20%; color: #64748b; border: none;"><b>Total Implementasi:</b></td>
+                                        <td style="width: 30%; color: #0f172a; border: none;"><b>{total_sesi} Sesi / Pelatihan</b></td>
+                                    </tr>
+                                    <tr>
+                                        <td style="color: #64748b; border: none;"><b>PIC KI Terkait:</b></td>
+                                        <td style="color: #0f172a; border: none;" colspan="3">{teks_pic_ki}</td>
+                                    </tr>
+                                </table>
+                            </div>
+
+                            <!-- 1. EXECUTIVE SUMMARY -->
+                            <h3 style="color: #003366; font-size: 12.5pt; border-bottom: 1.5px solid #cbd5e1; padding-bottom: 4px; margin-bottom: 8px;">
+                                1. RINGKASAN EKSEKUTIF (EXECUTIVE SUMMARY)
+                            </h3>
+                            <div style="background: #ffffff; border-left: 4px solid #0055A4; padding: 10px 14px; margin-bottom: 18px; text-align: justify; background-color: #f8fafc; border: 1px solid #e2e8f0; border-left-width: 4px;">
+                                <p style="margin: 0; font-size: 10.5pt; line-height: 1.55;">{narasi_eksekutif_ai}</p>
+                            </div>
+
+                            <!-- 2. PILAR SCORECARD -->
+                            <h3 style="color: #003366; font-size: 12.5pt; border-bottom: 1.5px solid #cbd5e1; padding-bottom: 4px; margin-bottom: 8px;">
+                                2. CAPAIAN KINERJA MUTU PER PILAR EVALUASI
+                            </h3>
+                            <table style="width: 100%; border-collapse: collapse; font-size: 10pt; margin-bottom: 18px; border: 1px solid #cbd5e1;" border="1">
+                                <thead>
+                                    <tr style="background-color: #003366; color: #ffffff; text-align: left;">
+                                        <th style="padding: 8px 10px;">Pilar Evaluasi Pembelajaran</th>
+                                        <th style="padding: 8px 10px; text-align: center; width: 15%;">Realisasi Skor</th>
+                                        <th style="padding: 8px 10px; text-align: center; width: 15%;">Target TMP</th>
+                                        <th style="padding: 8px 10px; text-align: center; width: 20%;">Status Mutu</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr style="background-color: #ffffff; border-bottom: 1px solid #e2e8f0;">
+                                        <td style="padding: 7px 10px;"><b>1. Kinerja Instruktur</b> (Engagement, Relevance, Satisfaction)</td>
+                                        <td style="padding: 7px 10px; text-align: center; font-weight: 700;">{format_skor_val(skor_instruktur)}</td>
+                                        <td style="padding: 7px 10px; text-align: center; color: #64748b;">4.50</td>
+                                        <td style="padding: 7px 10px; text-align: center;">{format_pill_badge(skor_instruktur)}</td>
+                                    </tr>
+                                    <tr style="background-color: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                                        <td style="padding: 7px 10px;"><b>2. Materi Pembelajaran</b> (Engagement, Relevance, Satisfaction)</td>
+                                        <td style="padding: 7px 10px; text-align: center; font-weight: 700;">{format_skor_val(skor_materi)}</td>
+                                        <td style="padding: 7px 10px; text-align: center; color: #64748b;">4.50</td>
+                                        <td style="padding: 7px 10px; text-align: center;">{format_pill_badge(skor_materi)}</td>
+                                    </tr>
+                                    <tr style="background-color: #ffffff; border-bottom: 1px solid #e2e8f0;">
+                                        <td style="padding: 7px 10px;"><b>3. Sarana & Prasarana In-Class</b> (Kenyamanan & Fasilitas Fisik)</td>
+                                        <td style="padding: 7px 10px; text-align: center; font-weight: 700;">{format_skor_val(skor_sarpras)}</td>
+                                        <td style="padding: 7px 10px; text-align: center; color: #64748b;">4.50</td>
+                                        <td style="padding: 7px 10px; text-align: center;">{format_pill_badge(skor_sarpras)}</td>
+                                    </tr>
+                                    <tr style="background-color: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                                        <td style="padding: 7px 10px;"><b>4. Sarana Digital</b> (Aplikasi, Modul Digital, Jaringan)</td>
+                                        <td style="padding: 7px 10px; text-align: center; font-weight: 700;">{format_skor_val(skor_digital)}</td>
+                                        <td style="padding: 7px 10px; text-align: center; color: #64748b;">4.50</td>
+                                        <td style="padding: 7px 10px; text-align: center;">{format_pill_badge(skor_digital)}</td>
+                                    </tr>
+                                    <tr style="background-color: #f1f5f9; font-weight: 800; border-top: 2px solid #003366;">
+                                        <td style="padding: 9px 10px; color: #003366;">RATA-RATA TOTAL KESELURUHAN</td>
+                                        <td style="padding: 9px 10px; text-align: center; font-size: 11pt; color: #003366;">{format_skor_val(rata_l1)}</td>
+                                        <td style="padding: 9px 10px; text-align: center; color: #64748b;">4.50</td>
+                                        <td style="padding: 9px 10px; text-align: center;">
+                                            {'<span style="background-color:#15803d; color:#ffffff; padding:3px 10px; border-radius:12px; font-size:8.5pt;">STATUS PRIMA</span>' if pd.notna(rata_l1) and rata_l1 >= 4.50 else '<span style="background-color:#b91c1c; color:#ffffff; padding:3px 10px; border-radius:12px; font-size:8.5pt;">PERLU EVALUASI</span>'}
+                                        </td>
+                                    </tr>
+                                </tbody>
                             </table>
 
-                            <h4 style="color:#0055A4; margin-bottom: 5px;">1. RINGKASAN EKSEKUTIF (EXECUTIVE SUMMARY)</h4>
-                            <p style="text-align: justify; margin-top: 0;">{narasi_eksekutif_ai}</p>
-
-                            <h4 style="color:#0055A4; margin-bottom: 5px;">2. PENCAPAIAN SKOR EVALUASI PER PILAR PEMBELAJARAN</h4>
-                            <table style="width:100%; border-collapse: collapse; text-align:left; font-size:11pt; margin-bottom: 15px;" border="1">
-                                <tr style="background-color:#003366; color:white;">
-                                    <th style="padding: 6px 10px;">Pilar Evaluasi</th>
-                                    <th style="padding: 6px 10px; text-align:center;">Realisasi Skor</th>
-                                    <th style="padding: 6px 10px; text-align:center;">Standar TMP</th>
-                                    <th style="padding: 6px 10px; text-align:center;">Status Kepatuhan</th>
-                                </tr>
-                                <tr>
-                                    <td style="padding: 5px 10px;">Kinerja Instruktur (Engagement, Relevance, Satisfaction)</td>
-                                    <td style="padding: 5px 10px; text-align:center;"><b>{format_skor(skor_instruktur)}</b></td>
-                                    <td style="padding: 5px 10px; text-align:center;">4.50</td>
-                                    <td style="padding: 5px 10px; text-align:center;">{format_status_badge(skor_instruktur)}</td>
-                                </tr>
-                                <tr>
-                                    <td style="padding: 5px 10px;">Materi Pembelajaran (Engagement, Relevance, Satisfaction)</td>
-                                    <td style="padding: 5px 10px; text-align:center;"><b>{format_skor(skor_materi)}</b></td>
-                                    <td style="padding: 5px 10px; text-align:center;">4.50</td>
-                                    <td style="padding: 5px 10px; text-align:center;">{format_status_badge(skor_materi)}</td>
-                                </tr>
-                                <tr>
-                                    <td style="padding: 5px 10px;">Sarana & Prasarana In-Class (Kenyamanan, Fasilitas)</td>
-                                    <td style="padding: 5px 10px; text-align:center;"><b>{format_skor(skor_sarpras)}</b></td>
-                                    <td style="padding: 5px 10px; text-align:center;">4.50</td>
-                                    <td style="padding: 5px 10px; text-align:center;">{format_status_badge(skor_sarpras)}</td>
-                                </tr>
-                                <tr>
-                                    <td style="padding: 5px 10px;">Sarana Digital (Aplikasi, Modul, Jaringan)</td>
-                                    <td style="padding: 5px 10px; text-align:center;"><b>{format_skor(skor_digital)}</b></td>
-                                    <td style="padding: 5px 10px; text-align:center;">4.50</td>
-                                    <td style="padding: 5px 10px; text-align:center;">{format_status_badge(skor_digital)}</td>
-                                </tr>
-                                <tr style="background-color:#f2f2f2;">
-                                    <td style="padding: 6px 10px;"><b>RATA-RATA TOTAL KESELURUHAN</b></td>
-                                    <td style="padding: 6px 10px; text-align:center;"><b>{format_skor(rata_l1)}</b></td>
-                                    <td style="padding: 6px 10px; text-align:center;"><b>4.50</b></td>
-                                    <td style="padding: 6px 10px; text-align:center;"><b>{'[ STATUS PRIMA ]' if pd.notna(rata_l1) and rata_l1 >= 4.50 else '[ PERLU EVALUASI ]'}</b></td>
-                                </tr>
-                            </table>
-
-                            <h4 style="color:#0055A4; margin-bottom: 5px;">3. PEMETAAN AREA KRITIS (IMPORTANCE-PERFORMANCE ANALYSIS)</h4>
+                            <!-- 3. IPA MATRIX & DIAGNOSIS -->
+                            <h3 style="color: #003366; font-size: 12.5pt; border-bottom: 1.5px solid #cbd5e1; padding-bottom: 4px; margin-bottom: 8px;">
+                                3. PEMETAAN AREA KRITIS (IMPORTANCE-PERFORMANCE ANALYSIS)
+                            </h3>
                             {ipa_canvas_html}
                             {penjelasan_q1_html}
 
-                            <h4 style="color:#0055A4; margin-bottom: 5px;">4. SUARA PELANGGAN (KOMENTAR APRESIASI & MASUKAN PER JUDUL PEMBELAJARAN)</h4>
-                            <p style="text-align: justify; margin-top: 0;">Total terekam <b>{jml_pos} komentar apresiasi</b> dan <b>{jml_neg} komentar masukan/keluhan</b> dari peserta diklat pada periode {bulan_pilih}:</p>
+                            <!-- 4. VOICE OF CUSTOMER -->
+                            <h3 style="color: #003366; font-size: 12.5pt; border-bottom: 1.5px solid #cbd5e1; padding-bottom: 4px; margin-bottom: 8px; margin-top: 20px;">
+                                4. SUARA PELANGGAN (VOICE OF CUSTOMER PER JUDUL PEMBELAJARAN)
+                            </h3>
+                            <p style="font-size: 10pt; color: #475569; margin: 0 0 6px 0;">
+                                Rekapitulasi umpan balik peserta mencatat total <b>{jml_pos} apresiasi positif</b> dan <b>{jml_neg} masukan/keluhan operasional</b> pada periode {bulan_pilih}:
+                            </p>
                             {tabel_suara_pelanggan_html}
 
-                            <h4 style="color:#0055A4; margin-bottom: 5px;">5. REKOMENDASI TINDAK LANJUT OPERASIONAL</h4>
-                            {teks_rekomendasi_html}
-                            
-                            <br><br>
-                            <table style="width:100%; text-align:center; border: none;">
+                            <!-- 5. STRATEGIC ROADMAP -->
+                            <h3 style="color: #003366; font-size: 12.5pt; border-bottom: 1.5px solid #cbd5e1; padding-bottom: 4px; margin-bottom: 8px; margin-top: 20px;">
+                                5. STRATEGIC ROADMAP & REKOMENDASI TINDAK LANJUT
+                            </h3>
+                            <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px 16px; margin-bottom: 25px;">
+                                <div style="margin-bottom: 10px;">
+                                    <div style="font-weight: 700; color: #003366; font-size: 10.5pt; margin-bottom: 2px;">
+                                        A. Pemenuhan Standar Minimum TMP Korporat (Target: 4.50)
+                                    </div>
+                                    <div style="font-size: 9.5pt; color: #334155; text-align: justify;">{gap_tmp_text}</div>
+                                </div>
+                                <div style="margin-bottom: 10px;">
+                                    <div style="font-weight: 700; color: #003366; font-size: 10.5pt; margin-bottom: 2px;">
+                                        B. Intervensi Preskriptif Indikator Kuadran 1 (Prioritas Utama)
+                                    </div>
+                                    <div style="font-size: 9.5pt; color: #334155; text-align: justify;">{q1_action_text}</div>
+                                </div>
+                                <div>
+                                    <div style="font-weight: 700; color: #003366; font-size: 10.5pt; margin-bottom: 2px;">
+                                        C. Resolusi Masukan Peserta & Continuous Improvement
+                                    </div>
+                                    <div style="font-size: 9.5pt; color: #334155; text-align: justify;">
+                                        Merespons <b>{jml_neg} komentar masukan</b> yang tercatat, PIC KI bersama pengelola diklat diwajibkan menyusun <i>Action Item Tracker</i> penanganan isu spesifik per pembelajaran dan mengevaluasi efektivitasnya pada siklus evaluasi mutu bulan berikutnya.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- LEMBAR PENGESAHAN -->
+                            <table style="width: 100%; border: none; margin-top: 30px; font-size: 10pt;">
                                 <tr>
-                                    <td style="width:50%; border: none;"></td>
-                                    <td style="width:50%; border: none;">
+                                    <td style="width: 50%; border: none;"></td>
+                                    <td style="width: 50%; border: none; text-align: center;">
                                         Disusun secara otomatis oleh sistem <b>EVALYTICS</b><br>
-                                        UPDL Jakarta, {datetime.now().strftime('%d %B %Y')}<br><br><br><br>
-                                        <b>( _________________________ )</b><br>Tim Pengendalian Mutu & Kinerja
+                                        UPDL Jakarta, {datetime.now().strftime('%d %B %Y')}<br><br><br><br><br>
+                                        <b>( _________________________ )</b><br>
+                                        Tim Pengendalian Mutu & Kinerja
                                     </td>
                                 </tr>
                             </table>
-                        </body></html>
+                        </body>
+                        </html>
                         """
                         
-                        st.success("✅ Dokumen Laporan Manajemen Mutu berhasil disusun!")
+                        st.success("✅ Dokumen Laporan Manajemen Mutu (Executive Edition) berhasil disusun!")
                         st.download_button(
-                            label="📥 DOWNLOAD LAPORAN WORD (.doc)",
+                            label="📥 DOWNLOAD LAPORAN EKSEKUTIF (.doc)",
                             data=html_content.encode('utf-8'),
-                            file_name=f"Laporan_Mutu_EVALYTICS_{bulan_pilih}.doc",
+                            file_name=f"Laporan_Mutu_EVALYTICS_{bulan_pilih}_Executive.doc",
                             mime="application/msword",
                             type="primary"
                         )
-                        with st.expander("👀 Pratinjau Teks Laporan (Live Preview)"):
+                        with st.expander("👀 Pratinjau Tampilan Eksekutif (Live Preview)"):
                             st.markdown(html_content, unsafe_allow_html=True)
             else:
                 st.info("Belum ada data bulan yang tersedia untuk dibuatkan laporan.")
