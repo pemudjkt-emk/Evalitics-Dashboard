@@ -1063,7 +1063,7 @@ elif menu_selection == "🚨 EARLY WARNING":
     except Exception as e: st.error(f"❌ Gagal memuat data dari Sheet 'Detail Komentar L1'. Detail error: {e}")
 
 # ══════════════════════════════════════════════════════════════════════════════
-# KONTEN: 📑 REPORT & KATALOG (WITH EMBEDDED IPA CHART & DETAILED DIAGNOSIS)
+# KONTEN: 📑 REPORT & KATALOG (HTML CANVAS IPA & TABEL SUARA PELANGGAN)
 # ══════════════════════════════════════════════════════════════════════════════
 elif menu_selection == "📑 REPORT & KATALOG":
     sub_rep_generator, sub_katalog = st.tabs(["📑 Report Generator", "👨‍🏫 Katalog Instruktur"])
@@ -1073,7 +1073,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
     # ─────────────────────────────────────────────────────────────────────────
     with sub_rep_generator:
         st.markdown("### 📑 Generator Laporan Manajemen Mutu (Otomatis)")
-        st.write("Menyusun laporan evaluasi mutu L1 komprehensif, mencakup capaian kategori, gambar grafik IPA, analisis detail Kuadran 1, seluruh komentar apresiasi & masukan per judul pembelajaran, PIC KI, serta narasi AI Executive Summary.")
+        st.write("Menyusun laporan evaluasi mutu L1 komprehensif, mencakup capaian kategori, peta matriks kuadran IPA, tabel komentar apresiasi & masukan per judul pembelajaran, PIC KI, serta narasi AI Executive Summary.")
         
         try:
             df_rep_raw = pd.read_csv(url)
@@ -1101,11 +1101,11 @@ elif menu_selection == "📑 REPORT & KATALOG":
                         btn_generate = st.button("🚀 Generate Dokumen Word", type="primary", use_container_width=True)
                 
                 if btn_generate:
-                    with st.spinner(f"Memproses kalkulasi data, grafik IPA, & menyusun laporan periode {bulan_pilih}..."):
+                    with st.spinner(f"Memproses kalkulasi data & menyusun laporan periode {bulan_pilih}..."):
                         df_bln = df_rep_raw[df_rep_raw['Laporan Bulan'].str.lower() == str(bulan_pilih).strip().lower()].copy()
                         total_sesi = len(df_bln)
                         
-                        # 1. Parsing numerik indikator
+                        # 1. Parsing Numerik Kolom Evaluasi
                         semua_butir = [f'INS{i}' for i in range(1, 10)] + [f'MAT{i}' for i in range(1, 8)] + [f'SP{i}' for i in range(1, 7)] + [f'DS{i}' for i in range(1, 7)]
                         kolom_skor_tambahan = ['RATA-RATA KESELURUHAN', 'RATA INST', 'RATA MAT', 'RATA SP', 'RATA DS']
                         for c in semua_butir + kolom_skor_tambahan:
@@ -1158,16 +1158,19 @@ elif menu_selection == "📑 REPORT & KATALOG":
                         if 'RATA-RATA KESELURUHAN' not in df_bln.columns or df_bln['RATA-RATA KESELURUHAN'].dropna().empty:
                             df_bln['RATA-RATA KESELURUHAN'] = df_bln[['Engagement Instruktur', 'Relevance Instruktur', 'Satisfaction Instruktur', 'Engagement Materi', 'Relevance Materi', 'Satisfaction Materi', 'Satisfaction Sarana Digital', 'Satisfaction Sarana In Class']].mean(axis=1)
 
-                        # 3. Kalkulasi IPA & Render Gambar Base64
+                        # 3. Analisis IPA & HTML Canvas Rendering
                         kategori_ipa_list = [
                             'Engagement Instruktur', 'Relevance Instruktur', 'Satisfaction Instruktur', 
                             'Engagement Materi', 'Relevance Materi', 'Satisfaction Materi', 
                             'Satisfaction Sarana Digital', 'Satisfaction Sarana In Class'
                         ]
                         df_bln_ipa = df_bln.dropna(subset=['RATA-RATA KESELURUHAN']).copy()
+                        df_plot_rep = pd.DataFrame()
                         df_q1_detail = pd.DataFrame()
                         q1_items = []
-                        ipa_image_html = ""
+                        ipa_canvas_html = ""
+                        x_cross = 4.50
+                        y_cross = 0.50
                         
                         if len(df_bln_ipa) >= 2:
                             kinerja_list, kep_list, kat_valid = [], [], []
@@ -1182,49 +1185,72 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                         
                             if kat_valid:
                                 df_plot_rep = pd.DataFrame({'Kategori': kat_valid, 'Kinerja': kinerja_list, 'Kepentingan': kep_list})
-                                x_cross = 4.50
                                 y_cross = df_plot_rep['Kepentingan'].mean()
                                 df_q1_detail = df_plot_rep[(df_plot_rep['Kinerja'] < x_cross) & (df_plot_rep['Kepentingan'] > y_cross)].copy()
                                 q1_items = df_q1_detail['Kategori'].tolist()
                                 
-                                # Bangun Plotly Figure untuk di-export ke gambar
-                                fig_rep_ipa = px.scatter(df_plot_rep, x='Kinerja', y='Kepentingan', text='Kategori')
-                                fig_rep_ipa.update_traces(textposition='top center', marker=dict(size=12, color='#0055A4', line=dict(width=1, color='#002244')))
-                                fig_rep_ipa.add_hline(y=y_cross, line_dash="dash", line_color="#FFC000")
-                                fig_rep_ipa.add_vline(x=x_cross, line_dash="dash", line_color="#FFC000")
-                                
-                                for ax, ay, txt, col, algn in [
-                                    (0.01, 0.99, "KUADRAN 1 (Prioritas Utama)", "#d32f2f", "left"),
-                                    (0.99, 0.99, "KUADRAN 2 (Pertahankan)", "#2e7d32", "right"),
-                                    (0.01, 0.01, "KUADRAN 3 (Prioritas Rendah)", "#757575", "left"),
-                                    (0.99, 0.01, "KUADRAN 4 (Berlebihan)", "#f57c00", "right"),
-                                ]:
-                                    fig_rep_ipa.add_annotation(xref="paper", yref="paper", x=ax, y=ay, text=txt, showarrow=False, font=dict(color=col, size=11), align=algn)
-                                    
+                                # Render Matriks Visual IPA via HTML/CSS Murni (Bebas Kaleido)
                                 min_x = min(3.8, df_plot_rep['Kinerja'].min() - 0.1)
-                                fig_rep_ipa.update_layout(
-                                    width=800, height=450,
-                                    margin=dict(t=30, b=30, l=40, r=40),
-                                    xaxis_range=[min_x, 5.05],
-                                    xaxis_title="Kinerja (Rata-rata Skor Kepuasan)",
-                                    yaxis_title="Kepentingan (Korelasi terhadap Total Skor)",
-                                    plot_bgcolor='#ffffff',
-                                    paper_bgcolor='#ffffff'
-                                )
+                                max_x = 5.05
+                                min_y = min(-0.1, df_plot_rep['Kepentingan'].min() - 0.1)
+                                max_y = max(1.05, df_plot_rep['Kepentingan'].max() + 0.1)
                                 
-                                try:
-                                    img_bytes = fig_rep_ipa.to_image(format="png", width=800, height=450, scale=2)
-                                    img_base64 = base64.b64encode(img_bytes).decode('utf-8')
-                                    ipa_image_html = f"""
-                                    <div style="text-align: center; margin: 15px 0;">
-                                        <img src="data:image/png;base64,{img_base64}" style="width: 100%; max-width: 680px; height: auto; border: 1px solid #ccc; border-radius: 4px;" alt="Grafik IPA L1" />
-                                        <p style="font-size: 9.5pt; color: #555; margin-top: 4px;"><i>Gambar: Pemetaan Importance-Performance Analysis (IPA) Periode {bulan_pilih}</i></p>
+                                def hitung_pos_canvas(k, r):
+                                    px_left = ((k - min_x) / (max_x - min_x)) * 100
+                                    px_top = (1 - ((r - min_y) / (max_y - min_y))) * 100
+                                    return max(2, min(95, px_left)), max(5, min(92, px_top))
+                                
+                                cross_x_pct, _ = hitung_pos_canvas(x_cross, y_cross)
+                                _, cross_y_pct = hitung_pos_canvas(x_cross, y_cross)
+                                
+                                titik_html = ""
+                                for _, r_pt in df_plot_rep.iterrows():
+                                    pos_l, pos_t = hitung_pos_canvas(r_pt['Kinerja'], r_pt['Kepentingan'])
+                                    is_q1 = (r_pt['Kinerja'] < x_cross) and (r_pt['Kepentingan'] > y_cross)
+                                    dot_bg = "#d32f2f" if is_q1 else "#0055A4"
+                                    titik_html += f"""
+                                    <div style="position: absolute; left: {pos_l:.1f}%; top: {pos_t:.1f}%; transform: translate(-50%, -50%);">
+                                        <div style="width: 12px; height: 12px; background-color: {dot_bg}; border: 1.5px solid white; border-radius: 50%; box-shadow: 0 0 3px rgba(0,0,0,0.5); margin: auto;"></div>
+                                        <div style="font-size: 8pt; font-weight: bold; color: {dot_bg}; white-space: nowrap; text-shadow: 1px 1px 2px white; margin-top: 1px;">{r_pt['Kategori']} ({r_pt['Kinerja']:.2f})</div>
                                     </div>
                                     """
-                                except Exception as e_img:
-                                    ipa_image_html = f"<p><i>[Grafik IPA tidak dapat dikonversi ke gambar: {e_img}. Pastikan paket kaleido terinstall.]</i></p>"
+                                
+                                ipa_canvas_html = f"""
+                                <div style="margin: 15px 0 10px 0; border: 1.5px solid #003366; background-color: #fdfdfd; border-radius: 6px; padding: 10px;">
+                                    <div style="text-align: center; font-weight: bold; color: #003366; font-size: 11pt; margin-bottom: 8px;">
+                                        MATRIKS IMPORTANCE-PERFORMANCE ANALYSIS (IPA)
+                                    </div>
+                                    <div style="position: relative; width: 100%; height: 360px; background-color: #ffffff; border: 1px solid #d0d7de;">
+                                        <!-- Garis Batas Kuadran -->
+                                        <div style="position: absolute; left: {cross_x_pct:.1f}%; top: 0; bottom: 0; width: 2px; border-left: 2px dashed #FFC000;"></div>
+                                        <div style="position: absolute; top: {cross_y_pct:.1f}%; left: 0; right: 0; height: 2px; border-top: 2px dashed #FFC000;"></div>
+                                        
+                                        <!-- Label Kuadran -->
+                                        <div style="position: absolute; top: 6px; left: 8px; font-size: 9pt; font-weight: bold; color: #d32f2f; background: rgba(255,255,255,0.85); padding: 2px 4px; border-radius: 3px;">
+                                            KUADRAN 1<br><span style="font-size: 8pt; font-weight: normal;">🚨 Prioritas Utama (Kritis)</span>
+                                        </div>
+                                        <div style="position: absolute; top: 6px; right: 8px; font-size: 9pt; font-weight: bold; color: #2e7d32; background: rgba(255,255,255,0.85); padding: 2px 4px; border-radius: 3px; text-align: right;">
+                                            KUADRAN 2<br><span style="font-size: 8pt; font-weight: normal;">🌟 Pertahankan Kinerja</span>
+                                        </div>
+                                        <div style="position: absolute; bottom: 6px; left: 8px; font-size: 9pt; font-weight: bold; color: #757575; background: rgba(255,255,255,0.85); padding: 2px 4px; border-radius: 3px;">
+                                            KUADRAN 3<br><span style="font-size: 8pt; font-weight: normal;">📉 Prioritas Rendah</span>
+                                        </div>
+                                        <div style="position: absolute; bottom: 6px; right: 8px; font-size: 9pt; font-weight: bold; color: #f57c00; background: rgba(255,255,255,0.85); padding: 2px 4px; border-radius: 3px; text-align: right;">
+                                            KUADRAN 4<br><span style="font-size: 8pt; font-weight: normal;">⚠️ Berlebihan / Cukup</span>
+                                        </div>
+                                        
+                                        <!-- Titik-titik Indikator -->
+                                        {titik_html}
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; font-size: 8.5pt; color: #555; margin-top: 4px;">
+                                        <span>← Sumbu Kinerja Rendah</span>
+                                        <span>Garis Batas TMP PLN (Kinerja = 4.50) | Garis Rata-rata Kepentingan ({y_cross:.2f})</span>
+                                        <span>Sumbu Kinerja Tinggi →</span>
+                                    </div>
+                                </div>
+                                """
 
-                        # 4. Penjelasan Rinci Masing-masing Indikator Kuadran 1
+                        # 4. Penjelasan Rinci Indikator Kuadran 1
                         penjelasan_q1_html = ""
                         kamus_deskripsi_indikator = {
                             'Engagement Instruktur': "Tingkat partisipasi interaktif, kemampuan melibatkan peserta dalam diskusi, dan dinamika pengajaran di kelas.",
@@ -1238,7 +1264,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
                         }
 
                         if not df_q1_detail.empty:
-                            penjelasan_q1_html += "<p style='text-align: justify; margin-bottom: 8px;'>Berikut adalah diagnosis mendalam terhadap indikator yang masuk ke dalam <b>Kuadran 1 (Prioritas Utama)</b>:</p><ol style='margin-top:0; padding-left: 22px;'>"
+                            penjelasan_q1_html += "<p style='text-align: justify; margin-bottom: 6px;'>Berikut adalah diagnosis mendalam terhadap indikator yang masuk ke dalam <b>Kuadran 1 (Prioritas Utama)</b>:</p><ol style='margin-top:0; padding-left: 20px; text-align: justify;'>"
                             for _, r_q1 in df_q1_detail.iterrows():
                                 kat_name = r_q1['Kategori']
                                 kin_val = r_q1['Kinerja']
@@ -1246,19 +1272,19 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                 gap_val = 4.50 - kin_val
                                 desc_text = kamus_deskripsi_indikator.get(kat_name, "Elemen pembelajaran utama yang memerlukan evaluasi.")
                                 penjelasan_q1_html += f"""
-                                <li style="margin-bottom: 8px; text-align: justify;">
+                                <li style="margin-bottom: 8px;">
                                     <b>{kat_name}</b> (Realisasi Skor: <b>{kin_val:.2f}</b> | Korelasi: <b>{kep_val:.3f}</b> | Gap TMP: <b>-{gap_val:.2f}</b>)<br>
                                     <i>Definisi Fokus:</i> {desc_text}<br>
-                                    <i>Akar Masalah:</i> Indikator ini memiliki derajat sensitivitas tinggi terhadap kepuasan peserta (korelasi > {y_cross:.2f}), namun skor riilnya ({kinerja_list[kat_valid.index(kat_name)]:.2f}) belum mencapai batas minimum TMP PLN (4.50). Penurunan di area ini menjadi faktor utama penyebab tertahannya indeks mutu Level 1.
+                                    <i>Akar Masalah:</i> Indikator ini memiliki sensitivitas pengaruh tinggi terhadap kepuasan peserta (korelasi > {y_cross:.2f}), namun realisasi kinerjanya belum memenuhi target TMP PLN (4.50). Area ini wajib diprioritaskan dalam siklus perbaikan operasional berikutnya.
                                 </li>
                                 """
                             penjelasan_q1_html += "</ol>"
                         else:
-                            penjelasan_q1_html = "<p style='text-align: justify;'>Berdasarkan hasil pemetaan IPA, <b>tidak ditemukan indikator kritis yang jatuh ke dalam Kuadran 1</b>. Seluruh variabel mutu layanan berada pada tingkat kepuasan yang selaras dengan ekspektasi peserta (seluruh skor berada di atas rata-rata batas kritis).</p>"
+                            penjelasan_q1_html = "<p style='text-align: justify;'>Berdasarkan analisis IPA, <b>tidak ditemukan indikator kritis yang jatuh ke dalam Kuadran 1</b>. Seluruh variabel mutu layanan berada pada tingkat kepuasan yang selaras dengan standar TMP PLN.</p>"
 
-                        # 5. Rekapitulasi Komentar Peserta dari Sheet Detail Komentar L1
+                        # 5. Rekapitulasi Suara Pelanggan (TABEL BERSIH TANPA TANGGAL)
                         jml_pos, jml_neg = 0, 0
-                        komentar_per_judul_html = ""
+                        tabel_suara_pelanggan_html = ""
                         try:
                             sheet_id_komentar = '1IDAmFwTbBQDZcKM3eiiEDcA3KwM9WKqW4zCrk__6-PU'
                             url_k = f'https://docs.google.com/spreadsheets/d/{sheet_id_komentar}/gviz/tq?tqx=out:csv&sheet=Detail%20Komentar%20L1'
@@ -1286,66 +1312,82 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                 jml_pos = len(df_k_bln[df_k_bln['Kategori_Final'] == 'Positif'])
                                 jml_neg = len(df_k_bln[df_k_bln['Kategori_Final'] == 'Negatif'])
                                 
+                                baris_tabel_komentar = ""
                                 daftar_judul_k = df_k_bln[col_judul_k].dropna().unique()
-                                for jdl in daftar_judul_k:
+                                
+                                for idx, jdl in enumerate(daftar_judul_k, 1):
                                     sub_df = df_k_bln[df_k_bln[col_judul_k] == jdl]
                                     pos_list = sub_df[sub_df['Kategori_Final'] == 'Positif'][col_teks_k].dropna().tolist()
                                     neg_list = sub_df[sub_df['Kategori_Final'] == 'Negatif'][col_teks_k].dropna().tolist()
                                     
-                                    pic_jdl = ""
+                                    # Cari PIC KI terkait judul
+                                    pic_jdl = "-"
                                     col_judul_l1 = next((c for c in ['Judul Pembelajaran/Kegiatan', 'Judul Pembelajaran', 'Judul'] if c in df_bln.columns), None)
                                     col_pic_l1   = next((c for c in ['PIC KI', 'Bidang'] if c in df_bln.columns), None)
                                     if col_judul_l1 and col_pic_l1:
                                         match_pic = df_bln[df_bln[col_judul_l1] == jdl][col_pic_l1].dropna()
                                         if not match_pic.empty:
-                                            pic_jdl = f" | <b>PIC KI:</b> {match_pic.iloc[0]}"
+                                            pic_jdl = str(match_pic.iloc[0])
                                             
-                                    pos_html = "".join([f"<li style='margin-bottom:3px; color:#1b5e20;'>{t}</li>" for t in pos_list]) if pos_list else "<i>Tidak ada komentar apresiasi.</i>"
-                                    neg_html = "".join([f"<li style='margin-bottom:3px; color:#b71c1c;'>{t}</li>" for t in neg_list]) if neg_list else "<i>Tidak ada komentar masukan.</i>"
+                                    pos_html = "<ul style='margin: 0; padding-left: 16px;'>" + "".join([f"<li style='margin-bottom: 2px; color: #1b5e20;'>{t}</li>" for t in pos_list]) + "</ul>" if pos_list else "<span style='color: #888;'>-</span>"
+                                    neg_html = "<ul style='margin: 0; padding-left: 16px;'>" + "".join([f"<li style='margin-bottom: 2px; color: #b71c1c;'>{t}</li>" for t in neg_list]) + "</ul>" if neg_list else "<span style='color: #888;'>-</span>"
                                     
-                                    komentar_per_judul_html += f"""
-                                    <div style="margin-bottom: 12px; border: 1px solid #d0d7de; padding: 10px 14px; border-radius: 6px; background-color: #fafbfc;">
-                                        <div style="font-weight:bold; font-size:11pt; color: #003366; margin-bottom: 5px;">
-                                            &#9632; {jdl} <span style="font-size:9.5pt; font-weight:normal; color:#555;">{pic_jdl}</span>
-                                        </div>
-                                        <p style="margin: 3px 0 2px 0; font-size:10pt;"><b>[ Komentar Apresiasi ]</b></p>
-                                        <ul style="margin: 0 0 6px 0; padding-left: 20px; font-size:10pt;">{pos_html}</ul>
-                                        <p style="margin: 3px 0 2px 0; font-size:10pt;"><b>[ Komentar Masukan / Evaluasi ]</b></p>
-                                        <ul style="margin: 0 0 3px 0; padding-left: 20px; font-size:10pt;">{neg_html}</ul>
-                                    </div>
+                                    baris_tabel_komentar += f"""
+                                    <tr style="background-color: {'#ffffff' if idx % 2 != 0 else '#f9f9f9'};">
+                                        <td style="padding: 6px 8px; text-align: center; vertical-align: top;">{idx}</td>
+                                        <td style="padding: 6px 8px; vertical-align: top;"><b>{jdl}</b></td>
+                                        <td style="padding: 6px 8px; text-align: center; vertical-align: top;">{pic_jdl}</td>
+                                        <td style="padding: 6px 8px; vertical-align: top;">{pos_html}</td>
+                                        <td style="padding: 6px 8px; vertical-align: top;">{neg_html}</td>
+                                    </tr>
                                     """
+                                
+                                tabel_suara_pelanggan_html = f"""
+                                <table style="width: 100%; border-collapse: collapse; font-size: 10pt; margin-top: 8px; margin-bottom: 12px;" border="1">
+                                    <thead>
+                                        <tr style="background-color: #003366; color: white; text-align: center;">
+                                            <th style="padding: 6px 8px; width: 4%;">No</th>
+                                            <th style="padding: 6px 8px; width: 32%;">Judul Pembelajaran</th>
+                                            <th style="padding: 6px 8px; width: 10%;">PIC KI</th>
+                                            <th style="padding: 6px 8px; width: 27%;">Komentar Apresiasi</th>
+                                            <th style="padding: 6px 8px; width: 27%;">Komentar Masukan / Evaluasi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {baris_tabel_komentar}
+                                    </tbody>
+                                </table>
+                                """
                             else:
-                                komentar_per_judul_html = "<p><i>Tidak ada data komentar peserta untuk periode ini.</i></p>"
+                                tabel_suara_pelanggan_html = "<p><i>Tidak ada data komentar peserta untuk periode ini.</i></p>"
                         except Exception as e_k:
-                            komentar_per_judul_html = f"<p><i>Gagal memproses data komentar: {e_k}</i></p>"
+                            tabel_suara_pelanggan_html = f"<p><i>Gagal memproses data komentar: {e_k}</i></p>"
 
-                        # 6. Rekomendasi Tindak Lanjut Spesifik (Menjawab TMP < 4.5 & Kuadran 1)
+                        # 6. Rekomendasi Preskriptif Menjawab TMP < 4.5 & Kuadran 1
                         pilar_kurang_tmp = []
                         if pd.notna(skor_instruktur) and skor_instruktur < 4.50: pilar_kurang_tmp.append(f"Kinerja Instruktur ({skor_instruktur:.2f})")
                         if pd.notna(skor_materi) and skor_materi < 4.50: pilar_kurang_tmp.append(f"Materi Pembelajaran ({skor_materi:.2f})")
                         if pd.notna(skor_sarpras) and skor_sarpras < 4.50: pilar_kurang_tmp.append(f"Sarana In-Class ({skor_sarpras:.2f})")
                         if pd.notna(skor_digital) and skor_digital < 4.50: pilar_kurang_tmp.append(f"Sarana Digital ({skor_digital:.2f})")
 
-                        teks_rekomendasi_html = "<ol style='margin-top:5px; padding-left:22px; text-align:justify;'>"
+                        teks_rekomendasi_html = "<ol style='margin-top:5px; padding-left:20px; text-align:justify;'>"
                         
-                        # Tindak lanjut pilar di bawah TMP
                         if pilar_kurang_tmp:
                             teks_rekomendasi_html += f"""
                             <li style='margin-bottom:8px;'>
                                 <b>Pemenuhan Standar Minimum TMP PLN (Skor < 4.50):</b><br>
-                                Ditemukan pilar yang belum mencapai target TMP yaitu: <b>{', '.join(pilar_kurang_tmp)}</b>. 
+                                Ditemukan pilar mutu yang belum mencapai target TMP yaitu: <b>{', '.join(pilar_kurang_tmp)}</b>. 
                                 Manajemen UPDL Jakarta bersama PIC KI terkait ({teks_pic_ki}) perlu melakukan <i>gap analysis</i> kurikulum, refreshment teknik mengajar instruktur, serta audit kesiapan sarana sebelum kelas dimulai agar rata-rata capaian kembali melampaui target korporat 4.50.
                             </li>
                             """
                         else:
                             teks_rekomendasi_html += "<li style='margin-bottom:8px;'><b>Pemenuhan Standar TMP PLN:</b> Seluruh 4 pilar utama telah mencapai dan melampaui batas TMP (≥ 4.50). Manajemen direkomendasikan mempertahankan standar operasional (SOP) yang sudah berjalan prima.</li>"
                         
-                        # Tindak lanjut Kuadran 1
                         if q1_items:
                             teks_rekomendasi_html += f"""
                             <li style='margin-bottom:8px;'>
                                 <b>Intervensi Area Kritis Kuadran 1 ({', '.join(q1_items)}):</b><br>
-                                Berdasarkan prinsip efisiensi sumber daya (Pareto Improvement), alokasi perbaikan <b>wajib diprioritaskan pada indikator Kuadran 1</b>. Tindakan ini mencakup pemutakhiran studi kasus materi kerja terkini, pelatihan interaksi aktif bagi instruktur, serta peningkatan keandalan fasilitas yang paling sering dikeluhkan peserta. Perbaikan di area ini memberikan daya ungkit terbesar terhadap lonjakan kepuasan Level 1.
+                                Berdasarkan prinsip efisiensi sumber daya (Pareto Improvement), alokasi perbaikan <b>wajib diprioritaskan pada indikator Kuadran 1</b>. Tindakan korektif meliputi pemutakhiran modul studi kasus aktual, pelatihan interaksi aktif instruktur, serta optimalisasi peralatan penunjang pembelajaran. Perbaikan di area ini memberikan daya ungkit terbesar terhadap lonjakan kepuasan peserta.
                             </li>
                             """
                         else:
@@ -1354,7 +1396,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
                         teks_rekomendasi_html += f"""
                         <li style='margin-bottom:8px;'>
                             <b>Resolusi Suara Pelanggan (Voice of Customer):</b><br>
-                            Merespons <b>{jml_neg} komentar masukan/keluhan</b> yang masuk, PIC KI dan pengelola diklat diwajibkan menyusun <i>Action Plan</i> penanganan keluhan spesifik per judul pembelajaran dan mengevaluasi efektivitasnya pada siklus evaluasi bulan berikutnya.
+                            Merespons <b>{jml_neg} komentar masukan/keluhan</b> pada tabel di atas, PIC KI dan pengelola diklat diwajibkan menyusun <i>Action Plan</i> penanganan keluhan spesifik per judul pembelajaran dan mengevaluasi efektivitasnya pada siklus evaluasi bulan berikutnya.
                         </li>
                         </ol>
                         """
@@ -1375,7 +1417,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
                             - PIC KI yang bertugas: {teks_pic_ki}.
                             
                             Pedoman Penulisan:
-                            1. Paragraf 1: Bahas capaian skor total vs TMP 4.50, gap pilar evaluasi, dan koordinasi dengan PIC KI.
+                            1. Paragraf 1: Analisis capaian skor total vs TMP 4.50, gap pilar evaluasi, dan koordinasi dengan PIC KI.
                             2. Paragraf 2: Paparkan temuan kritis Kuadran 1 IPA, sintesis suara pelanggan, dan arah kebijakan perbaikan operasional ke depan.
                             3. Gunakan Bahasa Indonesia baku korporat PLN, lugas, preskriptif, tanpa markdown bintang tebal.
                             """
@@ -1454,12 +1496,12 @@ elif menu_selection == "📑 REPORT & KATALOG":
                             </table>
 
                             <h4 style="color:#0055A4; margin-bottom: 5px;">3. PEMETAAN AREA KRITIS (IMPORTANCE-PERFORMANCE ANALYSIS)</h4>
-                            {ipa_image_html}
+                            {ipa_canvas_html}
                             {penjelasan_q1_html}
 
                             <h4 style="color:#0055A4; margin-bottom: 5px;">4. SUARA PELANGGAN (KOMENTAR APRESIASI & MASUKAN PER JUDUL PEMBELAJARAN)</h4>
                             <p style="text-align: justify; margin-top: 0;">Total terekam <b>{jml_pos} komentar apresiasi</b> dan <b>{jml_neg} komentar masukan/keluhan</b> dari peserta diklat pada periode {bulan_pilih}:</p>
-                            {komentar_per_judul_html}
+                            {tabel_suara_pelanggan_html}
 
                             <h4 style="color:#0055A4; margin-bottom: 5px;">5. REKOMENDASI TINDAK LANJUT OPERASIONAL</h4>
                             {teks_rekomendasi_html}
@@ -1638,7 +1680,6 @@ elif menu_selection == "📑 REPORT & KATALOG":
                 st.warning("⚠️ Database Instruktur kosong atau belum ditarik dari Google Sheets.")
         except Exception as e:
             st.error(f"Gagal memuat data Katalog Instruktur: {e}")
-
 # ══════════════════════════════════════════════════════════════════════════════
 # KONTEN: ⚙️ PENGATURAN
 # ══════════════════════════════════════════════════════════════════════════════
