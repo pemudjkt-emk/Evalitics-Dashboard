@@ -1063,7 +1063,7 @@ elif menu_selection == "🚨 EARLY WARNING":
     except Exception as e: st.error(f"❌ Gagal memuat data dari Sheet 'Detail Komentar L1'. Detail error: {e}")
 
 # ══════════════════════════════════════════════════════════════════════════════
-# KONTEN: 📑 REPORT & KATALOG (CONSULTING-GRADE EXECUTIVE DESIGN)
+# KONTEN: 📑 REPORT & KATALOG (WITH AI-DRIVEN ACTION PLAN & DETAILED RESOLUTION)
 # ══════════════════════════════════════════════════════════════════════════════
 elif menu_selection == "📑 REPORT & KATALOG":
     sub_rep_generator, sub_katalog = st.tabs(["📑 Report Generator", "👨‍🏫 Katalog Instruktur"])
@@ -1073,7 +1073,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
     # ─────────────────────────────────────────────────────────────────────────
     with sub_rep_generator:
         st.markdown("### 📑 Generator Laporan Manajemen Mutu (Executive Edition)")
-        st.write("Menyusun laporan evaluasi mutu komprehensif berstandar konsultan manajemen (McKinsey/PwC style) mencakup Executive Summary, Scorecard Pilar, Peta Matriks IPA, Voice of Customer, dan Strategic Roadmap.")
+        st.write("Menyusun laporan evaluasi mutu komprehensif berstandar konsultan (McKinsey/PwC style) lengkap dengan AI Executive Summary, Scorecard Pilar, Visual Matriks IPA, Voice of Customer, dan Tabel Rencana Tindak Lanjut Preskriptif dari Gemini AI.")
         
         try:
             df_rep_raw = pd.read_csv(url)
@@ -1101,7 +1101,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
                         btn_generate = st.button("🚀 Generate Laporan Eksekutif", type="primary", use_container_width=True)
                 
                 if btn_generate:
-                    with st.spinner(f"Menyusun laporan manajemen mutu berstandar konsultan untuk periode {bulan_pilih}..."):
+                    with st.spinner(f"Menyusun analisis data, visualisasi IPA, & merumuskan tindak lanjut AI untuk periode {bulan_pilih}..."):
                         df_bln = df_rep_raw[df_rep_raw['Laporan Bulan'].str.lower() == str(bulan_pilih).strip().lower()].copy()
                         total_sesi = len(df_bln)
                         
@@ -1157,7 +1157,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
                         if 'RATA-RATA KESELURUHAN' not in df_bln.columns or df_bln['RATA-RATA KESELURUHAN'].dropna().empty:
                             df_bln['RATA-RATA KESELURUHAN'] = df_bln[['Engagement Instruktur', 'Relevance Instruktur', 'Satisfaction Instruktur', 'Engagement Materi', 'Relevance Materi', 'Satisfaction Materi', 'Satisfaction Sarana Digital', 'Satisfaction Sarana In Class']].mean(axis=1)
 
-                        # 3. Analisis IPA & Visual Canvas Modern
+                        # 3. Analisis IPA & HTML Canvas Rendering
                         kategori_ipa_list = [
                             'Engagement Instruktur', 'Relevance Instruktur', 'Satisfaction Instruktur', 
                             'Engagement Materi', 'Relevance Materi', 'Satisfaction Materi', 
@@ -1224,11 +1224,9 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                         Visualisasi Matriks Importance-Performance Analysis (IPA)
                                     </div>
                                     <div style="position: relative; width: 100%; height: 350px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px;">
-                                        <!-- Garis Crosshair -->
                                         <div style="position: absolute; left: {cross_x_pct:.1f}%; top: 0; bottom: 0; width: 2px; border-left: 2px dashed #f59e0b;"></div>
                                         <div style="position: absolute; top: {cross_y_pct:.1f}%; left: 0; right: 0; height: 2px; border-top: 2px dashed #f59e0b;"></div>
                                         
-                                        <!-- Label Kuadran Konsultan -->
                                         <div style="position: absolute; top: 8px; left: 10px; font-size: 8pt; font-weight: 700; color: #b91c1c; background: #fff1f2; border: 1px solid #fecdd3; padding: 3px 6px; border-radius: 4px;">
                                             KUADRAN I: PRIORITAS UTAMA (KRITIS)
                                         </div>
@@ -1246,7 +1244,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                     </div>
                                     <div style="display: flex; justify-content: space-between; font-size: 8pt; color: #64748b; margin-top: 6px;">
                                         <span>← Kinerja Rendah (Di Bawah Harapan)</span>
-                                        <span><b>Batas TMP PLN (4.50)</b> | <b>Garis Tengah Korelasi ({y_cross:.2f})</b></span>
+                                        <span><b>Batas TMP PLN (4.50)</b> | <b>Garis Rata-rata Kepentingan ({y_cross:.2f})</b></span>
                                         <span>Kinerja Tinggi (Sangat Memuaskan) →</span>
                                     </div>
                                 </div>
@@ -1280,16 +1278,18 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                         {kat_name} <span style="font-weight: 400; color: #475569; font-size: 9.5pt;">(Realisasi: <b>{kin_val:.2f}</b> / 5.00 | Korelasi: <b>{kep_val:.3f}</b> | Gap TMP: <b style="color:#b91c1c;">-{gap_val:.2f}</b>)</span>
                                     </div>
                                     <div style="font-size: 9.5pt; color: #334155; margin-bottom: 2px;"><b>Fokus Elemen:</b> {desc_text}</div>
-                                    <div style="font-size: 9.5pt; color: #7f1d1d;"><b>Akar Masalah:</b> Indikator ini merupakan <i>Key Driver</i> yang sangat sensitif terhadap kepuasan akhir peserta (Korelasi > {y_cross:.2f}), namun skor riilnya berada di bawah standar TMP (4.50). Mengabaikan indikator ini berpotensi menurunkan citra kualitas pembelajaran secara signifikan.</div>
+                                    <div style="font-size: 9.5pt; color: #7f1d1d;"><b>Akar Masalah:</b> Indikator ini merupakan <i>Key Driver</i> yang sangat sensitif terhadap kepuasan akhir peserta (Korelasi > {y_cross:.2f}), namun skor riilnya berada di bawah standar TMP (4.50).</div>
                                 </div>
                                 """
                             penjelasan_q1_html += "</div>"
                         else:
                             penjelasan_q1_html = "<div style='background:#f0fdf4; border:1px solid #bbf7d0; padding:10px 14px; border-radius:6px; color:#166534; font-size:10pt;'><b>Status Mutu Prima:</b> Tidak ditemukan indikator yang jatuh ke dalam Kuadran 1. Seluruh variabel strategis berhasil memenuhi atau melampaui standar kinerja korporat (TMP 4.50).</div>"
 
-                        # 5. Suara Pelanggan (Tabel Konsultan Bersih)
+                        # 5. Suara Pelanggan (Tabel Konsultan Bersih & Penarikan List Masukan)
                         jml_pos, jml_neg = 0, 0
                         tabel_suara_pelanggan_html = ""
+                        list_semua_masukan_raw = []  # Digunakan untuk prompt Gemini AI
+                        
                         try:
                             sheet_id_komentar = '1IDAmFwTbBQDZcKM3eiiEDcA3KwM9WKqW4zCrk__6-PU'
                             url_k = f'https://docs.google.com/spreadsheets/d/{sheet_id_komentar}/gviz/tq?tqx=out:csv&sheet=Detail%20Komentar%20L1'
@@ -1324,6 +1324,9 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                     sub_df = df_k_bln[df_k_bln[col_judul_k] == jdl]
                                     pos_list = sub_df[sub_df['Kategori_Final'] == 'Positif'][col_teks_k].dropna().tolist()
                                     neg_list = sub_df[sub_df['Kategori_Final'] == 'Negatif'][col_teks_k].dropna().tolist()
+                                    
+                                    for item_neg in neg_list:
+                                        list_semua_masukan_raw.append(f"[{jdl}] {item_neg}")
                                     
                                     pic_jdl = "-"
                                     col_judul_l1 = next((c for c in ['Judul Pembelajaran/Kegiatan', 'Judul Pembelajaran', 'Judul'] if c in df_bln.columns), None)
@@ -1368,7 +1371,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
                         except Exception as e_k:
                             tabel_suara_pelanggan_html = f"<p><i>Gagal memproses data komentar: {e_k}</i></p>"
 
-                        # 6. Strategic Roadmap & Rekomendasi Solutif
+                        # 6. Strategic Action Plan & Rekomendasi Preskriptif
                         pilar_kurang_tmp = []
                         if pd.notna(skor_instruktur) and skor_instruktur < 4.50: pilar_kurang_tmp.append(f"Kinerja Instruktur ({skor_instruktur:.2f})")
                         if pd.notna(skor_materi) and skor_materi < 4.50: pilar_kurang_tmp.append(f"Materi Pembelajaran ({skor_materi:.2f})")
@@ -1378,7 +1381,57 @@ elif menu_selection == "📑 REPORT & KATALOG":
                         gap_tmp_text = f"Fokus utama perbaikan ditargetkan pada pilar dengan realisasi skor di bawah target korporat 4.50, yaitu: <b>{', '.join(pilar_kurang_tmp)}</b>. Manajemen perlu memberlakukan standardisasi kesiapan kurikulum, refreshment metode pengajaran instruktur, dan audit sarana berkala." if pilar_kurang_tmp else "Seluruh 4 pilar utama telah melampaui batas TMP (≥ 4.50). Manajemen dianjurkan memperkuat SOP guna mempertahankan stabilitas mutu operasional."
                         q1_action_text = f"Berdasarkan prinsip efisiensi sumber daya (Pareto Principle), alokasi anggaran dan intervensi wajib difokuskan pada area <b>Kuadran 1 ({', '.join(q1_items)})</b>. Perbaikan di area ini memberikan daya ungkit (leverage) paling masif terhadap lonjakan indeks kepuasan pelanggan." if q1_items else "Tidak ada area kritis di Kuadran 1. Pengendalian mutu difokuskan pada pengawasan preventif."
 
-                        # 7. Gemini AI: Executive Summary Berstandar Konsultan
+                        # 7. GENERASI TINDAK LANJUT MENDALAM VIA GEMINI AI
+                        tabel_tindak_lanjut_ai_html = ""
+                        if list_semua_masukan_raw:
+                            try:
+                                sample_masukan = list_semua_masukan_raw[:25]
+                                prompt_action_plan = f"""
+                                Anda adalah Senior Quality Management Specialist di PLN UPDL Jakarta.
+                                Berdasarkan daftar suara masukan/keluhan peserta diklat berikut:
+                                {chr(10).join(sample_masukan)}
+
+                                Buatkan tabel Rencana Tindak Lanjut Perbaikan Operasional (Action Plan) yang konkret dan solutif.
+                                Klasifikasikan isu-isu tersebut ke dalam kelompok kategori (misal: Instruktur, Materi & Silabus, Sarana Ruang Kelas/In-Class, Sarana Digital/Aplikasi).
+
+                                Format output WAJIB HANYA berupa baris-baris HTML <tr> berikut (tanpa blok markdown ```html):
+                                <tr>
+                                    <td style="padding: 7px 10px; vertical-align: top; font-weight: 600; color: #003366;">[Nama Kategori/Pilar]</td>
+                                    <td style="padding: 7px 10px; vertical-align: top; color: #b91c1c;">[Ringkasan Poin Masukan/Keluhan Terkait]</td>
+                                    <td style="padding: 7px 10px; vertical-align: top; color: #15803d; font-weight: 500;">[Rencana Tindak Lanjut Konkret UPDL Jakarta]</td>
+                                    <td style="padding: 7px 10px; vertical-align: top; text-align: center; font-weight: 600; color: #0284c7;">[PIC Terkait: Sarpras / Akademik / Instruktur / PIC KI]</td>
+                                </tr>
+                                Tuliskan 3 hingga 5 baris isu paling krusial, bernada preskriptif korporat PLN, dan operasional.
+                                """
+                                ai_plan_resp = model.generate_content(prompt_action_plan)
+                                rows_plan = ai_plan_resp.text.strip().replace('```html', '').replace('```', '')
+                                
+                                tabel_tindak_lanjut_ai_html = f"""
+                                <div style="margin-top: 14px;">
+                                    <div style="font-weight: 700; color: #003366; font-size: 10pt; margin-bottom: 6px; text-transform: uppercase;">
+                                        Matriks Tindak Lanjut & Resolusi Keluhan Peserta (Action Item Tracker - UPDL Jakarta)
+                                    </div>
+                                    <table style="width: 100%; border-collapse: collapse; font-size: 9pt; border: 1px solid #cbd5e1;" border="1">
+                                        <thead>
+                                            <tr style="background-color: #003366; color: #ffffff; text-align: left;">
+                                                <th style="padding: 7px 10px; width: 18%;">Kategori Area</th>
+                                                <th style="padding: 7px 10px; width: 32%;">Isu / Masukan Peserta</th>
+                                                <th style="padding: 7px 10px; width: 35%;">Rencana Tindak Lanjut Operasional (UPDL Jakarta)</th>
+                                                <th style="padding: 7px 10px; width: 15%; text-align: center;">PIC Penanggung Jawab</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {rows_plan}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                """
+                            except Exception as e_plan:
+                                tabel_tindak_lanjut_ai_html = f"<p style='font-size:9pt; color:#64748b;'><i>[Tindak lanjut otomatis: PIC Akademik dan Sarpras wajib mengevaluasi {jml_neg} masukan peserta pada rapat tinjauan mutu].</i></p>"
+                        else:
+                            tabel_tindak_lanjut_ai_html = "<div style='background:#f0fdf4; border:1px solid #bbf7d0; padding:8px 12px; border-radius:4px; color:#166534; font-size:9pt; margin-top:8px;'><b>Zero Defect:</b> Tidak terdapat rekaman keluhan atau masukan negatif pada periode ini. Tindak lanjut berfokus pada pemeliharaan standar layanan prima.</div>"
+
+                        # 8. Gemini AI: Executive Summary Berstandar Konsultan
                         narasi_eksekutif_ai = ""
                         try:
                             prompt_ai = f"""
@@ -1412,7 +1465,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
                         def format_skor_val(val):
                             return f"{val:.2f}" if pd.notna(val) else "-"
 
-                        # 8. Template Dokumen Word Berstandar Konsultan Global (.DOC)
+                        # 9. Template Dokumen Word Berstandar Konsultan Global (.DOC)
                         html_content = f"""
                         <html>
                         <head>
@@ -1424,7 +1477,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
                             </style>
                         </head>
                         <body>
-                            <!-- HEADER UTAMA KONSULTAN -->
+                            <!-- HEADER UTAMA -->
                             <div style="border-bottom: 3px solid #0055A4; padding-bottom: 12px; margin-bottom: 20px;">
                                 <table style="width: 100%; border: none;">
                                     <tr>
@@ -1540,30 +1593,31 @@ elif menu_selection == "📑 REPORT & KATALOG":
                             </p>
                             {tabel_suara_pelanggan_html}
 
-                            <!-- 5. STRATEGIC ROADMAP -->
+                            <!-- 5. STRATEGIC ROADMAP & DETAILED AI RESOLUTION -->
                             <h3 style="color: #003366; font-size: 12.5pt; border-bottom: 1.5px solid #cbd5e1; padding-bottom: 4px; margin-bottom: 8px; margin-top: 20px;">
                                 5. STRATEGIC ROADMAP & REKOMENDASI TINDAK LANJUT
                             </h3>
                             <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px 16px; margin-bottom: 25px;">
-                                <div style="margin-bottom: 10px;">
+                                <div style="margin-bottom: 12px;">
                                     <div style="font-weight: 700; color: #003366; font-size: 10.5pt; margin-bottom: 2px;">
                                         A. Pemenuhan Standar Minimum TMP Korporat (Target: 4.50)
                                     </div>
                                     <div style="font-size: 9.5pt; color: #334155; text-align: justify;">{gap_tmp_text}</div>
                                 </div>
-                                <div style="margin-bottom: 10px;">
+                                <div style="margin-bottom: 12px;">
                                     <div style="font-weight: 700; color: #003366; font-size: 10.5pt; margin-bottom: 2px;">
                                         B. Intervensi Preskriptif Indikator Kuadran 1 (Prioritas Utama)
                                     </div>
                                     <div style="font-size: 9.5pt; color: #334155; text-align: justify;">{q1_action_text}</div>
                                 </div>
                                 <div>
-                                    <div style="font-weight: 700; color: #003366; font-size: 10.5pt; margin-bottom: 2px;">
-                                        C. Resolusi Masukan Peserta & Continuous Improvement
+                                    <div style="font-weight: 700; color: #003366; font-size: 10.5pt; margin-bottom: 4px;">
+                                        C. Resolusi Masukan Peserta & Continuous Improvement (UPDL Jakarta)
                                     </div>
-                                    <div style="font-size: 9.5pt; color: #334155; text-align: justify;">
-                                        Merespons <b>{jml_neg} komentar masukan</b> yang tercatat, PIC KI bersama pengelola diklat diwajibkan menyusun <i>Action Item Tracker</i> penanganan isu spesifik per pembelajaran dan mengevaluasi efektivitasnya pada siklus evaluasi mutu bulan berikutnya.
+                                    <div style="font-size: 9.5pt; color: #334155; text-align: justify; margin-bottom: 6px;">
+                                        Merespons <b>{jml_neg} keluhan dan masukan peserta</b> pada periode {bulan_pilih}, sistem menyusun matriks rencana aksi perbaikan operasional secara preskriptif di bawah ini:
                                     </div>
+                                    {tabel_tindak_lanjut_ai_html}
                                 </div>
                             </div>
 
@@ -1606,7 +1660,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
         st.write("Sistem rekomendasi objektif berbasis **Composite Performance Index** yang menggabungkan kepuasan mutu (`Ins-Rat`) dan stabilitas jam terbang.")
         
         sheet_id_ins = '1IDAmFwTbBQDZcKM3eiiEDcA3KwM9WKqW4zCrk__6-PU'
-        url_ins_katalog = f'https://docs.google.com/spreadsheets/d/{sheet_id_ins}/gviz/tq?tqx=out:csv&sheet=Detail%20Instruktur'
+        url_ins_katalog = f'[https://docs.google.com/spreadsheets/d/](https://docs.google.com/spreadsheets/d/){sheet_id_ins}/gviz/tq?tqx=out:csv&sheet=Detail%20Instruktur'
         
         try:
             df_katalog_raw = pd.read_csv(url_ins_katalog)
