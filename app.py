@@ -1692,17 +1692,26 @@ Tuliskan 3 hingga 5 baris isu paling utama dengan bahasa korporat baku PLN.
             st.error(f"Gagal memuat data sumber untuk laporan: {e}")
 
     # ─────────────────────────────────────────────────────────────────────────
-    # --- SUB TAB 2: KATALOG INSTRUKTUR ---
+    # --- SUB TAB 2: KATALOG INSTRUKTUR (FIXED URL LOADER & ROBUST PIPELINE) ---
     # ─────────────────────────────────────────────────────────────────────────
     with sub_katalog:
         st.markdown("### 👨‍🏫 Katalog & Rapor Instruktur Terbobot")
         st.write("Sistem rekomendasi objektif berbasis **Composite Performance Index** yang menggabungkan kepuasan mutu (`Ins-Rat`) dan stabilitas jam terbang.")
         
         sheet_id_ins = '1IDAmFwTbBQDZcKM3eiiEDcA3KwM9WKqW4zCrk__6-PU'
-        url_ins_katalog = f'[https://docs.google.com/spreadsheets/d/](https://docs.google.com/spreadsheets/d/){sheet_id_ins}/gviz/tq?tqx=out:csv&sheet=Detail%20Instruktur'
+        url_ins_katalog = f'https://docs.google.com/spreadsheets/d/{sheet_id_ins}/gviz/tq?tqx=out:csv&sheet=Detail%20Instruktur'
         
         try:
-            df_katalog_raw = pd.read_csv(url_ins_katalog)
+            # ⬇️ PERBAIKAN: Gunakan urllib untuk membaca URL Google Sheets secara stabil ⬇️
+            import urllib.request
+            import io
+            
+            req = urllib.request.Request(url_ins_katalog, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req) as response:
+                csv_bytes = response.read()
+            df_katalog_raw = pd.read_csv(io.BytesIO(csv_bytes))
+            # ⬆️ AKHIR PERBAIKAN URL LOADER ⬆️
+
             df_katalog_raw.columns = df_katalog_raw.columns.astype(str).str.strip()
             
             if not df_katalog_raw.empty:
