@@ -1086,15 +1086,23 @@ elif menu_selection == "📑 REPORT & KATALOG":
             df_rep_raw = pd.read_csv(io.BytesIO(csv_bytes))
             # ⬆️ AKHIR PERBAIKAN URL LOADER ⬆️
             
-            # Bersihkan nama kolom dari spasi berlebih
+           # Bersihkan nama kolom dari spasi berlebih
             df_rep_raw.columns = df_rep_raw.columns.astype(str).str.strip()
             
-            # ⬇️ PERBAIKAN 2: Pengecekan defensif jika kolom Laporan Bulan benar-benar hilang ⬇️
-            if 'Laporan Bulan' not in df_rep_raw.columns:
-                st.error("⚠️ Kolom 'Laporan Bulan' tidak ditemukan di data Google Sheets. Silakan cek kembali nama kolom di file sumber Anda.")
-                st.stop() # Hentikan proses di bawahnya agar tidak error merah
+            # ⬇️ PERBAIKAN: Deteksi otomatis variasi nama kolom bulan ⬇️
+            variasi_nama_kolom = ['Laporan Bulan', 'Laporan Bulanan', 'Bulan', 'LAPORAN BULAN']
+            kolom_ditemukan = next((col for col in df_rep_raw.columns if col in variasi_nama_kolom), None)
+            
+            if not kolom_ditemukan:
+                st.error(f"⚠️ Kolom periode bulan tidak ditemukan. Kolom yang saat ini terbaca di Sheets Anda adalah: {', '.join(df_rep_raw.columns.tolist()[:10])}...")
+                st.stop()
                 
-            # Jika aman, bersihkan teks di dalam kolom Laporan Bulan
+            # Seragamkan nama kolom di dalam sistem menjadi 'Laporan Bulan' 
+            # (agar tidak perlu merombak ratusan baris kode di bawahnya)
+            if kolom_ditemukan != 'Laporan Bulan':
+                df_rep_raw.rename(columns={kolom_ditemukan: 'Laporan Bulan'}, inplace=True)
+            
+            # Bersihkan teks di dalam kolom tersebut dari spasi tersembunyi
             df_rep_raw['Laporan Bulan'] = df_rep_raw['Laporan Bulan'].astype(str).str.strip()
             
             URUTAN_BULAN_STD = [
