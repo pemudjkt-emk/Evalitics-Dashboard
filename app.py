@@ -1068,24 +1068,40 @@ elif menu_selection == "🚨 EARLY WARNING":
 elif menu_selection == "📑 REPORT & KATALOG":
     sub_rep_generator, sub_katalog = st.tabs(["📑 Report Generator", "👨‍🏫 Katalog Instruktur"])
     
-    # ─────────────────────────────────────────────────────────────────────────
+   # ─────────────────────────────────────────────────────────────────────────
     # --- SUB TAB 1: REPORT GENERATOR ---
     # ─────────────────────────────────────────────────────────────────────────
     with sub_rep_generator:
-        st.markdown("### 📑 Generator Laporan Manajemen Mutu (Executive Edition)")
-        st.write("Menyusun laporan evaluasi mutu komprehensif berstandar konsultan (McKinsey/PwC style) lengkap dengan AI Executive Summary, Scorecard Pilar, Visual Matriks IPA, Voice of Customer, dan Tabel Rencana Tindak Lanjut Preskriptif dari Gemini AI.")
+        st.markdown("### 📑 Generator Laporan Manajemen Mutu (Otomatis)")
+        st.write("Menyusun laporan evaluasi mutu L1 komprehensif, mencakup capaian kategori, analisis IPA Kuadran 1, seluruh komentar apresiasi & masukan per judul pembelajaran, PIC KI, serta narasi AI Executive Summary.")
         
         try:
-            df_rep_raw = pd.read_csv(url)
+            # ⬇️ PERBAIKAN 1: Gunakan urllib untuk membaca URL Google Sheets secara stabil ⬇️
+            import urllib.request
+            import io
+            
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req) as response:
+                csv_bytes = response.read()
+            df_rep_raw = pd.read_csv(io.BytesIO(csv_bytes))
+            # ⬆️ AKHIR PERBAIKAN URL LOADER ⬆️
+            
+            # Bersihkan nama kolom dari spasi berlebih
             df_rep_raw.columns = df_rep_raw.columns.astype(str).str.strip()
             
-            if 'Laporan Bulan' in df_rep_raw.columns:
-                df_rep_raw['Laporan Bulan'] = df_rep_raw['Laporan Bulan'].astype(str).str.strip()
+            # ⬇️ PERBAIKAN 2: Pengecekan defensif jika kolom Laporan Bulan benar-benar hilang ⬇️
+            if 'Laporan Bulan' not in df_rep_raw.columns:
+                st.error("⚠️ Kolom 'Laporan Bulan' tidak ditemukan di data Google Sheets. Silakan cek kembali nama kolom di file sumber Anda.")
+                st.stop() # Hentikan proses di bawahnya agar tidak error merah
+                
+            # Jika aman, bersihkan teks di dalam kolom Laporan Bulan
+            df_rep_raw['Laporan Bulan'] = df_rep_raw['Laporan Bulan'].astype(str).str.strip()
             
             URUTAN_BULAN_STD = [
                 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
                 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
             ]
+            
             bulan_di_data = df_rep_raw['Laporan Bulan'].dropna().unique().tolist()
             opsi_bulan_rep = [b for b in URUTAN_BULAN_STD if b in bulan_di_data]
             sisa_bulan = [b for b in bulan_di_data if b not in URUTAN_BULAN_STD and b not in ['nan', 'None', '', 'Laporan Bulan']]
