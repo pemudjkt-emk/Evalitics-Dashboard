@@ -1009,7 +1009,8 @@ elif menu_selection == "📤 DATA ENTRY":
                                 max_no = get_sheet_max_no(sht_master)
                                 df_master_push['No'] = range(max_no+1, max_no+1+len(df_master_push))
                                 rows_master = [clean_row_for_sheets(r) for r in df_master_push.values.tolist()]
-                                sht_master.append_rows(rows_master, value_input_option='USER_ENTERED')
+                                # TAMBAHKAN table_range='A1' DI SINI 👇
+                                sht_master.append_rows(rows_master, value_input_option='USER_ENTERED', table_range='A1')
                                 st.success(f"🟣 Berhasil mengirim {len(rows_master)} baris ke Tab **{ws_master_target}**")
 
                             # Push L1 Tertutup (L1 + L2)
@@ -1018,14 +1019,16 @@ elif menu_selection == "📤 DATA ENTRY":
                                 max_no = get_sheet_max_no(sht_l1)
                                 df_l1_l2_push['No'] = range(max_no+1, max_no+1+len(df_l1_l2_push))
                                 rows_l1 = [clean_row_for_sheets(r) for r in df_l1_l2_push.values.tolist()]
-                                sht_l1.append_rows(rows_l1, value_input_option='USER_ENTERED')
+                                # TAMBAHKAN table_range='A1' DI SINI 👇
+                                sht_l1.append_rows(rows_l1, value_input_option='USER_ENTERED', table_range='A1')
                                 st.success(f"🔵 Berhasil mengirim {len(rows_l1)} baris ke Tab **{ws_l1_target}**")
 
                             # Push Instruktur
                             if has_ins:
                                 sht_ins = gsheet_file.worksheet(ws_ins_target)
                                 rows_ins = [clean_row_for_sheets(r) for r in df_ins_push.values.tolist()]
-                                sht_ins.append_rows(rows_ins, value_input_option='USER_ENTERED')
+                                # TAMBAHKAN table_range='A1' DI SINI 👇
+                                sht_ins.append_rows(rows_ins, value_input_option='USER_ENTERED', table_range='A1')
                                 st.success(f"🟠 Berhasil mengirim {len(rows_ins)} baris ke Tab **{ws_ins_target}**")
 
                             st.balloons()
