@@ -74,7 +74,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ─────────────────────────────────────────────────────────────────────────────
-# CONSTANTS (Data Entry & Master Data Cetak Biru)
+# CONSTANTS (Data Entry)
 # ─────────────────────────────────────────────────────────────────────────────
 TARGET_COLUMNS = [
     'No', 'Laporan Bulan', 'Kode Unik', 'Kode Pembelajaran', 'Judul Pembelajaran/Kegiatan',
@@ -720,91 +720,92 @@ elif menu_selection == "🤖 AI ASSISTANT":
                     st.error(f"Gagal AI: {ai_err}")
 
 # ══════════════════════════════════════════════════════════════════════════════
-# KONTEN: 📤 DATA ENTRY (PRESERVED AS REQUESTED)
+# KONTEN: 📤 DATA ENTRY
 # ══════════════════════════════════════════════════════════════════════════════
 elif menu_selection == "📤 DATA ENTRY":
     st.markdown("""
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
         <i class="material-icons" style="font-size:30px;color:#0055A4;">cloud_upload</i>
         <div>
-            <h2 style="margin:0;color:#003366;">Upload File</h2>
-            <p style="margin:0;color:#8a8a8a;font-size:0.9em;">Upload L1, L2, dan Instruktur — sistem otomatis mendeteksi tipe file</p>
+            <h2 style="margin:0;color:#003366;">Upload File Evaluasi</h2>
+            <p style="margin:0;color:#8a8a8a;font-size:0.9em;">Gabungkan L1, L2, SMILE, dan Instruktur secara Otomatis</p>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-    with st.expander("📖 Panduan Cepat", expanded=False):
+    with st.expander("📖 Panduan Cepat (3 Jalur Data)", expanded=True):
         col_g1, col_g2, col_g3 = st.columns(3)
-        with col_g1: st.markdown("**🔵 File L1** — wajib ada kolom `Ins-Eng-1 of 2` → Sheet **L1 Tertutup**")
-        with col_g2: st.markdown("**🟢 File L2** — wajib ada kolom `Confidence Level` → Sheet **L1 Tertutup**")
-        with col_g3: st.markdown("**🟠 File Instruktur** — wajib ada `Nama` + `Kode Diklat` → Sheet **Detail Instruktur**")
+        with col_g1: st.markdown("🔵 **L1 + L2 (Lama)** ➡️ Sheet **L1 Tertutup**\nGabungan Evaluasi Reaksi & L2 HXMS")
+        with col_g2: st.markdown("🟣 **L1 + SMILE** ➡️ Sheet **Master Data Laporan**\nData terpadu 2 Kunci Pas untuk Dashboard")
+        with col_g3: st.markdown("🟠 **Instruktur** ➡️ Sheet **Detail Instruktur**\nData Penilaian & Jam Terbang Pengajar")
 
     sub_upload, sub_riwayat, sub_panduan = st.tabs(["📤 Upload & Kirim", "🕒 Riwayat", "📄 Panduan Format"])
 
     with sub_upload:
         with st.container(border=True):
+            st.info("💡 **Tips:** Untuk hasil terbaik, letakkan seluruh file (L1, SMILE, L2, Instruktur) secara bersamaan ke dalam kotak di bawah ini.")
             uploaded_files = st.file_uploader(
-                "Pilih atau seret file Excel/CSV (bisa beberapa sekaligus)",
-                type=["xlsx","csv"], accept_multiple_files=True, key="entry_uploader"
+                "Pilih atau seret file Excel/CSV",
+                type=["xlsx","csv", "xls"], accept_multiple_files=True, key="entry_uploader"
             )
 
         if uploaded_files:
-            try:
-                all_l1_dfs, all_l2_dfs, all_ins_dfs, file_log = [], [], [], []
+            all_l1_dfs, all_l2_dfs, all_smile_dfs, all_ins_dfs, file_log = [], [], [], [], []
 
-                with st.status("🔍 Membaca dan mendeteksi tipe file...", expanded=True) as status_proc:
-                    for f in uploaded_files:
-                        df_raw = pd.read_csv(f) if f.name.endswith('.csv') else pd.read_excel(f)
+            with st.status("🔍 Membaca dan memetakan jalur file...", expanded=True) as status_proc:
+                for f in uploaded_files:
+                    try:
+                        if f.name.endswith('.csv'): df_raw = pd.read_csv(f)
+                        else: df_raw = pd.read_excel(f)
                         df_raw.columns = df_raw.columns.astype(str).str.strip()
 
+                        # Identifikasi Jalur File
+                        is_smile = ('Kode Service Request' in df_raw.columns or 'Peserta Diundang' in df_raw.columns)
+                        is_l2 = ('Confidence Level' in df_raw.columns and not is_smile)
                         is_instruktur = ('Nama' in df_raw.columns and 'Kode Diklat' in df_raw.columns and 'Confidence Level' not in df_raw.columns)
-                        is_l2 = ('Confidence Level' in df_raw.columns and 'Ins-Eng-1 of 2' not in df_raw.columns)
                         is_l1 = ('Ins-Eng-1 of 2' in df_raw.columns and not is_instruktur)
 
-                        if is_instruktur:
-                            before = len(df_raw)
-                            df_raw = df_raw[~df_raw['Nama'].astype(str).str.strip().str.upper().isin(['UPDL JAKARTA','JAKARTA'])].reset_index(drop=True)
-                            excluded = before - len(df_raw)
-                            
-                            df_ins = build_instruktur_df(df_raw) # Memetakan langsung ke 15 Kolom
-                            all_ins_dfs.append(df_ins)
-                            
-                            excl_note = f" ({excluded} baris dummy dikecualikan)" if excluded > 0 else ""
-                            ws_ins = st.session_state["setting_ws_instruktur"]
-                            file_log.append({"File":f.name,"Tipe":"🟠 Instruktur","Baris":len(df_raw),"Sheet":ws_ins})
-                            st.write(f"🟠 **Instruktur** — `{f.name}` ({len(df_raw)} baris{excl_note}) → Sheet: **{ws_ins}**")
-                            st.session_state.riwayat_upload.append({
-                                "nama":f.name,"waktu":datetime.now().strftime("%d/%m/%Y %H:%M"),
-                                "tipe":"Instruktur","baris":len(df_raw)})
-
-                        elif is_l1:
+                        # --- JALUR L1 ---
+                        if is_l1:
                             detect_and_show_column_mismatch(df_raw, INS_COL_NAMES, f.name, "INS")
                             detect_and_show_column_mismatch(df_raw, MAT_COL_NAMES, f.name, "MAT")
                             df_mapped = pd.DataFrame(index=df_raw.index, columns=TARGET_COLUMNS)
-                            df_mapped['Kode Pembelajaran']           = df_raw.get('Kode Judul')
+                            df_mapped['Kode Pembelajaran']       = df_raw.get('Kode Judul')
                             df_mapped['Judul Pembelajaran/Kegiatan'] = df_raw.get('Judul Pembelajaran')
-                            df_mapped['Batch']                       = df_raw.get('Angkatan')
-                            df_mapped['Tanggal Mulai']               = df_raw.get('Tgl Mulai')
-                            df_mapped['Tanggal Selesai']             = df_raw.get('Tgl Selesai')
-                            df_mapped['Strategi Pelaksanaan']        = df_raw.get('Strategi Pelaksana')
-                            df_mapped['Peserta Isi L1']              = df_raw.get('P.Isi')
-                            df_mapped['Peserta Hadir']               = df_raw.get('P.Hadir')
-                            df_mapped['PIC KI']                      = df_raw.get('Bidang')
+                            df_mapped['Batch']                   = df_raw.get('Angkatan')
+                            df_mapped['Tanggal Mulai']           = df_raw.get('Tgl Mulai')
+                            df_mapped['Tanggal Selesai']         = df_raw.get('Tgl Selesai')
+                            df_mapped['Strategi Pelaksanaan']    = df_raw.get('Strategi Pelaksana')
+                            df_mapped['Peserta Isi L1']          = df_raw.get('P.Isi')
+                            df_mapped['Peserta Hadir']           = df_raw.get('P.Hadir')
+                            df_mapped['PIC KI']                  = df_raw.get('Bidang')
+                            
                             for i, c in enumerate(INS_COL_NAMES, 1): df_mapped[f'INS{i}'] = df_raw.get(c)
                             for i, c in enumerate(MAT_COL_NAMES, 1): df_mapped[f'MAT{i}'] = df_raw.get(c)
                             for i, c in enumerate(SP_COL_NAMES,  1): df_mapped[f'SP{i}']  = df_raw.get(c)
                             for i, c in enumerate(DS_COL_NAMES,  1): df_mapped[f'DS{i}']  = df_raw.get(c)
-                            batch_val = df_mapped['Batch'].astype(str).str.replace(r'\.0$','',regex=True).str.strip()
+                            
+                            # Kunci Pas PENGHUBUNG
+                            kd_pemb = df_mapped['Kode Pembelajaran'].astype(str).str.replace(' ', '', regex=False).str.upper()
                             tgl_mulai = pd.to_datetime(df_mapped['Tanggal Mulai'],errors='coerce').dt.strftime('%Y%m%d').fillna('NOTGL')
-                            df_mapped['Kode Unik'] = df_mapped['Kode Pembelajaran'].astype(str).str.strip()+"."+batch_val+"."+tgl_mulai
+                            df_mapped['Kode Unik'] = kd_pemb + "." + tgl_mulai
+                            
                             all_l1_dfs.append(df_mapped)
-                            ws_l1 = st.session_state["setting_worksheet"]
-                            file_log.append({"File":f.name,"Tipe":"🔵 L1","Baris":len(df_raw),"Sheet":ws_l1})
-                            st.write(f"🔵 **L1** — `{f.name}` ({len(df_raw)} baris) → Sheet: **{ws_l1}**")
-                            st.session_state.riwayat_upload.append({
-                                "nama":f.name,"waktu":datetime.now().strftime("%d/%m/%Y %H:%M"),
-                                "tipe":"L1","baris":len(df_raw)})
+                            file_log.append({"File":f.name,"Tipe":"🔵 Evaluasi L1","Baris":len(df_raw)})
+                            st.session_state.riwayat_upload.append({"nama":f.name,"waktu":datetime.now().strftime("%d/%m/%Y %H:%M"),"tipe":"L1","baris":len(df_raw)})
 
+                        # --- JALUR SMILE ---
+                        elif is_smile:
+                            df_smile = df_raw.copy()
+                            kd_pemb_s = df_smile.get('Kode Pembelajaran', pd.Series(dtype=str)).astype(str).str.replace(' ', '', regex=False).str.upper()
+                            tgl_mulai_s = pd.to_datetime(df_smile.get('Tgl Mulai', pd.Series()), errors='coerce').dt.strftime('%Y%m%d').fillna('NOTGL')
+                            df_smile['Kode Unik'] = kd_pemb_s + "." + tgl_mulai_s
+                            
+                            all_smile_dfs.append(df_smile)
+                            file_log.append({"File":f.name,"Tipe":"🟣 SMILE","Baris":len(df_raw)})
+                            st.session_state.riwayat_upload.append({"nama":f.name,"waktu":datetime.now().strftime("%d/%m/%Y %H:%M"),"tipe":"SMILE","baris":len(df_raw)})
+
+                        # --- JALUR L2 ---
                         elif is_l2:
                             df_mapped = pd.DataFrame(index=df_raw.index, columns=TARGET_COLUMNS)
                             df_mapped['Kode Pembelajaran']       = df_raw.get('Kode Judul')
@@ -817,193 +818,243 @@ elif menu_selection == "📤 DATA ENTRY":
                             df_mapped['Jumlah Peserta Isi L2']   = df_raw.get('Jumlah Peserta Isi')
                             df_mapped['Nilai Confidence']        = df_raw.get('Confidence Level')
                             df_mapped['Nilai Commitment']        = df_raw.get('Commitment Level')
-                            batch_val = df_mapped['Batch'].astype(str).str.replace(r'\.0$','',regex=True).str.strip()
-                            tgl_mulai = pd.to_datetime(df_mapped['Tanggal Mulai'],errors='coerce').dt.strftime('%Y%m%d').fillna('NOTGL')
-                            df_mapped['Kode Unik'] = df_mapped['Kode Pembelajaran'].astype(str).str.strip()+"."+batch_val+"."+tgl_mulai
-                            all_l2_dfs.append(df_mapped)
-                            ws_l2 = st.session_state["setting_worksheet"]
-                            file_log.append({"File":f.name,"Tipe":"🟢 L2","Baris":len(df_raw),"Sheet":ws_l2})
-                            st.write(f"🟢 **L2** — `{f.name}` ({len(df_raw)} baris) → Sheet: **{ws_l2}**")
-                            st.session_state.riwayat_upload.append({
-                                "nama":f.name,"waktu":datetime.now().strftime("%d/%m/%Y %H:%M"),
-                                "tipe":"L2","baris":len(df_raw)})
-                        else:
-                            file_log.append({"File":f.name,"Tipe":"❌ Tidak Dikenal","Baris":len(df_raw),"Sheet":"—"})
-                            st.error(f"❌ **{f.name}** tidak dikenali. Kolom: `{'`, `'.join(list(df_raw.columns[:10]))}`...")
-
-                    status_proc.update(label="✅ Selesai!", state="complete", expanded=False)
-
-                if not all_l1_dfs and not all_l2_dfs and not all_ins_dfs: st.stop()
-
-                st.markdown("### 📋 Ringkasan")
-                st.dataframe(pd.DataFrame(file_log), use_container_width=True, hide_index=True)
-
-                has_l1l2 = bool(all_l1_dfs or all_l2_dfs)
-                has_ins  = bool(all_ins_dfs)
-
-                if has_l1l2:
-                    df_l1 = pd.concat(all_l1_dfs, ignore_index=True) if all_l1_dfs else pd.DataFrame(columns=TARGET_COLUMNS)
-                    if all_l2_dfs:
-                        df_l2_raw  = pd.concat(all_l2_dfs, ignore_index=True)
-                        l2_cols_av = [c for c in L2_MERGE_COLS if c in df_l2_raw.columns]
-                        df_l2_slim = df_l2_raw[l2_cols_av].groupby('Kode Unik', as_index=False).first()
-                        if not df_l1.empty:
-                            df_final = df_l1.merge(df_l2_slim, on='Kode Unik', how='left', suffixes=('','_l2'))
-                            for col in [c for c in L2_MERGE_COLS if c != 'Kode Unik']:
-                                col_l2 = col+'_l2'
-                                if col_l2 in df_final.columns:
-                                    df_final[col] = df_final[col].combine_first(df_final[col_l2])
-                                    df_final.drop(columns=[col_l2], inplace=True)
-                        else:
-                            df_final = df_l2_raw.copy()
-                    else:
-                        df_final = df_l1.copy()
-
-                    df_final = df_final.reindex(columns=TARGET_COLUMNS)
-                    df_final['Tanggal Selesai'] = pd.to_datetime(df_final['Tanggal Selesai'], errors='coerce')
-                    df_final['Tanggal Mulai']   = pd.to_datetime(df_final['Tanggal Mulai'],   errors='coerce')
-                    df_final['Cut off Data']    = df_final['Tanggal Selesai'] + pd.Timedelta(days=st.session_state["setting_cutoff"])
-                    df_final['Laporan Bulan']   = df_final['Cut off Data'].dt.month.map(BULAN_MAP_ID)
-                    today = pd.Timestamp.today().normalize()
-                    df_final['Status Pembelajaran'] = df_final['Tanggal Selesai'].apply(
-                        lambda x: "Terlaksana" if pd.notna(x) and x<=today else ("Belum Terlaksana" if pd.notna(x) else ""))
-                    for col in ['Peserta Isi L1','Peserta Hadir','Jumlah Peserta Lulus L2','Jumlah Peserta Isi L2','Nilai Confidence','Nilai Commitment']:
-                        df_final[col] = pd.to_numeric(df_final[col], errors='coerce')
-                    df_final['% Pengisian'] = safe_divide(df_final['Peserta Isi L1'], df_final['Peserta Hadir'])
-                    df_final['% Valid'] = df_final['% Pengisian'].apply(
-                        lambda x: "VALID" if pd.notna(x) and x>st.session_state["setting_threshold"] else ("TIDAK VALID" if pd.notna(x) else ""))
-                    df_final['% Pengisian L2'] = safe_divide(df_final['Jumlah Peserta Isi L2'], df_final['Jumlah Peserta Lulus L2'])
-                    all_indicators = [f'INS{i}' for i in range(1,10)] + [f'MAT{i}' for i in range(1,8)] + [f'SP{i}' for i in range(1,7)] + [f'DS{i}' for i in range(1,7)]
-                    for col in all_indicators:
-                        df_final[col] = pd.to_numeric(df_final[col], errors='coerce')
-                    df_final['RATA INST'] = df_final[[f'INS{i}' for i in range(1,9)]].mean(axis=1)
-                    df_final['RATA MAT']  = df_final[[f'MAT{i}' for i in range(1,7)]].mean(axis=1)
-                    df_final['RATA SP']   = df_final[[f'SP{i}'  for i in range(1,6)]].mean(axis=1)
-                    df_final['RATA DS']   = df_final[[f'DS{i}'  for i in range(1,6)]].mean(axis=1)
-                    df_final['RATA-RATA KESELURUHAN'] = df_final[['RATA INST','RATA MAT','RATA SP','RATA DS']].mean(axis=1)
-                    df_final['Jumlah Indikator dibawah 4.5'] = (df_final[all_indicators] < 4.5).sum(axis=1)
-                    df_final['Jumlah Indikator diatas 4.5']  = (df_final[all_indicators] >= 4.5).sum(axis=1)
-                    df_final.replace([np.inf, -np.inf], np.nan, inplace=True)
-
-                    with st.container(border=True):
-                        st.markdown("#### 🗓️ Filter & Preview — L1 & L2")
-                        if not df_final['Tanggal Mulai'].isnull().all():
-                            min_date = df_final['Tanggal Mulai'].min().date()
-                            max_date = df_final['Tanggal Mulai'].max().date()
-                            c1, c2 = st.columns(2)
-                            start_d = c1.date_input("Mulai", min_date, key="l1l2_start")
-                            end_d   = c2.date_input("Sampai", max_date, key="l1l2_end")
-                            mask = (df_final['Tanggal Mulai'] >= pd.to_datetime(start_d)) & (df_final['Tanggal Mulai'] <= pd.to_datetime(end_d))
-                            df_to_push = df_final.loc[mask].copy()
-                        else:
-                            df_to_push = df_final.copy()
-
-                        m1, m2, m3, m4 = st.columns(4)
-                        rata_l1 = df_to_push['RATA-RATA KESELURUHAN'].mean()
-                        total_lulus = df_to_push['Jumlah Peserta Lulus L2'].sum()
-                        total_hadir = df_to_push['Peserta Hadir'].sum()
-                        pct_lulus   = (total_lulus/total_hadir*100) if total_hadir > 0 else None
-                        rata_partisipasi = df_to_push['% Pengisian'].mean()
-                        m1.metric("📊 Baris Aktif",  f"{len(df_to_push)}")
-                        m2.metric("😊 Rata-rata L1", f"{rata_l1:.2f}" if pd.notna(rata_l1) else "N/A")
-                        m3.metric("🎓 % Lulus L2",   f"{pct_lulus:.1f}%" if pct_lulus else "N/A")
-                        m4.metric("📋 % Pengisian",  f"{rata_partisipasi*100:.1f}%" if pd.notna(rata_partisipasi) else "N/A")
-                        with st.expander(f"🔍 Preview ({len(df_to_push)} baris)", expanded=False):
-                            st.dataframe(df_to_push.fillna(""), use_container_width=True)
-
-                if has_ins:
-                    df_ins_final = pd.concat(all_ins_dfs, ignore_index=True)
-                    with st.container(border=True):
-                        st.markdown("#### 🗓️ Filter & Preview — Instruktur")
-                        if not df_ins_final['Tgl Mulai'].isnull().all():
-                            min_d, max_d = df_ins_final['Tgl Mulai'].min().date(), df_ins_final['Tgl Mulai'].max().date()
-                            fc1, fc2 = st.columns(2)
-                            start_ins = fc1.date_input("Mulai", min_d, key="ins_start")
-                            end_ins   = fc2.date_input("Sampai", max_d, key="ins_end")
-                            mask_ins = (df_ins_final['Tgl Mulai'] >= pd.to_datetime(start_ins)) & (df_ins_final['Tgl Mulai'] <= pd.to_datetime(end_ins))
-                            df_ins_push = df_ins_final.loc[mask_ins].copy()
-                        else:
-                            df_ins_push = df_ins_final.copy()
                             
-                        mi1, mi2, mi3 = st.columns(3)
-                        rata_ins = df_ins_push['Ins-Rat'].mean()
-                        mi1.metric("📚 Sesi Mengajar", f"{len(df_ins_push)}")
-                        mi2.metric("⭐ Rata-rata",      f"{rata_ins:.2f}" if pd.notna(rata_ins) else "N/A")
-                        mi3.metric("📊 Min/Max",        f"{df_ins_push['Ins-Rat'].min():.2f} / {df_ins_push['Ins-Rat'].max():.2f}" if pd.notna(rata_ins) else "N/A")
-                        with st.expander(f"🔍 Preview ({len(df_ins_push)} baris)", expanded=False):
-                            st.dataframe(df_ins_push.fillna(""), use_container_width=True)
+                            kd_pemb = df_mapped['Kode Pembelajaran'].astype(str).str.replace(' ', '', regex=False).str.upper()
+                            tgl_mulai = pd.to_datetime(df_mapped['Tanggal Mulai'],errors='coerce').dt.strftime('%Y%m%d').fillna('NOTGL')
+                            df_mapped['Kode Unik'] = kd_pemb + "." + tgl_mulai
+                            
+                            all_l2_dfs.append(df_mapped)
+                            file_log.append({"File":f.name,"Tipe":"🟢 L2 HXMS","Baris":len(df_raw)})
+                            st.session_state.riwayat_upload.append({"nama":f.name,"waktu":datetime.now().strftime("%d/%m/%Y %H:%M"),"tipe":"L2","baris":len(df_raw)})
 
-                st.markdown("---")
-                ws_l1l2    = st.session_state["setting_worksheet"]
-                ws_ins     = st.session_state["setting_ws_instruktur"]
-                sheet_name_setting = st.session_state["setting_sheet"]
+                        # --- JALUR INSTRUKTUR ---
+                        elif is_instruktur:
+                            df_raw = df_raw[~df_raw['Nama'].astype(str).str.strip().str.upper().isin(['UPDL JAKARTA','JAKARTA'])].reset_index(drop=True)
+                            df_ins = build_instruktur_df(df_raw) 
+                            all_ins_dfs.append(df_ins)
+                            file_log.append({"File":f.name,"Tipe":"🟠 Instruktur","Baris":len(df_raw)})
+                            st.session_state.riwayat_upload.append({"nama":f.name,"waktu":datetime.now().strftime("%d/%m/%Y %H:%M"),"tipe":"Instruktur","baris":len(df_raw)})
+                        
+                        else:
+                            st.error(f"❌ **{f.name}** tidak dikenali formatnya.")
 
-                col_info, col_btn = st.columns([2, 1])
-                with col_info:
-                    with st.container(border=True):
-                        parts = []
-                        if has_l1l2: parts.append(f"🔵🟢 **{len(df_to_push)} baris L1/L2** → `{ws_l1l2}`")
-                        if has_ins:  parts.append(f"🟠 **{len(df_ins_push)} baris Instruktur** → `{ws_ins}`")
-                        st.markdown("\n\n".join(parts) or "_Tidak ada data_")
-                        st.caption(f"📁 Google Sheets: **{sheet_name_setting}**")
+                    except Exception as e_file:
+                        st.error(f"Gagal memproses file {f.name}: {e_file}")
 
-                with col_btn:
-                    if st.button("🚀 KIRIM KE GOOGLE SHEETS", use_container_width=True, disabled=not(has_l1l2 or has_ins), type="primary", key="btn_kirim"):
-                        with st.spinner("Menghubungkan..."):
+                status_proc.update(label="✅ Selesai memetakan jalur file!", state="complete", expanded=False)
+
+            has_l1l2 = bool(all_l1_dfs or all_l2_dfs)
+            has_smile_pipe = bool(all_smile_dfs)
+            has_ins = bool(all_ins_dfs)
+
+            if not has_l1l2 and not has_smile_pipe and not has_ins:
+                st.stop()
+
+            st.markdown("### 📋 Ringkasan File")
+            st.dataframe(pd.DataFrame(file_log), use_container_width=True, hide_index=True)
+
+            # ==========================================================
+            # PIPELINE 1: L1 + L2 -> L1 TERTUTUP
+            # ==========================================================
+            df_l1_l2_push = pd.DataFrame()
+            if has_l1l2:
+                df_l1 = pd.concat(all_l1_dfs, ignore_index=True) if all_l1_dfs else pd.DataFrame(columns=TARGET_COLUMNS)
+                if all_l2_dfs:
+                    df_l2_raw  = pd.concat(all_l2_dfs, ignore_index=True)
+                    l2_cols_av = [c for c in L2_MERGE_COLS if c in df_l2_raw.columns]
+                    df_l2_slim = df_l2_raw[l2_cols_av].groupby('Kode Unik', as_index=False).first()
+                    
+                    if not df_l1.empty:
+                        df_l1_l2_push = df_l1.merge(df_l2_slim, on='Kode Unik', how='left', suffixes=('','_l2'))
+                        for col in [c for c in L2_MERGE_COLS if c != 'Kode Unik']:
+                            col_l2 = col+'_l2'
+                            if col_l2 in df_l1_l2_push.columns:
+                                df_l1_l2_push[col] = df_l1_l2_push[col].combine_first(df_l1_l2_push[col_l2])
+                                df_l1_l2_push.drop(columns=[col_l2], inplace=True)
+                    else:
+                        df_l1_l2_push = df_l2_raw.copy()
+                else:
+                    df_l1_l2_push = df_l1.copy()
+
+                df_l1_l2_push = df_l1_l2_push.reindex(columns=TARGET_COLUMNS)
+                
+                df_l1_l2_push['Tanggal Selesai'] = pd.to_datetime(df_l1_l2_push['Tanggal Selesai'], errors='coerce')
+                df_l1_l2_push['Tanggal Mulai']   = pd.to_datetime(df_l1_l2_push['Tanggal Mulai'],   errors='coerce')
+                df_l1_l2_push['Cut off Data']    = df_l1_l2_push['Tanggal Selesai'] + pd.Timedelta(days=st.session_state["setting_cutoff"])
+                df_l1_l2_push['Laporan Bulan']   = df_l1_l2_push['Cut off Data'].dt.month.map(BULAN_MAP_ID)
+                today = pd.Timestamp.today().normalize()
+                df_l1_l2_push['Status Pembelajaran'] = df_l1_l2_push['Tanggal Selesai'].apply(
+                    lambda x: "Terlaksana" if pd.notna(x) and x<=today else ("Belum Terlaksana" if pd.notna(x) else ""))
+                
+                for col in ['Peserta Isi L1','Peserta Hadir','Jumlah Peserta Lulus L2','Jumlah Peserta Isi L2','Nilai Confidence','Nilai Commitment']:
+                    df_l1_l2_push[col] = pd.to_numeric(df_l1_l2_push[col], errors='coerce')
+                
+                df_l1_l2_push['% Pengisian'] = safe_divide(df_l1_l2_push['Peserta Isi L1'], df_l1_l2_push['Peserta Hadir'])
+                df_l1_l2_push['% Valid'] = df_l1_l2_push['% Pengisian'].apply(
+                    lambda x: "VALID" if pd.notna(x) and x>st.session_state["setting_threshold"] else ("TIDAK VALID" if pd.notna(x) else ""))
+                df_l1_l2_push['% Pengisian L2'] = safe_divide(df_l1_l2_push['Jumlah Peserta Isi L2'], df_l1_l2_push['Jumlah Peserta Lulus L2'])
+                
+                all_indicators = [f'INS{i}' for i in range(1,10)] + [f'MAT{i}' for i in range(1,8)] + [f'SP{i}' for i in range(1,7)] + [f'DS{i}' for i in range(1,7)]
+                for col in all_indicators:
+                    df_l1_l2_push[col] = pd.to_numeric(df_l1_l2_push[col], errors='coerce')
+                
+                df_l1_l2_push['RATA INST'] = df_l1_l2_push[[f'INS{i}' for i in range(1,9)]].mean(axis=1)
+                df_l1_l2_push['RATA MAT']  = df_l1_l2_push[[f'MAT{i}' for i in range(1,7)]].mean(axis=1)
+                df_l1_l2_push['RATA SP']   = df_l1_l2_push[[f'SP{i}'  for i in range(1,6)]].mean(axis=1)
+                df_l1_l2_push['RATA DS']   = df_l1_l2_push[[f'DS{i}'  for i in range(1,6)]].mean(axis=1)
+                df_l1_l2_push['RATA-RATA KESELURUHAN'] = df_l1_l2_push[['RATA INST','RATA MAT','RATA SP','RATA DS']].mean(axis=1)
+                
+                df_l1_l2_push['Jumlah Indikator dibawah 4.5'] = (df_l1_l2_push[all_indicators] < 4.5).sum(axis=1)
+                df_l1_l2_push['Jumlah Indikator diatas 4.5']  = (df_l1_l2_push[all_indicators] >= 4.5).sum(axis=1)
+                df_l1_l2_push.replace([np.inf, -np.inf], np.nan, inplace=True)
+
+            # ==========================================================
+            # PIPELINE 2: L1 + SMILE -> MASTER DATA LAPORAN
+            # ==========================================================
+            df_master_push = pd.DataFrame()
+            if has_smile_pipe:
+                df_smile_raw = pd.concat(all_smile_dfs, ignore_index=True)
+                
+                if all_l1_dfs:
+                    df_l1_for_smile = pd.concat(all_l1_dfs, ignore_index=True)
+                    all_indicators_sm = [f'INS{i}' for i in range(1,10)] + [f'MAT{i}' for i in range(1,8)] + [f'SP{i}' for i in range(1,7)] + [f'DS{i}' for i in range(1,7)]
+                    
+                    for col in all_indicators_sm:
+                        df_l1_for_smile[col] = pd.to_numeric(df_l1_for_smile[col], errors='coerce')
+                    df_l1_for_smile['RATA INST'] = df_l1_for_smile[[f'INS{i}' for i in range(1,9)]].mean(axis=1)
+                    df_l1_for_smile['RATA MAT']  = df_l1_for_smile[[f'MAT{i}' for i in range(1,7)]].mean(axis=1)
+                    df_l1_for_smile['RATA SP']   = df_l1_for_smile[[f'SP{i}'  for i in range(1,6)]].mean(axis=1)
+                    df_l1_for_smile['RATA DS']   = df_l1_for_smile[[f'DS{i}'  for i in range(1,6)]].mean(axis=1)
+                    df_l1_for_smile['RATA-RATA KESELURUHAN'] = df_l1_for_smile[['RATA INST','RATA MAT','RATA SP','RATA DS']].mean(axis=1)
+                    df_l1_for_smile['Jumlah Indikator dibawah 4.5'] = (df_l1_for_smile[all_indicators_sm] < 4.5).sum(axis=1)
+                    df_l1_for_smile['Jumlah Indikator diatas 4.5']  = (df_l1_for_smile[all_indicators_sm] >= 4.5).sum(axis=1)
+                    
+                    eval_cols_to_bring = [
+                        'Kode Unik', 'Peserta Isi L1', 'RATA INST', 'RATA MAT', 'RATA SP', 'RATA DS', 
+                        'RATA-RATA KESELURUHAN', 'Jumlah Indikator dibawah 4.5', 'Jumlah Indikator diatas 4.5'
+                    ]
+                    df_l1_slim = df_l1_for_smile[[c for c in eval_cols_to_bring if c in df_l1_for_smile.columns]].groupby('Kode Unik').first().reset_index()
+                    df_master_push = df_smile_raw.merge(df_l1_slim, on='Kode Unik', how='left')
+                else:
+                    df_master_push = df_smile_raw.copy()
+
+                df_master_push['Tgl Selesai'] = pd.to_datetime(df_master_push.get('Tgl Selesai', pd.Series()), errors='coerce')
+                df_master_push['Cut off Data'] = df_master_push['Tgl Selesai'] + pd.Timedelta(days=st.session_state["setting_cutoff"])
+                df_master_push['Laporan Bulan'] = df_master_push['Cut off Data'].dt.month.map(BULAN_MAP_ID)
+                
+                today = pd.Timestamp.today().normalize()
+                df_master_push['Status Pembelajaran'] = df_master_push['Tgl Selesai'].apply(
+                    lambda x: "Terlaksana" if pd.notna(x) and x<=today else "Belum Terlaksana"
+                )
+                
+                df_master_push['Peserta Isi L1'] = pd.to_numeric(df_master_push.get('Peserta Isi L1', pd.Series()), errors='coerce')
+                df_master_push['Peserta Hadir']  = pd.to_numeric(df_master_push.get('Peserta Hadir', pd.Series()), errors='coerce')
+                df_master_push['% Pengisian L1'] = safe_divide(df_master_push['Peserta Isi L1'], df_master_push['Peserta Hadir'])
+                df_master_push['% Valid L1'] = df_master_push['% Pengisian L1'].apply(
+                    lambda x: "VALID" if pd.notna(x) and x > st.session_state["setting_threshold"] else "TIDAK VALID"
+                )
+
+                # PEMETAAN KOLOM TAMBAHAN UNTUK LAPORAN KELAS
+                df_master_push['Tempat Pelaksanaan'] = df_smile_raw.get('Lokasi Pelaksanaan')
+                df_master_push['Nomor Surat Pemanggilan Peserta'] = df_smile_raw.get('Nomor Surat Pemanggilan Peserta')
+                df_master_push['Rencana Jumlah Peserta'] = df_smile_raw.get('Rencana Jumlah Peserta')
+                df_master_push['Instruktur/ Fasilitator'] = df_smile_raw.get('Instruktur/ Fasilitator')
+                df_master_push['Peserta Diundang'] = df_smile_raw.get('Peserta Diundang')
+                df_master_push['% Kehadiran'] = df_smile_raw.get('% Kehadiran')
+                df_master_push['% Kelulusan'] = df_smile_raw.get('% Kelulusan')
+
+                df_master_push = df_master_push.reindex(columns=MASTER_TARGET_COLUMNS)
+
+            # ==========================================================
+            # PIPELINE 3: INSTRUKTUR -> DETAIL INSTRUKTUR
+            # ==========================================================
+            df_ins_push = pd.DataFrame()
+            if has_ins:
+                df_ins_push = pd.concat(all_ins_dfs, ignore_index=True)
+                df_ins_push = df_ins_push.reindex(columns=DETAIL_INSTRUKTUR_COLUMNS)
+
+            # ----------------------------------------------------------
+            # TAMPILAN PREVIEW (AKORDEON)
+            # ----------------------------------------------------------
+            if has_smile_pipe:
+                with st.expander(f"🟣 PREVIEW: MASTER DATA LAPORAN (L1 + SMILE) | {len(df_master_push)} Baris", expanded=True):
+                    st.dataframe(df_master_push.fillna(""), use_container_width=True)
+            if has_l1l2:
+                with st.expander(f"🔵 PREVIEW: L1 TERTUTUP (L1 + L2) | {len(df_l1_l2_push)} Baris", expanded=False):
+                    st.dataframe(df_l1_l2_push.fillna(""), use_container_width=True)
+            if has_ins:
+                with st.expander(f"🟠 PREVIEW: DETAIL INSTRUKTUR | {len(df_ins_push)} Baris", expanded=False):
+                    st.dataframe(df_ins_push.fillna(""), use_container_width=True)
+
+            st.markdown("---")
+            sheet_name_setting = st.session_state["setting_sheet"]
+            ws_l1_target = st.session_state["setting_worksheet"]
+            ws_master_target = st.session_state["setting_ws_master"]
+            ws_ins_target = st.session_state["setting_ws_instruktur"]
+
+            col_info, col_btn = st.columns([2, 1])
+            with col_info:
+                st.info(f"Target Penyimpanan Google Sheets Utama: **{sheet_name_setting}**")
+            
+            with col_btn:
+                if st.button("🚀 KIRIM SEMUA KE GOOGLE SHEETS", use_container_width=True, type="primary"):
+                    with st.spinner("Mengirim data melalui jalur masing-masing ke brankas utama..."):
+                        try:
                             client = init_gsheets_connection()
-                            hasil = []
-                            if has_l1l2:
-                                sht = client.open(sheet_name_setting).worksheet(ws_l1l2)
-                                max_no = get_sheet_max_no(sht)
-                                df_to_push['No'] = range(max_no+1, max_no+1+len(df_to_push))
-                                rows = [clean_row_for_sheets(r) for r in df_to_push.reindex(columns=TARGET_COLUMNS).values.tolist()]
-                                sht.append_rows(rows, value_input_option='USER_ENTERED')
-                                hasil.append(f"✅ **L1 & L2**: {len(rows)} baris → sheet **{ws_l1l2}**")
-                                
-                            if has_ins:
-                                sht_ins = client.open(sheet_name_setting).worksheet(ws_ins)
-                                df_ins_push_send = df_ins_push.copy()
-                                df_ins_push_send = df_ins_push_send.reindex(columns=DETAIL_INSTRUKTUR_COLUMNS)
-                                rows_ins = [clean_row_for_sheets(r) for r in df_ins_push_send.values.tolist()]
-                                sht_ins.append_rows(rows_ins, value_input_option='USER_ENTERED')
-                                hasil.append(f"✅ **Instruktur**: {len(rows_ins)} baris → sheet **{ws_ins}**")
-                                
-                            for h in hasil: st.success(h)
-                            st.balloons()
+                            gsheet_file = client.open(sheet_name_setting)
 
-            except Exception as e:
-                st.error(f"Terjadi kesalahan: {e}")
-                st.exception(e)
-        else:
-            st.markdown("""
-            <div style="text-align:center;padding:40px;color:#aaa;">
-                <i class="material-icons" style="font-size:60px;color:#ccc;">upload_file</i>
-                <p style="font-size:1.1em;margin-top:10px;">Belum ada file diupload.<br>
-                <span style="font-size:0.9em;">Seret file L1, L2, dan/atau Instruktur ke area upload di atas.</span></p>
-            </div>
-            """, unsafe_allow_html=True)
+                            # Push Master Data (SMILE + L1)
+                            if has_smile_pipe:
+                                sht_master = gsheet_file.worksheet(ws_master_target)
+                                max_no = get_sheet_max_no(sht_master)
+                                df_master_push['No'] = range(max_no+1, max_no+1+len(df_master_push))
+                                rows_master = [clean_row_for_sheets(r) for r in df_master_push.values.tolist()]
+                                sht_master.append_rows(rows_master, value_input_option='USER_ENTERED')
+                                st.success(f"🟣 Berhasil mengirim {len(rows_master)} baris ke Tab **{ws_master_target}**")
+
+                            # Push L1 Tertutup (L1 + L2)
+                            if has_l1l2:
+                                sht_l1 = gsheet_file.worksheet(ws_l1_target)
+                                max_no = get_sheet_max_no(sht_l1)
+                                df_l1_l2_push['No'] = range(max_no+1, max_no+1+len(df_l1_l2_push))
+                                rows_l1 = [clean_row_for_sheets(r) for r in df_l1_l2_push.values.tolist()]
+                                sht_l1.append_rows(rows_l1, value_input_option='USER_ENTERED')
+                                st.success(f"🔵 Berhasil mengirim {len(rows_l1)} baris ke Tab **{ws_l1_target}**")
+
+                            # Push Instruktur
+                            if has_ins:
+                                sht_ins = gsheet_file.worksheet(ws_ins_target)
+                                rows_ins = [clean_row_for_sheets(r) for r in df_ins_push.values.tolist()]
+                                sht_ins.append_rows(rows_ins, value_input_option='USER_ENTERED')
+                                st.success(f"🟠 Berhasil mengirim {len(rows_ins)} baris ke Tab **{ws_ins_target}**")
+
+                            st.balloons()
+                        except Exception as e_push:
+                            st.error(f"Gagal mengirim ke Google Sheets. Pastikan nama tab benar. Error: {e_push}")
 
     with sub_riwayat:
         if not st.session_state.riwayat_upload:
             st.info("Belum ada riwayat upload.")
         else:
             for item in reversed(st.session_state.riwayat_upload):
-                badge_color = {"L1":"#0055A4","L2":"#1a7a2e","Instruktur":"#b35900"}.get(item['tipe'],"#666")
+                badge_color = {"L1":"#0055A4","L2":"#1a7a2e", "SMILE":"#8e24aa", "Instruktur":"#b35900"}.get(item['tipe'],"#666")
                 st.markdown(f"""
                 <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #eee;">
                     <div style="flex:1;">
                         <p style="margin:0;font-weight:bold;">{item['nama']}</p>
-                        <p style="margin:0;font-size:0.8em;color:#8a8a8a;">{item['waktu']} &bull; {item['baris']} baris</p>
+                        <p style="margin:0;font-size:0.8em;color:#8a8a8a;">{item['waktu']} • {item['baris']} baris</p>
                     </div>
                     <span style="background:{badge_color}20;color:{badge_color};border:1px solid {badge_color}55;
-                                 padding:2px 10px;border-radius:20px;font-size:0.75em;font-weight:bold;">{item['tipe']}</span>
+                    padding:2px 10px;border-radius:20px;font-size:0.75em;font-weight:bold;">{item['tipe']}</span>
                 </div>""", unsafe_allow_html=True)
 
     with sub_panduan:
         with st.expander("📖 File L1 — Evaluasi Reaksi", expanded=True):
             st.markdown("- Wajib ada kolom `Ins-Eng-1 of 2`\n- Kolom penting: `Kode Judul`, `Judul Pembelajaran`, `Angkatan`, `Tgl Mulai`, `Tgl Selesai`, `Strategi Pelaksana`, `P.Isi`, `P.Hadir`, `Bidang`")
-        with st.expander("📖 File L2 — Evaluasi Pembelajaran", expanded=True):
+        with st.expander("📖 File L2 — Evaluasi Pembelajaran (Legacy)", expanded=True):
             st.markdown("- Wajib ada kolom `Confidence Level` (tanpa `Ins-Eng-1 of 2`)\n- Kolom penting: `Kode Judul`, `Judul`, `Angkatan`, `Tgl Mulai`, `Tgl Selesai`, `Jumlah Peserta Hadir/Lulus/Isi`, `Commitment Level`")
+        with st.expander("📖 File SMILE — Laporan Pelaksanaan (Baru)", expanded=True):
+            st.markdown("- Wajib ada kolom `Kode Service Request` atau `Peserta Diundang`\n- Kolom penting: `Kode Pembelajaran`, `Judul Pembelajaran`, `Batch`, `Tgl Mulai`, `Tgl Selesai`, `Peserta Hadir`, `Peserta Lulus`")
         with st.expander("📖 File Instruktur — Detail Instruktur", expanded=True):
             st.markdown("- Wajib ada kolom `Nama` **DAN** `Kode Diklat`\n- Kolom skor: `Ins-Eng-1 of 2`, `Ins-Eng-2 of 2`, `Ins-Rel-1 of 2`, `Ins-Rel-2 of 2`, `Ins-Sat-1 of 4` s.d. `Ins-Sat-4 of 4`, `Ins-Rat`")
 
@@ -1314,6 +1365,8 @@ elif menu_selection == "📑 REPORT & KATALOG":
                         # 5. Suara Pelanggan (Tabel Konsultan Bersih)
                         jml_pos, jml_neg = 0, 0
                         tabel_suara_pelanggan_html = ""
+                        list_semua_masukan_raw = []
+                        
                         try:
                             sheet_id_komentar = '1IDAmFwTbBQDZcKM3eiiEDcA3KwM9WKqW4zCrk__6-PU'
                             url_k = "https://docs.google.com/spreadsheets/d/" + str(sheet_id_komentar) + "/gviz/tq?tqx=out:csv&sheet=Detail%20Komentar%20L1"
@@ -1324,11 +1377,12 @@ elif menu_selection == "📑 REPORT & KATALOG":
                             df_k_raw.columns = df_k_raw.columns.astype(str).str.strip()
                             
                             # Penyesuaian Kolom Berdasarkan Indeks & Nama Kolom Google Sheets
-                            col_bulan_k = df_k_raw.columns[3] if len(df_k_raw.columns) > 3 else 'Bulan'
-                            col_teks_k  = df_k_raw.columns[10] if len(df_k_raw.columns) > 10 else 'Komentar'
-                            col_jenis_k = df_k_raw.columns[13] if len(df_k_raw.columns) > 13 else 'Jenis'
-                            col_judul_k = next((c for c in ['Judul Pembelajaran/Kegiatan', 'Judul Pembelajaran', 'Judul', 'Nama Pelatihan'] if c in df_k_raw.columns), df_k_raw.columns[0])
+                            col_bulan_k = df_k_raw.columns[3] if len(df_k_raw.columns) > 3 else 'Bulan'       # Kolom D
+                            col_judul_k = df_k_raw.columns[4] if len(df_k_raw.columns) > 4 else 'Judul Diklat' # Kolom E (Judul Diklat)
+                            col_teks_k  = df_k_raw.columns[10] if len(df_k_raw.columns) > 10 else 'Komentar'    # Kolom K
+                            col_jenis_k = df_k_raw.columns[13] if len(df_k_raw.columns) > 13 else 'Jenis'       # Kolom N
 
+                            # Filter dan Pembersihan Data
                             df_k_raw[col_bulan_k] = df_k_raw[col_bulan_k].astype(str).str.strip()
                             df_k_bln = df_k_raw[df_k_raw[col_bulan_k].str.lower() == str(bulan_pilih).strip().lower()].copy()
 
@@ -1353,11 +1407,15 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                     pos_list = sub_df[sub_df['Kategori_Final'] == 'Positif'][col_teks_k].dropna().tolist()
                                     neg_list = sub_df[sub_df['Kategori_Final'] == 'Negatif'][col_teks_k].dropna().tolist()
                                     
+                                    for item_neg in neg_list:
+                                        list_semua_masukan_raw.append(f"[{jdl}] {item_neg}")
+                                    
+                                    # Pencocokan PIC KI dari sheet L1
                                     pic_jdl = "-"
                                     col_judul_l1 = next((c for c in ['Judul Pembelajaran/Kegiatan', 'Judul Pembelajaran', 'Judul'] if c in df_bln.columns), None)
                                     col_pic_l1   = next((c for c in ['PIC KI', 'Bidang'] if c in df_bln.columns), None)
                                     if col_judul_l1 and col_pic_l1:
-                                        match_pic = df_bln[df_bln[col_judul_l1] == jdl][col_pic_l1].dropna()
+                                        match_pic = df_bln[df_bln[col_judul_l1].astype(str).str.strip().str.lower() == str(jdl).strip().lower()][col_pic_l1].dropna()
                                         if not match_pic.empty:
                                             pic_jdl = str(match_pic.iloc[0])
                                             
@@ -1396,7 +1454,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
                         except Exception as e_k:
                             tabel_suara_pelanggan_html = f"<p><i>Gagal memproses data komentar: {e_k}</i></p>"
 
-                        # 6. Strategic Roadmap & Rekomendasi Solutif
+                        # 6. Strategic Action Plan & Rekomendasi Preskriptif
                         pilar_kurang_tmp = []
                         if pd.notna(skor_instruktur) and skor_instruktur < 4.50: pilar_kurang_tmp.append(f"Kinerja Instruktur ({skor_instruktur:.2f})")
                         if pd.notna(skor_materi) and skor_materi < 4.50: pilar_kurang_tmp.append(f"Materi Pembelajaran ({skor_materi:.2f})")
@@ -1406,7 +1464,94 @@ elif menu_selection == "📑 REPORT & KATALOG":
                         gap_tmp_text = f"Fokus utama perbaikan ditargetkan pada pilar dengan realisasi skor di bawah target korporat 4.50, yaitu: <b>{', '.join(pilar_kurang_tmp)}</b>. Manajemen perlu memberlakukan standardisasi kesiapan kurikulum, refreshment metode pengajaran instruktur, dan audit sarana berkala." if pilar_kurang_tmp else "Seluruh 4 pilar utama telah melampaui batas TMP (≥ 4.50). Manajemen dianjurkan memperkuat SOP guna mempertahankan stabilitas mutu operasional."
                         q1_action_text = f"Berdasarkan prinsip efisiensi sumber daya (Pareto Principle), alokasi anggaran dan intervensi wajib difokuskan pada area <b>Kuadran 1 ({', '.join(q1_items)})</b>. Perbaikan di area ini memberikan daya ungkit (leverage) paling masif terhadap lonjakan indeks kepuasan pelanggan." if q1_items else "Tidak ada area kritis di Kuadran 1. Pengendalian mutu difokuskan pada pengawasan preventif."
 
-                        # 7. Gemini AI: Executive Summary Berstandar Konsultan
+                        # 7. GENERASI TINDAK LANJUT MENDALAM VIA GEMINI AI (DENGAN SAFE FALLBACK)
+                        tabel_tindak_lanjut_ai_html = ""
+                        if list_semua_masukan_raw:
+                            sample_masukan = list_semua_masukan_raw[:25]
+                            teks_masukan_input = "\n".join([f"- {m}" for m in sample_masukan])
+                            rows_plan = ""
+                            
+                            try:
+                                prompt_action_plan = f"""
+Bertindaklah sebagai Senior Quality Management Specialist di PLN UPDL Jakarta.
+Berikut adalah rekaman suara masukan/keluhan peserta pelatihan:
+{teks_masukan_input}
+
+Buatkan tabel Rencana Tindak Lanjut Operasional (Action Plan) konkret dari UPDL Jakarta untuk menjawab isu-isu di atas.
+Klasifikasikan ke dalam kategori area yang relevan (misal: Instruktur & Pengajaran, Materi & Silabus Diklat, Sarana Ruang Kelas/In-Class, atau Sarana Digital & Jaringan).
+
+Output WAJIB HANYA berupa baris-baris tag HTML <tr>...</tr> (tanpa pembungkus ```html):
+<tr>
+    <td style="padding: 8px 10px; vertical-align: top; font-weight: 600; color: #003366;">[Nama Kategori/Pilar]</td>
+    <td style="padding: 8px 10px; vertical-align: top; color: #b91c1c;">[Ringkasan Poin Masukan Terkait]</td>
+    <td style="padding: 8px 10px; vertical-align: top; color: #15803d; font-weight: 500;">[Rencana Tindak Lanjut Operasional UPDL Jakarta]</td>
+    <td style="padding: 8px 10px; vertical-align: top; text-align: center; font-weight: 600; color: #0284c7;">[PIC: Sarpras / Akademik / Instruktur / PIC KI]</td>
+</tr>
+Tuliskan 3 hingga 5 baris isu paling utama dengan bahasa korporat baku PLN.
+"""
+                                if model:
+                                    ai_plan_resp = model.generate_content(prompt_action_plan)
+                                    if ai_plan_resp and hasattr(ai_plan_resp, 'text'):
+                                        rows_plan = ai_plan_resp.text.strip().replace('```html', '').replace('```', '')
+                            except Exception as e_ai:
+                                rows_plan = ""
+
+                            if not rows_plan or "<tr" not in rows_plan:
+                                fallback_rows = []
+                                for idx_m, item_m in enumerate(sample_masukan[:4], 1):
+                                    txt_clean = item_m.strip()
+                                    kat_area = "Sarana & Prasarana"
+                                    pic_area = "PIC Sarpras"
+                                    solusi_area = "Pemeriksaan dan perbaikan fasilitas kelas, AC, dan perlengkapan praktikum sebelum sesi dimulai."
+                                    
+                                    lower_m = txt_clean.lower()
+                                    if any(w in lower_m for w in ['instruktur', 'pengajar', 'suara', 'bicara', 'waktu', 'jadwal']):
+                                        kat_area = "Kinerja Instruktur"
+                                        pic_area = "Pengelola Instruktur"
+                                        solusi_area = "Briefing pengajar terkait alokasi waktu dan peningkatan interaksi aktif bersama peserta."
+                                    elif any(w in lower_m for w in ['materi', 'modul', 'ppt', 'studi kasus', 'silabus', 'teori']):
+                                        kat_area = "Materi Pembelajaran"
+                                        pic_area = "PIC Akademik"
+                                        solusi_area = "Pemutakhiran studi kasus aktual dan penyesuaian bobot latihan modul."
+                                    elif any(w in lower_m for w in ['aplikasi', 'jaringan', 'wifi', 'internet', 'web', 'login']):
+                                        kat_area = "Sarana Digital"
+                                        pic_area = "Tim TI & Media"
+                                        solusi_area = "Optimalisasi bandwidth internet dan pengecekan aksesibilitas platform e-learning."
+
+                                    fallback_rows.append(f"""
+                                    <tr style="background-color: {'#ffffff' if idx_m % 2 != 0 else '#f8fafc'};">
+                                        <td style="padding: 8px 10px; vertical-align: top; font-weight: 600; color: #003366;">{kat_area}</td>
+                                        <td style="padding: 8px 10px; vertical-align: top; color: #b91c1c;">{txt_clean}</td>
+                                        <td style="padding: 8px 10px; vertical-align: top; color: #15803d; font-weight: 500;">{solusi_area}</td>
+                                        <td style="padding: 8px 10px; vertical-align: top; text-align: center; font-weight: 600; color: #0284c7;">{pic_area}</td>
+                                    </tr>
+                                    """)
+                                rows_plan = "".join(fallback_rows)
+
+                            tabel_tindak_lanjut_ai_html = f"""
+                            <div style="margin-top: 14px;">
+                                <div style="font-weight: 700; color: #003366; font-size: 10pt; margin-bottom: 6px; text-transform: uppercase;">
+                                    Matriks Tindak Lanjut & Resolusi Keluhan Peserta (Action Item Tracker - UPDL Jakarta)
+                                </div>
+                                <table style="width: 100%; border-collapse: collapse; font-size: 9.5pt; border: 1px solid #cbd5e1;" border="1">
+                                    <thead>
+                                        <tr style="background-color: #003366; color: #ffffff; text-align: left;">
+                                            <th style="padding: 8px 10px; width: 18%;">Kategori Area</th>
+                                            <th style="padding: 8px 10px; width: 32%;">Isu / Masukan Peserta</th>
+                                            <th style="padding: 8px 10px; width: 35%;">Rencana Tindak Lanjut Operasional (UPDL Jakarta)</th>
+                                            <th style="padding: 8px 10px; width: 15%; text-align: center;">PIC Terkait</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {rows_plan}
+                                    </tbody>
+                                </table>
+                            </div>
+                            """
+                        else:
+                            tabel_tindak_lanjut_ai_html = "<div style='background:#f0fdf4; border:1px solid #bbf7d0; padding:10px 14px; border-radius:6px; color:#166534; font-size:9.5pt; margin-top:8px;'><b>Zero Defect:</b> Tidak terdapat rekaman keluhan atau masukan negatif pada periode ini. Tindak lanjut berfokus pada pemeliharaan standar layanan prima.</div>"
+
+                        # 8. Gemini AI: Executive Summary Berstandar Konsultan
                         narasi_eksekutif_ai = ""
                         try:
                             prompt_ai = f"""
@@ -1443,7 +1588,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
                         def format_skor_val(val):
                             return f"{val:.2f}" if pd.notna(val) else "-"
 
-                        # 8. Template Dokumen Word Berstandar Konsultan Global (.DOC)
+                        # 9. Template Dokumen Word Berstandar Konsultan Global (.DOC)
                         html_content = f"""
                         <html>
                         <head>
@@ -1637,7 +1782,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
         st.write("Menyusun laporan pelaksanaan spesifik per kelas dari Master Data Laporan, mencakup realisasi peserta, biaya, evaluasi, dan komentar berstandar *Consulting Style*.")
         
         try:
-            url_master = "https://docs.google.com/spreadsheets/d/" + str(sheet_id) + "/gviz/tq?tqx=out:csv&sheet=Master_Data_Laporan"
+            url_master = "[https://docs.google.com/spreadsheets/d/](https://docs.google.com/spreadsheets/d/)" + str(sheet_id) + "/gviz/tq?tqx=out:csv&sheet=Master_Data_Laporan"
             req_master = urllib.request.Request(url_master, headers={'User-Agent': 'Mozilla/5.0'})
             with urllib.request.urlopen(req_master) as response:
                 df_master = pd.read_csv(io.BytesIO(response.read()))
@@ -1741,7 +1886,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
                             pos_html, neg_html = "-", "-"
                             jml_pos_kelas, jml_neg_kelas = 0, 0
                             try:
-                                url_k = "https://docs.google.com/spreadsheets/d/" + str(sheet_id) + "/gviz/tq?tqx=out:csv&sheet=Detail%20Komentar%20L1"
+                                url_k = "[https://docs.google.com/spreadsheets/d/](https://docs.google.com/spreadsheets/d/)" + str(sheet_id) + "/gviz/tq?tqx=out:csv&sheet=Detail%20Komentar%20L1"
                                 req_k = urllib.request.Request(url_k, headers={'User-Agent': 'Mozilla/5.0'})
                                 with urllib.request.urlopen(req_k) as res_k:
                                     df_k_raw = pd.read_csv(io.BytesIO(res_k.read()))
@@ -1774,7 +1919,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                 neg_html = f"Gagal memuat komentar: {e_k}"
                                 
                             html_kelas = f"""
-                            <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                            <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='[http://www.w3.org/TR/REC-html40](http://www.w3.org/TR/REC-html40)'>
                             <head>
                                 <meta charset="utf-8">
                                 <style>
@@ -1820,7 +1965,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                     <h4>1. DASAR PELAKSANAAN</h4>
                                     <p>Inisiatif pembelajaran ini dieksekusi berdasarkan mandat korporat melalui Surat Penugasan No. <b>{no_surat}</b> yang diterbitkan pada tanggal <b>{tgl_surat}</b>. Sebagai landasan administratif tambahan, pemanggilan peserta diatur melalui Surat Pemanggilan No. <b>{no_surat_panggil}</b> dengan Kode Service Request (SR): <b>{kode_sr}</b>.</p>
                                     
-                                    <h4>2. JUMLAH PESERTA</h4>
+                                    <h4>2. JUMLAH PESERTA (METRIK PARTISIPASI & KELULUSAN)</h4>
                                     <p>Tingkat konversi (<i>Conversion Rate</i>) kehadiran dan kelulusan peserta merupakan indikator utama efektivitas pemanggilan dan kualitas penyampaian materi. Berikut adalah rincian capaian partisipasi dan akademik:</p>
                                     <table class="zebra">
                                         <tr><th style="width: 70%; text-align:center;">Indikator Partisipasi & Akademik</th><th style="width: 30%; text-align:center;">Realisasi / Capaian</th></tr>
@@ -1841,7 +1986,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                         <li><b>Narasumber/Instruktur:</b> {instruktur}</li>
                                     </ul>
 
-                                    <h4>4. REALISASI BIAYA</h4>
+                                    <h4>4. REALISASI BIAYA (EFISIENSI ANGGARAN)</h4>
                                     <p>Optimalisasi sumber daya finansial diukur melalui komparasi Rencana Anggaran Biaya (RAB) terhadap realisasi aktual, guna menjamin <i>Cost Effectiveness</i> kegiatan operasional:</p>
                                     <table class="zebra">
                                         <tr><th style="width: 60%; text-align:center;">Komponen Pembiayaan</th><th style="width: 40%; text-align:center;">Nominal (Rp)</th></tr>
@@ -1849,18 +1994,18 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                         <tr><td>Realisasi Biaya Pelaksanaan (Actual)</td><td style="text-align:right; color: #003366;"><b>{realisasi}</b></td></tr>
                                     </table>
 
-                                    <h4 style="page-break-before: always;">5. EVALUASI PEMBELAJARAN</h4>
+                                    <h4 style="page-break-before: always;">5. EVALUASI PEMBELAJARAN (ANALISIS KINERJA MUTU L1)</h4>
                                     <p>Evaluasi Level 1 mengukur kualitas kepuasan pelanggan secara komprehensif. Dengan tingkat partisipasi pengisian (<i>Response Rate</i>) sebesar <b>{pct_isi}</b> ({isi_l1} responden), berikut adalah pemetaan skor kepuasan peserta (Skala 1-5, Target TMP: 4.50):</p>
                                     <table class="zebra">
                                         <tr><th style="width: 10%; text-align:center;">No</th><th style="width: 60%;">Pilar Evaluasi Mutu</th><th style="width: 30%; text-align:center;">Realisasi Skor</th></tr>
-                                        <tr><td style="text-align:center;">1</td><td>Materi Pembelajaran</td><td style="text-align:center; font-weight:bold;">{skor_mat}</td></tr>
-                                        <tr><td style="text-align:center;">2</td><td>Instruktur & Fasilitator</td><td style="text-align:center; font-weight:bold;">{skor_ins}</td></tr>
-                                        <tr><td style="text-align:center;">3</td><td>Sarana Prasarana Offline</td><td style="text-align:center; font-weight:bold;">{skor_sp_off}</td></tr>
-                                        <tr><td style="text-align:center;">4</td><td>Sarana Prasarana Online</td><td style="text-align:center; font-weight:bold;">{skor_sp_on}</td></tr>
-                                        <tr style="background-color: #f1f5f9;"><td style="text-align:center; font-weight:bold; color:#003366;">5</td><td style="font-weight:bold; color:#003366;">Rata-Rata Keseluruhan</td><td style="text-align:center; font-weight:bold; color:#003366; font-size:12pt;">{skor_tot}</td></tr>
+                                        <tr><td style="text-align:center;">1</td><td>Kualitas Materi Pembelajaran</td><td style="text-align:center; font-weight:bold;">{skor_mat}</td></tr>
+                                        <tr><td style="text-align:center;">2</td><td>Kinerja Instruktur & Fasilitator</td><td style="text-align:center; font-weight:bold;">{skor_ins}</td></tr>
+                                        <tr><td style="text-align:center;">3</td><td>Sarana Prasarana Offline (In-Class)</td><td style="text-align:center; font-weight:bold;">{skor_sp_off}</td></tr>
+                                        <tr><td style="text-align:center;">4</td><td>Sarana Prasarana Online (Digital)</td><td style="text-align:center; font-weight:bold;">{skor_sp_on}</td></tr>
+                                        <tr style="background-color: #f1f5f9;"><td style="text-align:center; font-weight:bold; color:#003366;">5</td><td style="font-weight:bold; color:#003366;">Rata-Rata Komposit Keseluruhan</td><td style="text-align:center; font-weight:bold; color:#003366; font-size:12pt;">{skor_tot}</td></tr>
                                     </table>
 
-                                    <h4>6. CUSTOMER VOICE (KOMENTAR)</h4>
+                                    <h4>6. CUSTOMER VOICE (KOMENTAR APRESIASI & MASUKAN)</h4>
                                     <p>Analisis kualitatif terhadap sentimen peserta membagi umpan balik menjadi dua pilar utama: Kekuatan Layanan (Apresiasi) dan Area Pengembangan (Masukan):</p>
                                     <table>
                                         <tr><th style="width: 50%; text-align:center; background-color: #0f172a;">Komentar Apresiasi ({jml_pos_kelas})</th><th style="width: 50%; text-align:center; background-color: #0f172a;">Komentar Masukan / Evaluasi ({jml_neg_kelas})</th></tr>
@@ -1881,7 +2026,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                         </tr>
                                     </table>
 
-                                    <h3 style="page-break-before: always; color:#003366; border-bottom: 2px solid #003366; padding-bottom:5px;">7. LAMPIRAN</h3>
+                                    <h3 style="page-break-before: always; color:#003366; border-bottom: 2px solid #003366; padding-bottom:5px;">7. LAMPIRAN DOKUMEN</h3>
                                     <p>Berikut adalah kelengkapan administrasi dan bukti pelaksanaan program:</p>
                                     <ul style="line-height:2.0; font-weight:bold; color: #0055A4;">
                                         <li>Lampiran 1: Dasar Surat Penugasan</li>
@@ -1920,7 +2065,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
         st.write("Sistem rekomendasi objektif berbasis **Composite Performance Index** yang menggabungkan kepuasan mutu (`Ins-Rat`) dan stabilitas jam terbang.")
         
         sheet_id_ins = '1IDAmFwTbBQDZcKM3eiiEDcA3KwM9WKqW4zCrk__6-PU'
-        url_ins_katalog = "https://docs.google.com/spreadsheets/d/" + str(sheet_id_ins) + "/gviz/tq?tqx=out:csv&sheet=Detail%20Instruktur"
+        url_ins_katalog = "[https://docs.google.com/spreadsheets/d/](https://docs.google.com/spreadsheets/d/)" + str(sheet_id_ins) + "/gviz/tq?tqx=out:csv&sheet=Detail%20Instruktur"
         
         try:
             req_ins = urllib.request.Request(url_ins_katalog, headers={'User-Agent': 'Mozilla/5.0'})
@@ -2065,30 +2210,32 @@ elif menu_selection == "📑 REPORT & KATALOG":
 # KONTEN: ⚙️ PENGATURAN
 # ══════════════════════════════════════════════════════════════════════════════
 elif menu_selection == "⚙️ PENGATURAN":
-    st.subheader("⚙️ Pengaturan Data Entry")
+    st.subheader("⚙️ Pengaturan Aplikasi")
     with st.container(border=True):
-        st.markdown("#### 🔗 Konfigurasi Google Sheets")
-        nama_sheet = st.text_input("Nama File Google Sheets", value=st.session_state["setting_sheet"])
+        st.markdown("#### 🔗 Konfigurasi Google Sheets (Target Master Data Laporan)")
+        nama_sheet = st.text_input("Nama File Google Sheets Utama", value=st.session_state["setting_sheet"])
 
         st.markdown("---")
-        st.markdown("#### 📋 Nama Tab (Worksheet)")
-        col_ws1, col_ws2 = st.columns(2)
-        with col_ws1: nama_worksheet     = st.text_input("Tab — L1 & L2 Tertutup",    value=st.session_state["setting_worksheet"])
-        with col_ws2: nama_ws_instruktur = st.text_input("Tab — Detail Instruktur",  value=st.session_state["setting_ws_instruktur"])
+        st.markdown("#### 📋 Nama Tab (Worksheet) Tujuan Data Pipeline")
+        col_ws1, col_ws2, col_ws3 = st.columns(3)
+        with col_ws1: nama_worksheet     = st.text_input("Tab — L1 & L2 (Legacy)", value=st.session_state["setting_worksheet"])
+        with col_ws2: nama_ws_master     = st.text_input("Tab — Master Laporan (Baru)", value=st.session_state["setting_ws_master"])
+        with col_ws3: nama_ws_instruktur = st.text_input("Tab — Detail Instruktur", value=st.session_state["setting_ws_instruktur"])
 
         st.markdown("---")
         st.markdown("#### 📅 Cut-off & Threshold")
         col_s1, col_s2 = st.columns(2)
         with col_s1:
-            cutoff_hari = st.number_input("Hari Cut-off setelah Tanggal Selesai", min_value=1, max_value=30, value=st.session_state["setting_cutoff"])
+            cutoff_hari = st.number_input("Hari Cut-off Laporan Setelah Tanggal Selesai", min_value=1, max_value=30, value=st.session_state["setting_cutoff"])
         with col_s2:
-            threshold_valid = st.slider("Minimal % pengisian → VALID", 0.10, 1.0, value=st.session_state["setting_threshold"], step=0.01, format="%.2f")
-            st.info(f"Pengisian ≥ {threshold_valid:.0%} = **VALID**")
+            threshold_valid = st.slider("Minimal Persentase Pengisian Menjadi VALID", 0.10, 1.0, value=st.session_state["setting_threshold"], step=0.01, format="%.2f")
+            st.info(f"Jika Partisipasi Isi ≥ {threshold_valid:.0%}, maka = **VALID**")
 
-        if st.button("💾 Simpan Pengaturan", use_container_width=True):
+        if st.button("💾 Simpan Pengaturan", use_container_width=True, type="primary"):
             st.session_state["setting_sheet"]         = nama_sheet
             st.session_state["setting_worksheet"]     = nama_worksheet
+            st.session_state["setting_ws_master"]     = nama_ws_master
             st.session_state["setting_ws_instruktur"] = nama_ws_instruktur
             st.session_state["setting_cutoff"]        = cutoff_hari
             st.session_state["setting_threshold"]     = threshold_valid
-            st.success("✅ Pengaturan berhasil disimpan!")
+            st.success("✅ Pengaturan berhasil disimpan! Sistem akan merujuk ke tab Master Data Anda.")
