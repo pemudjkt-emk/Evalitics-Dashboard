@@ -1162,7 +1162,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
             
             if not kolom_ditemukan:
                 st.error(f"⚠️ Kolom periode bulan gagal terdeteksi! Kolom yang tersedia saat ini: {', '.join(df_rep_raw.columns.tolist()[:10])}...")
-                st.stop()
+                raise ValueError("Proses pada tab ini dihentikan karena format kolom Google Sheets tidak sesuai.")
                 
             if kolom_ditemukan != 'Laporan Bulan':
                 df_rep_raw.rename(columns={kolom_ditemukan: 'Laporan Bulan'}, inplace=True)
