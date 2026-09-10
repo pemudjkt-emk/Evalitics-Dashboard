@@ -12,6 +12,7 @@ import os
 import base64
 from datetime import datetime
 import urllib.request
+import io
 import re
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -195,6 +196,7 @@ def get_sheet_max_no(sheet):
 for key, default in [
     ("setting_sheet",         "Monitoring Evaluasi Pembelajaran"),
     ("setting_worksheet",     "L1 Tertutup"),
+    ("setting_ws_master",     "Master_Data_Laporan"),
     ("setting_ws_instruktur", "Detail Instruktur"),
     ("setting_cutoff",        14),
     ("setting_threshold",     0.8),
@@ -208,8 +210,10 @@ for key, default in [
 # ─────────────────────────────────────────────────────────────────────────────
 @st.cache_resource
 def load_gemini_model():
-    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-    return genai.GenerativeModel('gemini-1.5-flash')
+    if "GEMINI_API_KEY" in st.secrets:
+        genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+        return genai.GenerativeModel('gemini-1.5-flash')
+    return None
 
 model = load_gemini_model()
 
@@ -284,7 +288,7 @@ with st.sidebar:
 # URL Sumber Data Global (Dibutuhkan oleh Analytics, Dashboard & Report)
 sheet_id = '1IDAmFwTbBQDZcKM3eiiEDcA3KwM9WKqW4zCrk__6-PU'
 sheet_name = 'L1%20Tertutup' 
-url = f'https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet={sheet_name}'
+url = "https://docs.google.com/spreadsheets/d/" + str(sheet_id) + "/gviz/tq?tqx=out:csv&sheet=" + str(sheet_name)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1044,7 +1048,7 @@ elif menu_selection == "🚨 EARLY WARNING":
     try:
         sheet_id_komentar = '1IDAmFwTbBQDZcKM3eiiEDcA3KwM9WKqW4zCrk__6-PU'
         sheet_name_komentar = 'Detail%20Komentar%20L1' 
-        url_komentar = f'https://docs.google.com/spreadsheets/d/{sheet_id_komentar}/gviz/tq?tqx=out:csv&sheet={sheet_name_komentar}'
+        url_komentar = "https://docs.google.com/spreadsheets/d/" + str(sheet_id_komentar) + "/gviz/tq?tqx=out:csv&sheet=" + str(sheet_name_komentar)
         
         @st.cache_data(ttl=300)
         def load_csv_komentar(url): return pd.read_csv(url)
@@ -1119,10 +1123,10 @@ elif menu_selection == "📑 REPORT & KATALOG":
         st.write("Menyusun laporan evaluasi mutu komprehensif berstandar konsultan (McKinsey/PwC style) lengkap dengan AI Executive Summary, Scorecard Pilar, Visual Matriks IPA, Voice of Customer, dan Tabel Rencana Tindak Lanjut Preskriptif dari Gemini AI.")
         
         try:
-            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-            with urllib.request.urlopen(req) as response:
+            url_rep = "https://docs.google.com/spreadsheets/d/" + str(sheet_id) + "/gviz/tq?tqx=out:csv&sheet=L1%20Tertutup"
+            req_rep = urllib.request.Request(url_rep, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req_rep) as response:
                 csv_bytes = response.read()
-            import io
             df_rep_raw = pd.read_csv(io.BytesIO(csv_bytes))
             
             df_rep_raw.columns = df_rep_raw.columns.astype(str).str.strip()
@@ -1346,8 +1350,11 @@ elif menu_selection == "📑 REPORT & KATALOG":
                         
                         try:
                             sheet_id_komentar = '1IDAmFwTbBQDZcKM3eiiEDcA3KwM9WKqW4zCrk__6-PU'
-                            url_k = f'https://docs.google.com/spreadsheets/d/{sheet_id_komentar}/gviz/tq?tqx=out:csv&sheet=Detail%20Komentar%20L1'
-                            df_k_raw = pd.read_csv(url_k)
+                            url_k = "https://docs.google.com/spreadsheets/d/" + str(sheet_id_komentar) + "/gviz/tq?tqx=out:csv&sheet=Detail%20Komentar%20L1"
+                            req_k = urllib.request.Request(url_k, headers={'User-Agent': 'Mozilla/5.0'})
+                            with urllib.request.urlopen(req_k) as response_k:
+                                df_k_raw = pd.read_csv(io.BytesIO(response_k.read()))
+                                
                             df_k_raw.columns = df_k_raw.columns.astype(str).str.strip()
                             
                             # Penyesuaian Kolom Berdasarkan Indeks & Nama Kolom Google Sheets
@@ -1454,7 +1461,7 @@ Berikut adalah rekaman suara masukan/keluhan peserta pelatihan:
 Buatkan tabel Rencana Tindak Lanjut Operasional (Action Plan) konkret dari UPDL Jakarta untuk menjawab isu-isu di atas.
 Klasifikasikan ke dalam kategori area yang relevan (misal: Instruktur & Pengajaran, Materi & Silabus Diklat, Sarana Ruang Kelas/In-Class, atau Sarana Digital & Jaringan).
 
-Output WAJIB HANYA berupa baris-baris tag HTML <tr>...</tr> (tanpa pembungkus ```html):
+Output WAJIB HANYA berupa baris-baris tag HTML <tr>...</tr> (tanpa pembungkus html):
 <tr>
     <td style="padding: 8px 10px; vertical-align: top; font-weight: 600; color: #003366;">[Nama Kategori/Pilar]</td>
     <td style="padding: 8px 10px; vertical-align: top; color: #b91c1c;">[Ringkasan Poin Masukan Terkait]</td>
@@ -1466,7 +1473,7 @@ Tuliskan 3 hingga 5 baris isu paling utama dengan bahasa korporat baku PLN.
                                 if model:
                                     ai_plan_resp = model.generate_content(prompt_action_plan)
                                     if ai_plan_resp and hasattr(ai_plan_resp, 'text'):
-                                        rows_plan = ai_plan_resp.text.strip().replace('```html', '').replace('```', '')
+                                        rows_plan = ai_plan_resp.text.strip().replace("```html", "").replace("```", "")
                             except Exception as e_ai:
                                 rows_plan = ""
 
@@ -1725,8 +1732,7 @@ Tuliskan 3 hingga 5 baris isu paling utama dengan bahasa korporat baku PLN.
                                     <td style="width: 50%; border: none; text-align: center;">
                                         Disusun secara otomatis oleh sistem <b>EVALYTICS</b><br>
                                         UPDL Jakarta, {datetime.now().strftime('%d %B %Y')}<br><br><br><br><br>
-                                        <b>( _________________________ )</b><br>
-                                        Tim Pengendalian Mutu & Kinerja
+                                        <b>( _________________________ )</b><br>Tim Pengendalian Mutu & Kinerja
                                     </td>
                                 </tr>
                             </table>
@@ -1757,7 +1763,7 @@ Tuliskan 3 hingga 5 baris isu paling utama dengan bahasa korporat baku PLN.
         st.write("Menyusun laporan pelaksanaan spesifik per kelas dari Master Data Laporan, mencakup realisasi peserta, biaya, evaluasi, dan komentar.")
         
         try:
-            url_master = f'[https://docs.google.com/spreadsheets/d/](https://docs.google.com/spreadsheets/d/){sheet_id}/gviz/tq?tqx=out:csv&sheet=Master_Data_Laporan'
+            url_master = "https://docs.google.com/spreadsheets/d/" + str(sheet_id) + "/gviz/tq?tqx=out:csv&sheet=Master_Data_Laporan"
             req_master = urllib.request.Request(url_master, headers={'User-Agent': 'Mozilla/5.0'})
             with urllib.request.urlopen(req_master) as response:
                 import io
@@ -1819,8 +1825,11 @@ Tuliskan 3 hingga 5 baris isu paling utama dengan bahasa korporat baku PLN.
                             pos_html, neg_html = "-", "-"
                             jml_pos_kelas, jml_neg_kelas = 0, 0
                             try:
-                                url_k = f'[https://docs.google.com/spreadsheets/d/](https://docs.google.com/spreadsheets/d/){sheet_id}/gviz/tq?tqx=out:csv&sheet=Detail%20Komentar%20L1'
-                                df_k_raw = pd.read_csv(url_k)
+                                url_k = "https://docs.google.com/spreadsheets/d/" + str(sheet_id) + "/gviz/tq?tqx=out:csv&sheet=Detail%20Komentar%20L1"
+                                req_k = urllib.request.Request(url_k, headers={'User-Agent': 'Mozilla/5.0'})
+                                with urllib.request.urlopen(req_k) as res_k:
+                                    df_k_raw = pd.read_csv(io.BytesIO(res_k.read()))
+                                
                                 df_k_raw.columns = df_k_raw.columns.astype(str).str.strip()
                                 
                                 col_judul_k = df_k_raw.columns[4] if len(df_k_raw.columns) > 4 else 'Judul Diklat'
@@ -1968,10 +1977,14 @@ Tuliskan 3 hingga 5 baris isu paling utama dengan bahasa korporat baku PLN.
         st.write("Sistem rekomendasi objektif berbasis **Composite Performance Index** yang menggabungkan kepuasan mutu (`Ins-Rat`) dan stabilitas jam terbang.")
         
         sheet_id_ins = '1IDAmFwTbBQDZcKM3eiiEDcA3KwM9WKqW4zCrk__6-PU'
-        url_ins_katalog = f'[https://docs.google.com/spreadsheets/d/](https://docs.google.com/spreadsheets/d/){sheet_id_ins}/gviz/tq?tqx=out:csv&sheet=Detail%20Instruktur'
+        url_ins_katalog = "https://docs.google.com/spreadsheets/d/" + str(sheet_id_ins) + "/gviz/tq?tqx=out:csv&sheet=Detail%20Instruktur"
         
         try:
-            df_katalog_raw = pd.read_csv(url_ins_katalog)
+            req_ins = urllib.request.Request(url_ins_katalog, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req_ins) as response_ins:
+                import io
+                df_katalog_raw = pd.read_csv(io.BytesIO(response_ins.read()))
+                
             df_katalog_raw.columns = df_katalog_raw.columns.astype(str).str.strip()
             
             if not df_katalog_raw.empty:
@@ -2110,30 +2123,32 @@ Tuliskan 3 hingga 5 baris isu paling utama dengan bahasa korporat baku PLN.
 # KONTEN: ⚙️ PENGATURAN
 # ══════════════════════════════════════════════════════════════════════════════
 elif menu_selection == "⚙️ PENGATURAN":
-    st.subheader("⚙️ Pengaturan Data Entry")
+    st.subheader("⚙️ Pengaturan Aplikasi")
     with st.container(border=True):
-        st.markdown("#### 🔗 Konfigurasi Google Sheets")
+        st.markdown("#### 🔗 Konfigurasi Google Sheets (Target Master Data Laporan)")
         nama_sheet = st.text_input("Nama File Google Sheets", value=st.session_state["setting_sheet"])
-
         st.markdown("---")
-        st.markdown("#### 📋 Nama Tab (Worksheet)")
-        col_ws1, col_ws2 = st.columns(2)
-        with col_ws1: nama_worksheet     = st.text_input("Tab — L1 & L2 Tertutup",    value=st.session_state["setting_worksheet"])
-        with col_ws2: nama_ws_instruktur = st.text_input("Tab — Detail Instruktur",  value=st.session_state["setting_ws_instruktur"])
-
+        
+        st.markdown("#### 📋 Nama Tab (Worksheet) Tujuan Data Pipeline")
+        col_ws1, col_ws2, col_ws3 = st.columns(3)
+        with col_ws1: nama_worksheet     = st.text_input("Tab — L1 & L2 (Lama)", value=st.session_state["setting_worksheet"])
+        with col_ws2: nama_ws_master     = st.text_input("Tab — Master Laporan (Baru)", value=st.session_state["setting_ws_master"])
+        with col_ws3: nama_ws_instruktur = st.text_input("Tab — Detail Instruktur", value=st.session_state["setting_ws_instruktur"])
         st.markdown("---")
+        
         st.markdown("#### 📅 Cut-off & Threshold")
         col_s1, col_s2 = st.columns(2)
         with col_s1:
-            cutoff_hari = st.number_input("Hari Cut-off setelah Tanggal Selesai", min_value=1, max_value=30, value=st.session_state["setting_cutoff"])
+            cutoff_hari = st.number_input("Hari Cut-off Laporan Setelah Tanggal Selesai", min_value=1, max_value=30, value=st.session_state["setting_cutoff"])
         with col_s2:
-            threshold_valid = st.slider("Minimal % pengisian → VALID", 0.10, 1.0, value=st.session_state["setting_threshold"], step=0.01, format="%.2f")
-            st.info(f"Pengisian ≥ {threshold_valid:.0%} = **VALID**")
+            threshold_valid = st.slider("Minimal Persentase Pengisian Menjadi VALID", 0.10, 1.0, value=st.session_state["setting_threshold"], step=0.01, format="%.2f")
+            st.info(f"Jika Partisipasi Isi ≥ {threshold_valid:.0%}, maka = **VALID**")
 
-        if st.button("💾 Simpan Pengaturan", use_container_width=True):
+        if st.button("💾 Simpan Pengaturan", use_container_width=True, type="primary"):
             st.session_state["setting_sheet"]         = nama_sheet
             st.session_state["setting_worksheet"]     = nama_worksheet
+            st.session_state["setting_ws_master"]     = nama_ws_master
             st.session_state["setting_ws_instruktur"] = nama_ws_instruktur
             st.session_state["setting_cutoff"]        = cutoff_hari
             st.session_state["setting_threshold"]     = threshold_valid
-            st.success("✅ Pengaturan berhasil disimpan!")
+            st.success("✅ Pengaturan berhasil disimpan! Sistem akan merujuk ke tab Master Data Anda.")
