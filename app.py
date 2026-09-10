@@ -1153,17 +1153,19 @@ elif menu_selection == "📑 REPORT & KATALOG":
             
             df_rep_raw.columns = df_rep_raw.columns.astype(str).str.strip()
             
-            variasi_nama_kolom = ['Laporan Bulan', 'Laporan Bulanan', 'Bulan', 'LAPORAN BULAN']
-            kolom_ditemukan = next((col for col in df_rep_raw.columns if col in variasi_nama_kolom), None)
+            # Pelacakan nama kolom otomatis (kebal terhadap spasi berlebih)
+            kolom_ditemukan = None
+            for col in df_rep_raw.columns:
+                if 'laporan bulan' in col.lower() or 'bulan' in col.lower():
+                    kolom_ditemukan = col
+                    break
             
             if not kolom_ditemukan:
-                st.error(f"⚠️ Kolom periode bulan tidak ditemukan. Kolom yang saat ini terbaca di Sheets Anda adalah: {', '.join(df_rep_raw.columns.tolist()[:10])}...")
+                st.error(f"⚠️ Kolom periode bulan gagal terdeteksi! Kolom yang tersedia saat ini: {', '.join(df_rep_raw.columns.tolist()[:10])}...")
                 st.stop()
                 
             if kolom_ditemukan != 'Laporan Bulan':
                 df_rep_raw.rename(columns={kolom_ditemukan: 'Laporan Bulan'}, inplace=True)
-            
-            df_rep_raw['Laporan Bulan'] = df_rep_raw['Laporan Bulan'].astype(str).str.strip()
             
             URUTAN_BULAN_STD = [
                 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
@@ -1785,7 +1787,7 @@ Tuliskan 3 hingga 5 baris isu paling utama dengan bahasa korporat baku PLN.
         st.write("Menyusun laporan pelaksanaan spesifik per kelas dari Master Data Laporan, mencakup realisasi peserta, biaya, evaluasi, dan komentar berstandar *Consulting Style*.")
         
         try:
-            url_master = "[https://docs.google.com/spreadsheets/d/](https://docs.google.com/spreadsheets/d/)" + str(sheet_id) + "/gviz/tq?tqx=out:csv&sheet=Master_Data_Laporan"
+            url_master = "https://docs.google.com/spreadsheets/d/" + str(sheet_id) + "/gviz/tq?tqx=out:csv&sheet=Master_Data_Laporan"
             req_master = urllib.request.Request(url_master, headers={'User-Agent': 'Mozilla/5.0'})
             with urllib.request.urlopen(req_master) as response:
                 df_master = pd.read_csv(io.BytesIO(response.read()))
@@ -1889,7 +1891,7 @@ Tuliskan 3 hingga 5 baris isu paling utama dengan bahasa korporat baku PLN.
                             pos_html, neg_html = "-", "-"
                             jml_pos_kelas, jml_neg_kelas = 0, 0
                             try:
-                                url_k = "[https://docs.google.com/spreadsheets/d/](https://docs.google.com/spreadsheets/d/)" + str(sheet_id) + "/gviz/tq?tqx=out:csv&sheet=Detail%20Komentar%20L1"
+                                url_k = "https://docs.google.com/spreadsheets/d/" + str(sheet_id) + "/gviz/tq?tqx=out:csv&sheet=Detail%20Komentar%20L1"
                                 req_k = urllib.request.Request(url_k, headers={'User-Agent': 'Mozilla/5.0'})
                                 with urllib.request.urlopen(req_k) as res_k:
                                     df_k_raw = pd.read_csv(io.BytesIO(res_k.read()))
@@ -2068,7 +2070,7 @@ Tuliskan 3 hingga 5 baris isu paling utama dengan bahasa korporat baku PLN.
         st.write("Sistem rekomendasi objektif berbasis **Composite Performance Index** yang menggabungkan kepuasan mutu (`Ins-Rat`) dan stabilitas jam terbang.")
         
         sheet_id_ins = '1IDAmFwTbBQDZcKM3eiiEDcA3KwM9WKqW4zCrk__6-PU'
-        url_ins_katalog = "[https://docs.google.com/spreadsheets/d/](https://docs.google.com/spreadsheets/d/)" + str(sheet_id_ins) + "/gviz/tq?tqx=out:csv&sheet=Detail%20Instruktur"
+        url_ins_katalog = "https://docs.google.com/spreadsheets/d/" + str(sheet_id_ins) + "/gviz/tq?tqx=out:csv&sheet=Detail%20Instruktur"
         
         try:
             req_ins = urllib.request.Request(url_ins_katalog, headers={'User-Agent': 'Mozilla/5.0'})
