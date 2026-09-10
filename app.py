@@ -1772,7 +1772,7 @@ Tuliskan 3 hingga 5 baris isu paling utama dengan bahasa korporat baku PLN.
             df_master.columns = df_master.columns.astype(str).str.strip()
             
             if 'Judul Pembelajaran' in df_master.columns:
-                list_judul = df_master['Judul Pembelajaran'].dropna().unique().tolist()
+                list_judul = df_master['Judul Pembelajaran'].dropna().astype(str).str.strip().unique().tolist()
                 
                 if list_judul:
                     with st.container(border=True):
