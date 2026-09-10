@@ -1968,7 +1968,6 @@ elif menu_selection == "📑 REPORT & KATALOG":
         try:
             req_ins = urllib.request.Request(url_ins_katalog, headers={'User-Agent': 'Mozilla/5.0'})
             with urllib.request.urlopen(req_ins) as response_ins:
-                import io
                 df_katalog_raw = pd.read_csv(io.BytesIO(response_ins.read()))
                 
             df_katalog_raw.columns = df_katalog_raw.columns.astype(str).str.strip()
