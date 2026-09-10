@@ -89,20 +89,6 @@ TARGET_COLUMNS = [
     'nama instruktur', 'Jumlah Peserta Lulus L2',
     'Jumlah Peserta Isi L2', '% Pengisian L2', 'Nilai Confidence', 'Nilai Commitment', 'Status L2'
 ]
-
-# TARGET KOLOM UNTUK SHEET "MASTER DATA LAPORAN" (JALUR 3: L1 + SMILE)
-MASTER_TARGET_COLUMNS = [
-    'No', 'Kode Unik', 'Laporan Bulan',
-    'Kode Service Request', 'Jenis Program', 'Judul Pembelajaran', 'Kode Pembelajaran',
-    'Strategi Pelaksanaan', 'Lokasi Pelaksanaan', 'Tempat Pelaksanaan', 'No Surat Penugasan', 'Tanggal Surat Penugasan',
-    'Nomor Surat Pemanggilan Peserta', 'Instruktur/ Fasilitator',
-    'Tgl Mulai', 'Tgl Selesai', 'Rencana Jumlah Peserta', 'Peserta Diundang', 'Peserta Hadir', 'Peserta Lulus',
-    '% Kehadiran', '% Kelulusan', 'RAB Pelaksanaan', 'Realisasi Biaya Pelaksanaan',
-    'Peserta Isi L1', '% Pengisian L1', '% Valid L1',
-    'RATA INST', 'RATA MAT', 'RATA SP', 'RATA DS', 'RATA-RATA KESELURUHAN',
-    'Jumlah Indikator dibawah 4.5', 'Jumlah Indikator diatas 4.5', 'Status Pembelajaran'
-]
-
 INS_COL_NAMES = ['Ins-Eng-1 of 2','Ins-Eng-2 of 2','Ins-Rel-1 of 2','Ins-Rel-2 of 2',
                  'Ins-Sat-1 of 4','Ins-Sat-2 of 4','Ins-Sat-3 of 4','Ins-Sat-4 of 4','Ins-Rat']
 MAT_COL_NAMES = ['Mat-Eng-1 of 2','Mat-Eng-2 of 2','Mat-Rel-1 of 2','Mat-Rel-2 of 2',
@@ -210,7 +196,6 @@ def get_sheet_max_no(sheet):
 for key, default in [
     ("setting_sheet",         "Monitoring Evaluasi Pembelajaran"),
     ("setting_worksheet",     "L1 Tertutup"),
-    ("setting_ws_master",     "Master_Data_Laporan"),
     ("setting_ws_instruktur", "Detail Instruktur"),
     ("setting_cutoff",        14),
     ("setting_threshold",     0.8),
@@ -272,11 +257,12 @@ def analisis_sentimen_opensource(teks):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# MENU NAVIGASI (SIDEBAR)
+# MENU NAVIGASI (SIDEBAR) UI/UX BARU
 # ─────────────────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("### 🧭 Menu Navigasi")
     
+    # Menu Pilihan Modul
     menu_selection = st.radio(
         "Pilih Modul Aplikasi:",
         [
@@ -291,9 +277,12 @@ with st.sidebar:
     )
     
     st.markdown("---")
+    
+    # Tombol Sinkronisasi dipindah ke Sidebar agar lebih ringkas
     if st.button("🔄 Sinkron Data Terkini", use_container_width=True):
         st.cache_data.clear()
         st.toast("Menarik data terbaru dari Google Sheets...")
+
 
 # URL Sumber Data Global (Dibutuhkan oleh Analytics, Dashboard & Report)
 sheet_id = '1IDAmFwTbBQDZcKM3eiiEDcA3KwM9WKqW4zCrk__6-PU'
@@ -1376,13 +1365,11 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                 
                             df_k_raw.columns = df_k_raw.columns.astype(str).str.strip()
                             
-                            # Penyesuaian Kolom Berdasarkan Indeks & Nama Kolom Google Sheets
-                            col_bulan_k = df_k_raw.columns[3] if len(df_k_raw.columns) > 3 else 'Bulan'       # Kolom D
-                            col_judul_k = df_k_raw.columns[4] if len(df_k_raw.columns) > 4 else 'Judul Diklat' # Kolom E (Judul Diklat)
-                            col_teks_k  = df_k_raw.columns[10] if len(df_k_raw.columns) > 10 else 'Komentar'    # Kolom K
-                            col_jenis_k = df_k_raw.columns[13] if len(df_k_raw.columns) > 13 else 'Jenis'       # Kolom N
+                            col_bulan_k = df_k_raw.columns[3] if len(df_k_raw.columns) > 3 else 'Bulan'
+                            col_teks_k  = df_k_raw.columns[10] if len(df_k_raw.columns) > 10 else 'Komentar'
+                            col_jenis_k = df_k_raw.columns[13] if len(df_k_raw.columns) > 13 else 'Jenis'
+                            col_judul_k = next((c for c in ['Judul Pembelajaran/Kegiatan', 'Judul Pembelajaran', 'Judul', 'Nama Pelatihan'] if c in df_k_raw.columns), df_k_raw.columns[0])
 
-                            # Filter dan Pembersihan Data
                             df_k_raw[col_bulan_k] = df_k_raw[col_bulan_k].astype(str).str.strip()
                             df_k_bln = df_k_raw[df_k_raw[col_bulan_k].str.lower() == str(bulan_pilih).strip().lower()].copy()
 
@@ -1410,12 +1397,11 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                     for item_neg in neg_list:
                                         list_semua_masukan_raw.append(f"[{jdl}] {item_neg}")
                                     
-                                    # Pencocokan PIC KI dari sheet L1
                                     pic_jdl = "-"
                                     col_judul_l1 = next((c for c in ['Judul Pembelajaran/Kegiatan', 'Judul Pembelajaran', 'Judul'] if c in df_bln.columns), None)
                                     col_pic_l1   = next((c for c in ['PIC KI', 'Bidang'] if c in df_bln.columns), None)
                                     if col_judul_l1 and col_pic_l1:
-                                        match_pic = df_bln[df_bln[col_judul_l1].astype(str).str.strip().str.lower() == str(jdl).strip().lower()][col_pic_l1].dropna()
+                                        match_pic = df_bln[df_bln[col_judul_l1] == jdl][col_pic_l1].dropna()
                                         if not match_pic.empty:
                                             pic_jdl = str(match_pic.iloc[0])
                                             
@@ -1454,7 +1440,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
                         except Exception as e_k:
                             tabel_suara_pelanggan_html = f"<p><i>Gagal memproses data komentar: {e_k}</i></p>"
 
-                        # 6. Strategic Action Plan & Rekomendasi Preskriptif
+                        # 6. Strategic Roadmap & Rekomendasi Solutif
                         pilar_kurang_tmp = []
                         if pd.notna(skor_instruktur) and skor_instruktur < 4.50: pilar_kurang_tmp.append(f"Kinerja Instruktur ({skor_instruktur:.2f})")
                         if pd.notna(skor_materi) and skor_materi < 4.50: pilar_kurang_tmp.append(f"Materi Pembelajaran ({skor_materi:.2f})")
@@ -1464,94 +1450,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
                         gap_tmp_text = f"Fokus utama perbaikan ditargetkan pada pilar dengan realisasi skor di bawah target korporat 4.50, yaitu: <b>{', '.join(pilar_kurang_tmp)}</b>. Manajemen perlu memberlakukan standardisasi kesiapan kurikulum, refreshment metode pengajaran instruktur, dan audit sarana berkala." if pilar_kurang_tmp else "Seluruh 4 pilar utama telah melampaui batas TMP (≥ 4.50). Manajemen dianjurkan memperkuat SOP guna mempertahankan stabilitas mutu operasional."
                         q1_action_text = f"Berdasarkan prinsip efisiensi sumber daya (Pareto Principle), alokasi anggaran dan intervensi wajib difokuskan pada area <b>Kuadran 1 ({', '.join(q1_items)})</b>. Perbaikan di area ini memberikan daya ungkit (leverage) paling masif terhadap lonjakan indeks kepuasan pelanggan." if q1_items else "Tidak ada area kritis di Kuadran 1. Pengendalian mutu difokuskan pada pengawasan preventif."
 
-                        # 7. GENERASI TINDAK LANJUT MENDALAM VIA GEMINI AI (DENGAN SAFE FALLBACK)
-                        tabel_tindak_lanjut_ai_html = ""
-                        if list_semua_masukan_raw:
-                            sample_masukan = list_semua_masukan_raw[:25]
-                            teks_masukan_input = "\n".join([f"- {m}" for m in sample_masukan])
-                            rows_plan = ""
-                            
-                            try:
-                                prompt_action_plan = f"""
-Bertindaklah sebagai Senior Quality Management Specialist di PLN UPDL Jakarta.
-Berikut adalah rekaman suara masukan/keluhan peserta pelatihan:
-{teks_masukan_input}
-
-Buatkan tabel Rencana Tindak Lanjut Operasional (Action Plan) konkret dari UPDL Jakarta untuk menjawab isu-isu di atas.
-Klasifikasikan ke dalam kategori area yang relevan (misal: Instruktur & Pengajaran, Materi & Silabus Diklat, Sarana Ruang Kelas/In-Class, atau Sarana Digital & Jaringan).
-
-Output WAJIB HANYA berupa baris-baris tag HTML <tr>...</tr> (tanpa pembungkus ```html):
-<tr>
-    <td style="padding: 8px 10px; vertical-align: top; font-weight: 600; color: #003366;">[Nama Kategori/Pilar]</td>
-    <td style="padding: 8px 10px; vertical-align: top; color: #b91c1c;">[Ringkasan Poin Masukan Terkait]</td>
-    <td style="padding: 8px 10px; vertical-align: top; color: #15803d; font-weight: 500;">[Rencana Tindak Lanjut Operasional UPDL Jakarta]</td>
-    <td style="padding: 8px 10px; vertical-align: top; text-align: center; font-weight: 600; color: #0284c7;">[PIC: Sarpras / Akademik / Instruktur / PIC KI]</td>
-</tr>
-Tuliskan 3 hingga 5 baris isu paling utama dengan bahasa korporat baku PLN.
-"""
-                                if model:
-                                    ai_plan_resp = model.generate_content(prompt_action_plan)
-                                    if ai_plan_resp and hasattr(ai_plan_resp, 'text'):
-                                        rows_plan = ai_plan_resp.text.strip().replace('```html', '').replace('```', '')
-                            except Exception as e_ai:
-                                rows_plan = ""
-
-                            if not rows_plan or "<tr" not in rows_plan:
-                                fallback_rows = []
-                                for idx_m, item_m in enumerate(sample_masukan[:4], 1):
-                                    txt_clean = item_m.strip()
-                                    kat_area = "Sarana & Prasarana"
-                                    pic_area = "PIC Sarpras"
-                                    solusi_area = "Pemeriksaan dan perbaikan fasilitas kelas, AC, dan perlengkapan praktikum sebelum sesi dimulai."
-                                    
-                                    lower_m = txt_clean.lower()
-                                    if any(w in lower_m for w in ['instruktur', 'pengajar', 'suara', 'bicara', 'waktu', 'jadwal']):
-                                        kat_area = "Kinerja Instruktur"
-                                        pic_area = "Pengelola Instruktur"
-                                        solusi_area = "Briefing pengajar terkait alokasi waktu dan peningkatan interaksi aktif bersama peserta."
-                                    elif any(w in lower_m for w in ['materi', 'modul', 'ppt', 'studi kasus', 'silabus', 'teori']):
-                                        kat_area = "Materi Pembelajaran"
-                                        pic_area = "PIC Akademik"
-                                        solusi_area = "Pemutakhiran studi kasus aktual dan penyesuaian bobot latihan modul."
-                                    elif any(w in lower_m for w in ['aplikasi', 'jaringan', 'wifi', 'internet', 'web', 'login']):
-                                        kat_area = "Sarana Digital"
-                                        pic_area = "Tim TI & Media"
-                                        solusi_area = "Optimalisasi bandwidth internet dan pengecekan aksesibilitas platform e-learning."
-
-                                    fallback_rows.append(f"""
-                                    <tr style="background-color: {'#ffffff' if idx_m % 2 != 0 else '#f8fafc'};">
-                                        <td style="padding: 8px 10px; vertical-align: top; font-weight: 600; color: #003366;">{kat_area}</td>
-                                        <td style="padding: 8px 10px; vertical-align: top; color: #b91c1c;">{txt_clean}</td>
-                                        <td style="padding: 8px 10px; vertical-align: top; color: #15803d; font-weight: 500;">{solusi_area}</td>
-                                        <td style="padding: 8px 10px; vertical-align: top; text-align: center; font-weight: 600; color: #0284c7;">{pic_area}</td>
-                                    </tr>
-                                    """)
-                                rows_plan = "".join(fallback_rows)
-
-                            tabel_tindak_lanjut_ai_html = f"""
-                            <div style="margin-top: 14px;">
-                                <div style="font-weight: 700; color: #003366; font-size: 10pt; margin-bottom: 6px; text-transform: uppercase;">
-                                    Matriks Tindak Lanjut & Resolusi Keluhan Peserta (Action Item Tracker - UPDL Jakarta)
-                                </div>
-                                <table style="width: 100%; border-collapse: collapse; font-size: 9.5pt; border: 1px solid #cbd5e1;" border="1">
-                                    <thead>
-                                        <tr style="background-color: #003366; color: #ffffff; text-align: left;">
-                                            <th style="padding: 8px 10px; width: 18%;">Kategori Area</th>
-                                            <th style="padding: 8px 10px; width: 32%;">Isu / Masukan Peserta</th>
-                                            <th style="padding: 8px 10px; width: 35%;">Rencana Tindak Lanjut Operasional (UPDL Jakarta)</th>
-                                            <th style="padding: 8px 10px; width: 15%; text-align: center;">PIC Terkait</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {rows_plan}
-                                    </tbody>
-                                </table>
-                            </div>
-                            """
-                        else:
-                            tabel_tindak_lanjut_ai_html = "<div style='background:#f0fdf4; border:1px solid #bbf7d0; padding:10px 14px; border-radius:6px; color:#166534; font-size:9.5pt; margin-top:8px;'><b>Zero Defect:</b> Tidak terdapat rekaman keluhan atau masukan negatif pada periode ini. Tindak lanjut berfokus pada pemeliharaan standar layanan prima.</div>"
-
-                        # 8. Gemini AI: Executive Summary Berstandar Konsultan
+                        # 7. Gemini AI: Executive Summary Berstandar Konsultan
                         narasi_eksekutif_ai = ""
                         try:
                             prompt_ai = f"""
@@ -1588,7 +1487,7 @@ Tuliskan 3 hingga 5 baris isu paling utama dengan bahasa korporat baku PLN.
                         def format_skor_val(val):
                             return f"{val:.2f}" if pd.notna(val) else "-"
 
-                        # 9. Template Dokumen Word Berstandar Konsultan Global (.DOC)
+                        # 8. Template Dokumen Word Berstandar Konsultan Global (.DOC)
                         html_content = f"""
                         <html>
                         <head>
@@ -1782,7 +1681,7 @@ Tuliskan 3 hingga 5 baris isu paling utama dengan bahasa korporat baku PLN.
         st.write("Menyusun laporan pelaksanaan spesifik per kelas dari Master Data Laporan, mencakup realisasi peserta, biaya, evaluasi, dan komentar berstandar *Consulting Style*.")
         
         try:
-            url_master = "[https://docs.google.com/spreadsheets/d/](https://docs.google.com/spreadsheets/d/)" + str(sheet_id) + "/gviz/tq?tqx=out:csv&sheet=Master_Data_Laporan"
+            url_master = "https://docs.google.com/spreadsheets/d/" + str(sheet_id) + "/gviz/tq?tqx=out:csv&sheet=Master_Data_Laporan"
             req_master = urllib.request.Request(url_master, headers={'User-Agent': 'Mozilla/5.0'})
             with urllib.request.urlopen(req_master) as response:
                 df_master = pd.read_csv(io.BytesIO(response.read()))
@@ -1886,7 +1785,7 @@ Tuliskan 3 hingga 5 baris isu paling utama dengan bahasa korporat baku PLN.
                             pos_html, neg_html = "-", "-"
                             jml_pos_kelas, jml_neg_kelas = 0, 0
                             try:
-                                url_k = "[https://docs.google.com/spreadsheets/d/](https://docs.google.com/spreadsheets/d/)" + str(sheet_id) + "/gviz/tq?tqx=out:csv&sheet=Detail%20Komentar%20L1"
+                                url_k = "https://docs.google.com/spreadsheets/d/" + str(sheet_id) + "/gviz/tq?tqx=out:csv&sheet=Detail%20Komentar%20L1"
                                 req_k = urllib.request.Request(url_k, headers={'User-Agent': 'Mozilla/5.0'})
                                 with urllib.request.urlopen(req_k) as res_k:
                                     df_k_raw = pd.read_csv(io.BytesIO(res_k.read()))
@@ -1919,7 +1818,7 @@ Tuliskan 3 hingga 5 baris isu paling utama dengan bahasa korporat baku PLN.
                                 neg_html = f"Gagal memuat komentar: {e_k}"
                                 
                             html_kelas = f"""
-                            <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='[http://www.w3.org/TR/REC-html40](http://www.w3.org/TR/REC-html40)'>
+                            <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
                             <head>
                                 <meta charset="utf-8">
                                 <style>
@@ -1965,7 +1864,7 @@ Tuliskan 3 hingga 5 baris isu paling utama dengan bahasa korporat baku PLN.
                                     <h4>1. DASAR PELAKSANAAN</h4>
                                     <p>Inisiatif pembelajaran ini dieksekusi berdasarkan mandat korporat melalui Surat Penugasan No. <b>{no_surat}</b> yang diterbitkan pada tanggal <b>{tgl_surat}</b>. Sebagai landasan administratif tambahan, pemanggilan peserta diatur melalui Surat Pemanggilan No. <b>{no_surat_panggil}</b> dengan Kode Service Request (SR): <b>{kode_sr}</b>.</p>
                                     
-                                    <h4>2. JUMLAH PESERTA (METRIK PARTISIPASI & KELULUSAN)</h4>
+                                    <h4>2. JUMLAH PESERTA</h4>
                                     <p>Tingkat konversi (<i>Conversion Rate</i>) kehadiran dan kelulusan peserta merupakan indikator utama efektivitas pemanggilan dan kualitas penyampaian materi. Berikut adalah rincian capaian partisipasi dan akademik:</p>
                                     <table class="zebra">
                                         <tr><th style="width: 70%; text-align:center;">Indikator Partisipasi & Akademik</th><th style="width: 30%; text-align:center;">Realisasi / Capaian</th></tr>
@@ -1986,7 +1885,7 @@ Tuliskan 3 hingga 5 baris isu paling utama dengan bahasa korporat baku PLN.
                                         <li><b>Narasumber/Instruktur:</b> {instruktur}</li>
                                     </ul>
 
-                                    <h4>4. REALISASI BIAYA (EFISIENSI ANGGARAN)</h4>
+                                    <h4>4. REALISASI BIAYA</h4>
                                     <p>Optimalisasi sumber daya finansial diukur melalui komparasi Rencana Anggaran Biaya (RAB) terhadap realisasi aktual, guna menjamin <i>Cost Effectiveness</i> kegiatan operasional:</p>
                                     <table class="zebra">
                                         <tr><th style="width: 60%; text-align:center;">Komponen Pembiayaan</th><th style="width: 40%; text-align:center;">Nominal (Rp)</th></tr>
@@ -1994,18 +1893,18 @@ Tuliskan 3 hingga 5 baris isu paling utama dengan bahasa korporat baku PLN.
                                         <tr><td>Realisasi Biaya Pelaksanaan (Actual)</td><td style="text-align:right; color: #003366;"><b>{realisasi}</b></td></tr>
                                     </table>
 
-                                    <h4 style="page-break-before: always;">5. EVALUASI PEMBELAJARAN (ANALISIS KINERJA MUTU L1)</h4>
+                                    <h4 style="page-break-before: always;">5. EVALUASI PEMBELAJARAN</h4>
                                     <p>Evaluasi Level 1 mengukur kualitas kepuasan pelanggan secara komprehensif. Dengan tingkat partisipasi pengisian (<i>Response Rate</i>) sebesar <b>{pct_isi}</b> ({isi_l1} responden), berikut adalah pemetaan skor kepuasan peserta (Skala 1-5, Target TMP: 4.50):</p>
                                     <table class="zebra">
                                         <tr><th style="width: 10%; text-align:center;">No</th><th style="width: 60%;">Pilar Evaluasi Mutu</th><th style="width: 30%; text-align:center;">Realisasi Skor</th></tr>
-                                        <tr><td style="text-align:center;">1</td><td>Kualitas Materi Pembelajaran</td><td style="text-align:center; font-weight:bold;">{skor_mat}</td></tr>
-                                        <tr><td style="text-align:center;">2</td><td>Kinerja Instruktur & Fasilitator</td><td style="text-align:center; font-weight:bold;">{skor_ins}</td></tr>
-                                        <tr><td style="text-align:center;">3</td><td>Sarana Prasarana Offline (In-Class)</td><td style="text-align:center; font-weight:bold;">{skor_sp_off}</td></tr>
-                                        <tr><td style="text-align:center;">4</td><td>Sarana Prasarana Online (Digital)</td><td style="text-align:center; font-weight:bold;">{skor_sp_on}</td></tr>
-                                        <tr style="background-color: #f1f5f9;"><td style="text-align:center; font-weight:bold; color:#003366;">5</td><td style="font-weight:bold; color:#003366;">Rata-Rata Komposit Keseluruhan</td><td style="text-align:center; font-weight:bold; color:#003366; font-size:12pt;">{skor_tot}</td></tr>
+                                        <tr><td style="text-align:center;">1</td><td>Materi Pembelajaran</td><td style="text-align:center; font-weight:bold;">{skor_mat}</td></tr>
+                                        <tr><td style="text-align:center;">2</td><td>Instruktur & Fasilitator</td><td style="text-align:center; font-weight:bold;">{skor_ins}</td></tr>
+                                        <tr><td style="text-align:center;">3</td><td>Sarana Prasarana Offline</td><td style="text-align:center; font-weight:bold;">{skor_sp_off}</td></tr>
+                                        <tr><td style="text-align:center;">4</td><td>Sarana Prasarana Online</td><td style="text-align:center; font-weight:bold;">{skor_sp_on}</td></tr>
+                                        <tr style="background-color: #f1f5f9;"><td style="text-align:center; font-weight:bold; color:#003366;">5</td><td style="font-weight:bold; color:#003366;">Rata-Rata Keseluruhan</td><td style="text-align:center; font-weight:bold; color:#003366; font-size:12pt;">{skor_tot}</td></tr>
                                     </table>
 
-                                    <h4>6. CUSTOMER VOICE (KOMENTAR APRESIASI & MASUKAN)</h4>
+                                    <h4>6. VOICE OF CUSTOMER (KOMENTAR)</h4>
                                     <p>Analisis kualitatif terhadap sentimen peserta membagi umpan balik menjadi dua pilar utama: Kekuatan Layanan (Apresiasi) dan Area Pengembangan (Masukan):</p>
                                     <table>
                                         <tr><th style="width: 50%; text-align:center; background-color: #0f172a;">Komentar Apresiasi ({jml_pos_kelas})</th><th style="width: 50%; text-align:center; background-color: #0f172a;">Komentar Masukan / Evaluasi ({jml_neg_kelas})</th></tr>
@@ -2026,7 +1925,7 @@ Tuliskan 3 hingga 5 baris isu paling utama dengan bahasa korporat baku PLN.
                                         </tr>
                                     </table>
 
-                                    <h3 style="page-break-before: always; color:#003366; border-bottom: 2px solid #003366; padding-bottom:5px;">7. LAMPIRAN DOKUMEN</h3>
+                                    <h3 style="page-break-before: always; color:#003366; border-bottom: 2px solid #003366; padding-bottom:5px;">7. LAMPIRAN</h3>
                                     <p>Berikut adalah kelengkapan administrasi dan bukti pelaksanaan program:</p>
                                     <ul style="line-height:2.0; font-weight:bold; color: #0055A4;">
                                         <li>Lampiran 1: Dasar Surat Penugasan</li>
@@ -2065,7 +1964,7 @@ Tuliskan 3 hingga 5 baris isu paling utama dengan bahasa korporat baku PLN.
         st.write("Sistem rekomendasi objektif berbasis **Composite Performance Index** yang menggabungkan kepuasan mutu (`Ins-Rat`) dan stabilitas jam terbang.")
         
         sheet_id_ins = '1IDAmFwTbBQDZcKM3eiiEDcA3KwM9WKqW4zCrk__6-PU'
-        url_ins_katalog = "[https://docs.google.com/spreadsheets/d/](https://docs.google.com/spreadsheets/d/)" + str(sheet_id_ins) + "/gviz/tq?tqx=out:csv&sheet=Detail%20Instruktur"
+        url_ins_katalog = "https://docs.google.com/spreadsheets/d/" + str(sheet_id_ins) + "/gviz/tq?tqx=out:csv&sheet=Detail%20Instruktur"
         
         try:
             req_ins = urllib.request.Request(url_ins_katalog, headers={'User-Agent': 'Mozilla/5.0'})
@@ -2210,32 +2109,30 @@ Tuliskan 3 hingga 5 baris isu paling utama dengan bahasa korporat baku PLN.
 # KONTEN: ⚙️ PENGATURAN
 # ══════════════════════════════════════════════════════════════════════════════
 elif menu_selection == "⚙️ PENGATURAN":
-    st.subheader("⚙️ Pengaturan Aplikasi")
+    st.subheader("⚙️ Pengaturan Data Entry")
     with st.container(border=True):
-        st.markdown("#### 🔗 Konfigurasi Google Sheets (Target Master Data Laporan)")
-        nama_sheet = st.text_input("Nama File Google Sheets Utama", value=st.session_state["setting_sheet"])
+        st.markdown("#### 🔗 Konfigurasi Google Sheets")
+        nama_sheet = st.text_input("Nama File Google Sheets", value=st.session_state["setting_sheet"])
 
         st.markdown("---")
-        st.markdown("#### 📋 Nama Tab (Worksheet) Tujuan Data Pipeline")
-        col_ws1, col_ws2, col_ws3 = st.columns(3)
-        with col_ws1: nama_worksheet     = st.text_input("Tab — L1 & L2 (Legacy)", value=st.session_state["setting_worksheet"])
-        with col_ws2: nama_ws_master     = st.text_input("Tab — Master Laporan (Baru)", value=st.session_state["setting_ws_master"])
-        with col_ws3: nama_ws_instruktur = st.text_input("Tab — Detail Instruktur", value=st.session_state["setting_ws_instruktur"])
+        st.markdown("#### 📋 Nama Tab (Worksheet)")
+        col_ws1, col_ws2 = st.columns(2)
+        with col_ws1: nama_worksheet     = st.text_input("Tab — L1 & L2 Tertutup",    value=st.session_state["setting_worksheet"])
+        with col_ws2: nama_ws_instruktur = st.text_input("Tab — Detail Instruktur",  value=st.session_state["setting_ws_instruktur"])
 
         st.markdown("---")
         st.markdown("#### 📅 Cut-off & Threshold")
         col_s1, col_s2 = st.columns(2)
         with col_s1:
-            cutoff_hari = st.number_input("Hari Cut-off Laporan Setelah Tanggal Selesai", min_value=1, max_value=30, value=st.session_state["setting_cutoff"])
+            cutoff_hari = st.number_input("Hari Cut-off setelah Tanggal Selesai", min_value=1, max_value=30, value=st.session_state["setting_cutoff"])
         with col_s2:
-            threshold_valid = st.slider("Minimal Persentase Pengisian Menjadi VALID", 0.10, 1.0, value=st.session_state["setting_threshold"], step=0.01, format="%.2f")
-            st.info(f"Jika Partisipasi Isi ≥ {threshold_valid:.0%}, maka = **VALID**")
+            threshold_valid = st.slider("Minimal % pengisian → VALID", 0.10, 1.0, value=st.session_state["setting_threshold"], step=0.01, format="%.2f")
+            st.info(f"Pengisian ≥ {threshold_valid:.0%} = **VALID**")
 
-        if st.button("💾 Simpan Pengaturan", use_container_width=True, type="primary"):
+        if st.button("💾 Simpan Pengaturan", use_container_width=True):
             st.session_state["setting_sheet"]         = nama_sheet
             st.session_state["setting_worksheet"]     = nama_worksheet
-            st.session_state["setting_ws_master"]     = nama_ws_master
             st.session_state["setting_ws_instruktur"] = nama_ws_instruktur
             st.session_state["setting_cutoff"]        = cutoff_hari
             st.session_state["setting_threshold"]     = threshold_valid
-            st.success("✅ Pengaturan berhasil disimpan! Sistem akan merujuk ke tab Master Data Anda.")
+            st.success("✅ Pengaturan berhasil disimpan!")
