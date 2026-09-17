@@ -1541,7 +1541,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
                             metode_raw = str(df_kelas.get('Strategi Pelaksanaan', '-')).strip()
                             metode = dict_metode.get(metode_raw.upper(), metode_raw)
                             
-                            # 4. Realisasi Biaya (RAB dan Realisasi saja, tanpa Pagu)
+                            # 4. Realisasi Biaya (RAB dan Realisasi saja)
                             def format_rp(val):
                                 try: return f"Rp {int(float(val)):,}".replace(',', '.')
                                 except: return "Rp 0"
@@ -1595,6 +1595,31 @@ elif menu_selection == "📑 REPORT & KATALOG":
                             except Exception as e_k:
                                 pos_html = f"Gagal memuat komentar: {e_k}"
                                 neg_html = f"Gagal memuat komentar: {e_k}"
+
+                            # 7. AI EXECUTIVE SUMMARY (KHUSUS KELAS)
+                            narasi_eksekutif_kelas = ""
+                            try:
+                                prompt_kelas = f"""
+                                Bertindaklah sebagai Quality Management Specialist di PLN UPDL Jakarta.
+                                Buatkan Ringkasan Eksekutif (maksimal 2 paragraf) untuk Laporan Pelaksanaan Pembelajaran kelas "{judul_pilih}" (Kode: {kode_pemb}).
+                                
+                                Fakta Pelaksanaan:
+                                - Kehadiran: {pct_hadir} ({hadir} dari {diundang} diundang)
+                                - Kelulusan: {pct_lulus} ({lulus} lulus)
+                                - Realisasi Biaya: {realisasi} (RAB: {rab})
+                                - Skor Kepuasan (Skala 1-5, Target 4.50): Keseluruhan {skor_tot}, Materi {skor_mat}, Instruktur {skor_ins}, Sarana Offline {skor_sp_off}, Sarana Digital {skor_sp_on}.
+                                - Partisipasi Evaluasi: {pct_isi} ({int(isi_l1)} peserta)
+                                - Voice of Customer: {jml_pos_kelas} komentar apresiasi dan {jml_neg_kelas} masukan/keluhan.
+                                
+                                Tugas:
+                                Berikan analisis naratif yang tajam dan preskriptif mengenai efektivitas dan kesuksesan kelas ini. Berikan pula rekomendasi singkat untuk perbaikan batch selanjutnya berdasarkan metrik dan suara peserta (jika ada keluhan).
+                                Gunakan bahasa korporat baku PLN, lugas, preskriptif, dan tanpa format markdown tebal (* atau **) yang berlebihan.
+                                """
+                                ai_resp_kelas = model.generate_content(prompt_kelas)
+                                narasi_eksekutif_kelas = ai_resp_kelas.text.strip().replace('\n', '<br>')
+                            except Exception as e_ai_kelas:
+                                # Safe Fallback jika AI gagal / timeout
+                                narasi_eksekutif_kelas = f"Dokumen ini merangkum <i>post-implementation review</i> untuk pelaksanaan program <b>{judul_pilih}</b> ({kode_pemb}), menyajikan evaluasi metrik kehadiran ({pct_hadir}), efisiensi anggaran, dan tingkat kepuasan pelanggan (Skor: {skor_tot}) guna memastikan penyelarasan operasional dengan standar mutu <i>Service Excellence</i> UPDL Jakarta."
                                 
                             html_kelas = f"""
                             <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
@@ -1638,7 +1663,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                 
                                 <!-- CONTENT PAGE -->
                                 <div style="padding: 20px 40px;">
-                                    <p><b>Executive Summary:</b> Dokumen ini merangkum <i>post-implementation review</i> untuk pelaksanaan program <b>{judul_pilih}</b> ({kode_pemb}), menyajikan evaluasi metrik kehadiran, efisiensi anggaran, dan tingkat kepuasan pelanggan guna memastikan penyelarasan operasional dengan standar mutu <i>Service Excellence</i> UPDL Jakarta.</p>
+                                    <p><b>Executive Summary:</b><br>{narasi_eksekutif_kelas}</p>
                                     
                                     <h4>1. DASAR PELAKSANAAN</h4>
                                     <p>Pembelajaran ini dilaksanakan berdasarkan penugasan Pusdiklat melalui :</p>
