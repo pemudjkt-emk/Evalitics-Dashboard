@@ -1132,7 +1132,7 @@ elif menu_selection == "🚨 EARLY WARNING":
     except Exception as e: st.error(f"❌ Gagal memuat data dari Sheet 'Detail Komentar L1'. Detail error: {e}")
 
 # ══════════════════════════════════════════════════════════════════════════════
-# KONTEN: 📑 REPORT & KATALOG
+# KONTEN: 📑 REPORT & KATALOG (UPDATED - FULL DATA PIPELINE & AI FIX)
 # ══════════════════════════════════════════════════════════════════════════════
 elif menu_selection == "📑 REPORT & KATALOG":
     sub_rep_generator, sub_lap_pembelajaran, sub_katalog = st.tabs(["📑 Report Generator", "📄 Laporan Pembelajaran", "👨‍🏫 Katalog Instruktur"])
@@ -1569,7 +1569,6 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                 </table>
                             </div>
 
-                            <!-- Konten Laporan Eksekutif Lanjutan -->
                             <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 14px; margin-bottom: 18px;">
                                 <table style="width: 100%; border: none; font-size: 9.5pt;">
                                     <tr>
@@ -2000,7 +1999,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                     <h4>6. CUSTOMER VOICE</h4>
                                     <p>Berikut adalah komentar apresiasi dan masukan dari peserta:</p>
                                     <table>
-                                        <tr><th style="width: 50%; text-align:center; background-color: #0f172a;">Komentar Apresiasi ({jml_pos_kelas})</th><th style="width: 50%; text-align:center; background-color: #0f172a;">Komentar Masukan / Evaluasi ({jml_neg_kelas})</th></tr>
+                                        <tr><th style="width: 50%; text-align:center; background-color: #0f172a; color: #ffffff;">Komentar Apresiasi ({jml_pos_kelas})</th><th style="width: 50%; text-align:center; background-color: #0f172a; color: #ffffff;">Komentar Masukan / Evaluasi ({jml_neg_kelas})</th></tr>
                                         <tr>
                                             <td style="padding: 12px; background-color: #f8fafc; vertical-align:top;">{pos_html}</td>
                                             <td style="padding: 12px; background-color: #fff1f2; vertical-align:top;">{neg_html}</td>
