@@ -761,11 +761,14 @@ elif menu_selection == "📤 DATA ENTRY":
                             detect_and_show_column_mismatch(df_raw, INS_COL_NAMES, f.name, "INS")
                             detect_and_show_column_mismatch(df_raw, MAT_COL_NAMES, f.name, "MAT")
                             df_mapped = pd.DataFrame(index=df_raw.index, columns=TARGET_COLUMNS)
-                            df_mapped['Kode Pembelajaran']       = df_raw.get('Kode Judul')
-                            df_mapped['Judul Pembelajaran/Kegiatan'] = df_raw.get('Judul Pembelajaran')
-                            df_mapped['Batch']                   = df_raw.get('Angkatan')
-                            df_mapped['Tanggal Mulai']           = df_raw.get('Tgl Mulai')
-                            df_mapped['Tanggal Selesai']         = df_raw.get('Tgl Selesai')
+                            
+                            # 🛡️ Pemaaf Nama Kolom (L1)
+                            df_mapped['Kode Pembelajaran']       = df_raw.get('Kode Judul', df_raw.get('Kode Pembelajaran'))
+                            df_mapped['Judul Pembelajaran/Kegiatan'] = df_raw.get('Judul Pembelajaran', df_raw.get('Judul'))
+                            df_mapped['Batch']                   = df_raw.get('Angkatan', df_raw.get('Batch'))
+                            df_mapped['Tanggal Mulai']           = df_raw.get('Tgl Mulai', df_raw.get('Tanggal Mulai'))
+                            df_mapped['Tanggal Selesai']         = df_raw.get('Tgl Selesai', df_raw.get('Tanggal Selesai'))
+                            
                             df_mapped['Strategi Pelaksanaan']    = df_raw.get('Strategi Pelaksana')
                             df_mapped['Peserta Isi L1']          = df_raw.get('P.Isi')
                             df_mapped['Peserta Hadir']           = df_raw.get('P.Hadir')
@@ -788,8 +791,16 @@ elif menu_selection == "📤 DATA ENTRY":
                         # --- JALUR SMILE ---
                         elif is_smile:
                             df_smile = df_raw.copy()
+                            
+                            # 🛡️ Pemaaf Nama Kolom (Standardisasi Otomatis untuk SMILE)
+                            rename_map = {}
+                            if 'Tanggal Mulai' in df_smile.columns and 'Tgl Mulai' not in df_smile.columns: rename_map['Tanggal Mulai'] = 'Tgl Mulai'
+                            if 'Tanggal Selesai' in df_smile.columns and 'Tgl Selesai' not in df_smile.columns: rename_map['Tanggal Selesai'] = 'Tgl Selesai'
+                            if 'Kode Judul' in df_smile.columns and 'Kode Pembelajaran' not in df_smile.columns: rename_map['Kode Judul'] = 'Kode Pembelajaran'
+                            if rename_map: df_smile.rename(columns=rename_map, inplace=True)
+                            
                             kd_pemb_s = df_smile.get('Kode Pembelajaran', pd.Series(dtype=str)).astype(str).str.replace(' ', '', regex=False).str.upper()
-                            tgl_mulai_s = pd.to_datetime(df_smile.get('Tgl Mulai', pd.Series()), errors='coerce').dt.strftime('%Y%m%d').fillna('NOTGL')
+                            tgl_mulai_s = pd.to_datetime(df_smile.get('Tgl Mulai', pd.Series(dtype=str)), errors='coerce').dt.strftime('%Y%m%d').fillna('NOTGL')
                             df_smile['Kode Unik'] = kd_pemb_s + "." + tgl_mulai_s
                             
                             all_smile_dfs.append(df_smile)
@@ -799,11 +810,14 @@ elif menu_selection == "📤 DATA ENTRY":
                         # --- JALUR L2 ---
                         elif is_l2:
                             df_mapped = pd.DataFrame(index=df_raw.index, columns=TARGET_COLUMNS)
-                            df_mapped['Kode Pembelajaran']       = df_raw.get('Kode Judul')
-                            df_mapped['Judul Pembelajaran/Kegiatan'] = df_raw.get('Judul')
-                            df_mapped['Batch']                   = df_raw.get('Angkatan')
-                            df_mapped['Tanggal Mulai']           = df_raw.get('Tgl Mulai')
-                            df_mapped['Tanggal Selesai']         = df_raw.get('Tgl Selesai')
+                            
+                            # 🛡️ Pemaaf Nama Kolom (L2)
+                            df_mapped['Kode Pembelajaran']       = df_raw.get('Kode Judul', df_raw.get('Kode Pembelajaran'))
+                            df_mapped['Judul Pembelajaran/Kegiatan'] = df_raw.get('Judul', df_raw.get('Judul Pembelajaran'))
+                            df_mapped['Batch']                   = df_raw.get('Angkatan', df_raw.get('Batch'))
+                            df_mapped['Tanggal Mulai']           = df_raw.get('Tgl Mulai', df_raw.get('Tanggal Mulai'))
+                            df_mapped['Tanggal Selesai']         = df_raw.get('Tgl Selesai', df_raw.get('Tanggal Selesai'))
+                            
                             df_mapped['Peserta Hadir']           = df_raw.get('Jumlah Peserta Hadir')
                             df_mapped['Jumlah Peserta Lulus L2'] = df_raw.get('Jumlah Peserta Lulus')
                             df_mapped['Jumlah Peserta Isi L2']   = df_raw.get('Jumlah Peserta Isi')
