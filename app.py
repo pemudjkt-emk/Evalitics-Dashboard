@@ -25,23 +25,73 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Menghapus CSS tab lama dan sedikit merapikan area Uploader
+# Menghapus CSS tab lama, merapikan area Uploader, dan UI/UX UPGRADE Menu Navigasi
 st.markdown("""
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
+    /* Styling Uploader */
     [data-testid="stFileUploader"] {
         background: #ffffff;
         border: 2px dashed #0055A4;
         border-radius: 12px;
         padding: 20px;
     }
-    /* Mempercantik font di sidebar */
-    [data-testid="stSidebar"] [data-testid="stRadio"] label p {
+    
+    /* ====================================================
+       UI/UX UPGRADE: Menu Navigasi (Pill-Shaped Tabs)
+       ==================================================== */
+    /* Jarak antar menu */
+    [data-testid="stSidebar"] [data-testid="stRadio"] > div {
+        gap: 10px; 
+    }
+    
+    /* Sembunyikan icon lingkaran bawaan radio button */
+    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] > div:first-child {
+        display: none !important;
+    }
+    
+    /* Desain default menu (Biru Muda & Teks Biru Tua) */
+    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] {
+        background-color: #E3F2FD; 
+        border-radius: 8px;
+        padding: 12px 15px;
+        cursor: pointer;
+        transition: all 0.3s ease-in-out;
+        border: 1px solid transparent;
+        margin: 0;
+    }
+    
+    /* Memastikan margin teks sejajar karena icon lingkaran hilang */
+    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] div[data-testid="stMarkdownContainer"] {
+        margin-left: 0px !important;
+    }
+    
+    /* Font style default menu */
+    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] p {
         font-size: 16px;
-        font-weight: 500;
+        font-weight: 600;
+        color: #0055A4; 
+        margin: 0;
+    }
+    
+    /* Hover effect */
+    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"]:hover {
+        background-color: #BBDEFB;
+        transform: translateX(4px);
+    }
+    
+    /* Desain menu saat AKTIF/DIKLIK (Biru Tua Pekat & Teks Putih) */
+    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"]:has(input:checked) {
+        background-color: #003366; 
+        box-shadow: 0px 4px 10px rgba(0, 51, 102, 0.3);
+    }
+    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"]:has(input:checked) p {
+        color: #FFFFFF !important;
+        font-weight: 800;
     }
     </style>
 """, unsafe_allow_html=True)
+
 # ─────────────────────────────────────────────────────────────────────────────
 # HEADER (TETAP DI KONTEN UTAMA AGAR EKSKLUSIF)
 # ─────────────────────────────────────────────────────────────────────────────
@@ -58,15 +108,15 @@ img_danantara = f'<img src="data:image/png;base64,{bin_danantara}" style="height
 
 st.markdown(f"""
 <div style="display:flex;align-items:center;justify-content:space-between;
-    background:linear-gradient(90deg,#003366,#0055A4);padding:10px 30px;
-    border-radius:12px;color:white;margin-bottom:25px;box-shadow:0px 4px 10px rgba(0,0,0,0.1);">
+    background:linear-gradient(135deg,#001f3f 0%,#0055A4 100%);padding:15px 30px;
+    border-radius:12px;color:white;margin-bottom:25px;box-shadow:0px 6px 15px rgba(0,0,0,0.15); border-bottom: 4px solid #FFC000;">
     <div style="flex:1;display:flex;align-items:center;gap:15px;">{img_danantara}</div>
     <div style="flex:2;text-align:center;">
-        <h1 style="margin:0;font-size:1.6em;color:white !important;font-weight:bold;line-height:1.2;">
-            &#9889; Smart Evaluation Analytics
+        <h1 style="margin:0;font-size:2.4em;color:white !important;font-weight:900;line-height:1.2;letter-spacing:1px;text-transform:uppercase;">
+            &#9889; Jakarta Insight Hub
         </h1>
-        <p style="margin:0;color:rgba(255,255,255,0.8) !important;font-size:0.85em;">
-            Website Analitik Interaktif Evaluasi Pembelajaran UPDL Jakarta
+        <p style="margin:4px 0 0 0;color:rgba(255,255,255,0.9) !important;font-size:0.95em;letter-spacing:0.5px;">
+            Smart Evaluation & Analytics Dashboard UPDL Jakarta
         </p>
     </div>
     <div style="flex:1;display:flex;align-items:center;justify-content:flex-end;">{img_pln}</div>
