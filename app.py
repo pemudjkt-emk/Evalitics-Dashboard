@@ -25,69 +25,20 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Menghapus CSS tab lama dan sedikit merapikan area Uploader serta merombak Menu Navigasi
+# Menghapus CSS tab lama dan sedikit merapikan area Uploader
 st.markdown("""
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
-    /* Styling Uploader */
     [data-testid="stFileUploader"] {
         background: #ffffff;
         border: 2px dashed #0055A4;
         border-radius: 12px;
         padding: 20px;
     }
-    
-    /* ====================================================
-       UI/UX UPGRADE: Menu Navigasi (Pill-Shaped Tabs)
-       ==================================================== */
-    /* Sembunyikan icon lingkaran bawaan radio button */
-    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] > div:first-child {
-        display: none !important;
-    }
-    
-    /* Jarak antar menu */
-    [data-testid="stSidebar"] [data-testid="stRadio"] > div {
-        gap: 10px; 
-    }
-    
-    /* Desain default menu (Biru Muda & Teks Biru Tua) */
-    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] {
-        background-color: #E3F2FD; 
-        border-radius: 8px;
-        padding: 12px 15px;
-        cursor: pointer;
-        transition: all 0.3s ease-in-out;
-        border: 1px solid transparent;
-        margin: 0;
-    }
-    
-    /* Memastikan margin teks sejajar karena icon lingkaran hilang */
-    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] div[data-testid="stMarkdownContainer"] {
-        margin-left: 0px !important;
-    }
-    
-    /* Font style default menu */
-    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] p {
+    /* Mempercantik font di sidebar */
+    [data-testid="stSidebar"] [data-testid="stRadio"] label p {
         font-size: 16px;
-        font-weight: 600;
-        color: #0055A4; 
-        margin: 0;
-    }
-    
-    /* Hover effect */
-    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"]:hover {
-        background-color: #BBDEFB;
-        transform: translateX(4px);
-    }
-    
-    /* Desain menu saat AKTIF/DIKLIK (Biru Tua Pekat & Teks Putih) */
-    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"]:has(input:checked) {
-        background-color: #003366; 
-        box-shadow: 0px 4px 10px rgba(0, 51, 102, 0.3);
-    }
-    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"]:has(input:checked) p {
-        color: #FFFFFF !important;
-        font-weight: 800;
+        font-weight: 500;
     }
     </style>
 """, unsafe_allow_html=True)
