@@ -25,51 +25,108 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Menghapus CSS tab lama, merapikan area Uploader, dan UI/UX UPGRADE Menu Navigasi
+# Menghapus CSS tab lama, merapikan area Uploader, dan UI/UX UPGRADE Menu Navigasi ke gaya Soft Teal
 st.markdown("""
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
+    /* Styling Uploader */
     [data-testid="stFileUploader"] {
         background: #ffffff;
-        border: 2px dashed #0055A4;
+        border: 2px dashed #17a2b8;
         border-radius: 12px;
         padding: 20px;
     }
-    [data-testid="stSidebar"] [data-testid="stRadio"] > div {
-        gap: 10px; 
+    
+    /* ====================================================
+       UI/UX UPGRADE: Sidebar "Soft Teal" Concept
+       ==================================================== */
+    
+    /* 1. Background Sidebar menjadi Abu-abu Muda */
+    [data-testid="stSidebar"] {
+        background-color: #f1f5f9 !important;
     }
+    
+    /* 2. Jarak antar menu */
+    [data-testid="stSidebar"] [data-testid="stRadio"] > div {
+        gap: 12px; 
+    }
+    
+    /* 3. Sembunyikan icon lingkaran bawaan radio button */
     [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] > div:first-child {
         display: none !important;
     }
+    
+    /* 4. Desain Default Menu (Putih Solid + Shadow Tipis) */
     [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] {
-        background-color: #E3F2FD; 
-        border-radius: 8px;
+        background-color: #FFFFFF; 
+        border-radius: 10px;
         padding: 12px 15px;
         cursor: pointer;
         transition: all 0.3s ease-in-out;
-        border: 1px solid transparent;
+        box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.05);
+        border: none;
         margin: 0;
     }
+    
+    /* Memastikan margin teks sejajar */
     [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] div[data-testid="stMarkdownContainer"] {
         margin-left: 0px !important;
     }
+    
+    /* Font style Default Menu */
     [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] p {
-        font-size: 16px;
-        font-weight: 600;
-        color: #0055A4; 
+        font-size: 15px;
+        font-weight: 500;
+        color: #475569; 
         margin: 0;
     }
+    
+    /* Hover effect */
     [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"]:hover {
-        background-color: #BBDEFB;
-        transform: translateX(4px);
+        background-color: #F8FAFC;
+        transform: translateY(-2px);
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.08);
     }
+    
+    /* 5. Desain Menu AKTIF (Teal/Cyan Gradient + Aksen Garis Kiri) */
     [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"]:has(input:checked) {
-        background-color: #003366; 
-        box-shadow: 0px 4px 10px rgba(0, 51, 102, 0.3);
+        background: linear-gradient(90deg, #17a2b8 0%, #20c997 100%); 
+        box-shadow: 0px 4px 12px rgba(23, 162, 184, 0.3);
+        border-left: 6px solid #0f766e; /* Aksen garis gelap di kiri */
+        border-radius: 10px;
     }
     [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"]:has(input:checked) p {
         color: #FFFFFF !important;
-        font-weight: 800;
+        font-weight: 600;
+    }
+    
+    /* 6. Desain Tombol "Sinkron Data Terkini" */
+    [data-testid="stSidebar"] button[kind="secondary"] {
+        background: linear-gradient(90deg, #17a2b8 0%, #20c997 100%);
+        color: white !important;
+        border: none;
+        border-radius: 20px; /* Bentuk kapsul penuh */
+        padding: 12px;
+        font-weight: bold;
+        box-shadow: 0px 4px 12px rgba(23, 162, 184, 0.3);
+        transition: all 0.3s ease;
+        margin-top: 20px;
+    }
+    [data-testid="stSidebar"] button[kind="secondary"] div,
+    [data-testid="stSidebar"] button[kind="secondary"] p {
+        color: white !important;
+    }
+    [data-testid="stSidebar"] button[kind="secondary"]:hover {
+        transform: scale(1.02);
+        box-shadow: 0px 6px 15px rgba(23, 162, 184, 0.4);
+        border-color: transparent;
+        color: white !important;
+    }
+    
+    /* Garis pembatas (divider) di atas tombol sinkron */
+    [data-testid="stSidebar"] hr {
+        margin-top: 30px;
+        border-top: 1px solid #cbd5e1;
     }
     </style>
 """, unsafe_allow_html=True)
