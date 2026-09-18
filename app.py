@@ -29,28 +29,18 @@ st.set_page_config(
 st.markdown("""
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
-    /* Styling Uploader */
     [data-testid="stFileUploader"] {
         background: #ffffff;
         border: 2px dashed #0055A4;
         border-radius: 12px;
         padding: 20px;
     }
-    
-    /* ====================================================
-       UI/UX UPGRADE: Menu Navigasi (Pill-Shaped Tabs)
-       ==================================================== */
-    /* Jarak antar menu */
     [data-testid="stSidebar"] [data-testid="stRadio"] > div {
         gap: 10px; 
     }
-    
-    /* Sembunyikan icon lingkaran bawaan radio button */
     [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] > div:first-child {
         display: none !important;
     }
-    
-    /* Desain default menu (Biru Muda & Teks Biru Tua) */
     [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] {
         background-color: #E3F2FD; 
         border-radius: 8px;
@@ -60,27 +50,19 @@ st.markdown("""
         border: 1px solid transparent;
         margin: 0;
     }
-    
-    /* Memastikan margin teks sejajar karena icon lingkaran hilang */
     [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] div[data-testid="stMarkdownContainer"] {
         margin-left: 0px !important;
     }
-    
-    /* Font style default menu */
     [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] p {
         font-size: 16px;
         font-weight: 600;
         color: #0055A4; 
         margin: 0;
     }
-    
-    /* Hover effect */
     [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"]:hover {
         background-color: #BBDEFB;
         transform: translateX(4px);
     }
-    
-    /* Desain menu saat AKTIF/DIKLIK (Biru Tua Pekat & Teks Putih) */
     [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"]:has(input:checked) {
         background-color: #003366; 
         box-shadow: 0px 4px 10px rgba(0, 51, 102, 0.3);
@@ -140,7 +122,6 @@ TARGET_COLUMNS = [
     'Jumlah Peserta Isi L2', '% Pengisian L2', 'Nilai Confidence', 'Nilai Commitment', 'Status L2'
 ]
 
-# TARGET KOLOM UNTUK SHEET "MASTER DATA LAPORAN" (JALUR 3: L1 + SMILE)
 MASTER_TARGET_COLUMNS = [
     'No', 'Kode Unik', 'Laporan Bulan',
     'Kode Service Request', 'Jenis Program', 'Judul Pembelajaran', 'Kode Pembelajaran',
@@ -797,7 +778,6 @@ elif menu_selection == "📤 DATA ENTRY":
                         else: df_raw = pd.read_excel(f)
                         df_raw.columns = df_raw.columns.astype(str).str.strip()
 
-                        # Identifikasi Jalur File
                         is_smile = ('Kode Service Request' in df_raw.columns or 'Peserta Diundang' in df_raw.columns)
                         is_l2 = ('Confidence Level' in df_raw.columns and not is_smile)
                         is_instruktur = ('Nama' in df_raw.columns and 'Kode Diklat' in df_raw.columns and 'Confidence Level' not in df_raw.columns)
@@ -809,7 +789,6 @@ elif menu_selection == "📤 DATA ENTRY":
                             detect_and_show_column_mismatch(df_raw, MAT_COL_NAMES, f.name, "MAT")
                             df_mapped = pd.DataFrame(index=df_raw.index, columns=TARGET_COLUMNS)
                             
-                            # Pemaaf Nama Kolom (L1)
                             df_mapped['Kode Pembelajaran']       = df_raw.get('Kode Judul', df_raw.get('Kode Pembelajaran'))
                             df_mapped['Judul Pembelajaran/Kegiatan'] = df_raw.get('Judul Pembelajaran', df_raw.get('Judul'))
                             df_mapped['Batch']                   = df_raw.get('Angkatan', df_raw.get('Batch'))
@@ -900,9 +879,6 @@ elif menu_selection == "📤 DATA ENTRY":
             st.markdown("### 📋 Ringkasan File")
             st.dataframe(pd.DataFrame(file_log), use_container_width=True, hide_index=True)
 
-            # ==========================================================
-            # PIPELINE 1: L1 + L2 -> L1 TERTUTUP
-            # ==========================================================
             df_l1_l2_push = pd.DataFrame()
             if has_l1l2:
                 df_l1 = pd.concat(all_l1_dfs, ignore_index=True) if all_l1_dfs else pd.DataFrame(columns=TARGET_COLUMNS)
@@ -954,9 +930,6 @@ elif menu_selection == "📤 DATA ENTRY":
                 df_l1_l2_push['Jumlah Indikator diatas 4.5']  = (df_l1_l2_push[all_indicators] >= 4.5).sum(axis=1)
                 df_l1_l2_push.replace([np.inf, -np.inf], np.nan, inplace=True)
 
-            # ==========================================================
-            # PIPELINE 2: L1 + SMILE -> MASTER DATA LAPORAN
-            # ==========================================================
             df_master_push = pd.DataFrame()
             if has_smile_pipe:
                 df_smile_raw = pd.concat(all_smile_dfs, ignore_index=True)
@@ -1009,17 +982,11 @@ elif menu_selection == "📤 DATA ENTRY":
 
                 df_master_push = df_master_push.reindex(columns=MASTER_TARGET_COLUMNS)
 
-            # ==========================================================
-            # PIPELINE 3: INSTRUKTUR -> DETAIL INSTRUKTUR
-            # ==========================================================
             df_ins_push = pd.DataFrame()
             if has_ins:
                 df_ins_push = pd.concat(all_ins_dfs, ignore_index=True)
                 df_ins_push = df_ins_push.reindex(columns=DETAIL_INSTRUKTUR_COLUMNS)
 
-            # ----------------------------------------------------------
-            # TAMPILAN PREVIEW (AKORDEON)
-            # ----------------------------------------------------------
             if has_smile_pipe:
                 with st.expander(f"🟣 PREVIEW: MASTER DATA LAPORAN (L1 + SMILE) | {len(df_master_push)} Baris", expanded=True):
                     st.dataframe(df_master_push.fillna(""), use_container_width=True)
@@ -1047,7 +1014,6 @@ elif menu_selection == "📤 DATA ENTRY":
                             client = init_gsheets_connection()
                             gsheet_file = client.open(sheet_name_setting)
 
-                            # Push Master Data (SMILE + L1)
                             if has_smile_pipe:
                                 sht_master = gsheet_file.worksheet(ws_master_target)
                                 if not sht_master.row_values(1):
@@ -1059,7 +1025,6 @@ elif menu_selection == "📤 DATA ENTRY":
                                 sht_master.append_rows(rows_master, value_input_option='USER_ENTERED', table_range='A1')
                                 st.success(f"🟣 Berhasil mengirim {len(rows_master)} baris ke Tab **{ws_master_target}**")
 
-                            # Push L1 Tertutup (L1 + L2)
                             if has_l1l2:
                                 sht_l1 = gsheet_file.worksheet(ws_l1_target)
                                 if not sht_l1.row_values(1):
@@ -1071,7 +1036,6 @@ elif menu_selection == "📤 DATA ENTRY":
                                 sht_l1.append_rows(rows_l1, value_input_option='USER_ENTERED', table_range='A1')
                                 st.success(f"🔵 Berhasil mengirim {len(rows_l1)} baris ke Tab **{ws_l1_target}**")
 
-                            # Push Instruktur
                             if has_ins:
                                 sht_ins = gsheet_file.worksheet(ws_ins_target)
                                 if not sht_ins.row_values(1):
