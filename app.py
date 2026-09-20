@@ -25,7 +25,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Menghapus CSS tab lama, merapikan area Uploader, dan UI/UX UPGRADE Menu Navigasi ke gaya Soft Teal
+# KEMBALI KE DESAIN UI/UX SIDEBAR PREMIUM (SEPERTI REFERENSI GAMBAR)
 st.markdown("""
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
@@ -52,12 +52,14 @@ st.markdown("""
     }
     
     /* 3. Sembunyikan icon lingkaran bawaan radio button */
-    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] > div:first-child {
+    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] > div:first-child,
+    [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label > div:first-child {
         display: none !important;
     }
     
     /* 4. Desain Default Menu (Putih Solid + Shadow Tipis) */
-    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] {
+    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"],
+    [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label {
         background-color: #FFFFFF; 
         border-radius: 10px;
         padding: 12px 15px;
@@ -69,12 +71,14 @@ st.markdown("""
     }
     
     /* Memastikan margin teks sejajar */
-    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] div[data-testid="stMarkdownContainer"] {
+    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] div[data-testid="stMarkdownContainer"],
+    [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label div[data-testid="stMarkdownContainer"] {
         margin-left: 0px !important;
     }
     
     /* Font style Default Menu */
-    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] p {
+    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] p,
+    [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label p {
         font-size: 15px;
         font-weight: 500;
         color: #475569; 
@@ -82,20 +86,23 @@ st.markdown("""
     }
     
     /* Hover effect */
-    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"]:hover {
+    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"]:hover,
+    [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label:hover {
         background-color: #F8FAFC;
         transform: translateY(-2px);
         box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.08);
     }
     
     /* 5. Desain Menu AKTIF (Teal/Cyan Gradient + Aksen Garis Kiri) */
-    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"]:has(input:checked) {
+    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"]:has(input:checked),
+    [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label:has(input:checked) {
         background: linear-gradient(90deg, #17a2b8 0%, #20c997 100%); 
         box-shadow: 0px 4px 12px rgba(23, 162, 184, 0.3);
         border-left: 6px solid #0f766e; /* Aksen garis gelap di kiri */
         border-radius: 10px;
     }
-    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"]:has(input:checked) p {
+    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"]:has(input:checked) p,
+    [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label:has(input:checked) p {
         color: #FFFFFF !important;
         font-weight: 600;
     }
@@ -292,7 +299,7 @@ def get_sheet_max_no(sheet):
     except:
         return 0
 
-# FUNGSI BARU: FORMAT TANGGAL INDONESIA (POIN 3 & 4)
+# FUNGSI FORMAT TANGGAL INDONESIA
 def format_tanggal_indo(tgl_input):
     """Mengubah format timestamp/tanggal menjadi format 15 April 2026"""
     if pd.isna(tgl_input) or str(tgl_input).strip() in ["", "-", "NOTGL", "NaT"]:
@@ -1220,7 +1227,7 @@ elif menu_selection == "🚨 EARLY WARNING":
     except Exception as e: st.error(f"❌ Gagal memuat data dari Sheet 'Detail Komentar L1'. Detail error: {e}")
 
 # ══════════════════════════════════════════════════════════════════════════════
-# KONTEN: 📑 REPORT & KATALOG (UPDATED - FULL DATA PIPELINE & AI FIX)
+# KONTEN: 📑 REPORT & KATALOG
 # ══════════════════════════════════════════════════════════════════════════════
 elif menu_selection == "📑 REPORT & KATALOG":
     sub_rep_generator, sub_lap_pembelajaran, sub_katalog = st.tabs(["📑 Report Generator", "📄 Laporan Pembelajaran", "👨‍🏫 Katalog Instruktur"])
@@ -1903,14 +1910,12 @@ elif menu_selection == "📑 REPORT & KATALOG":
         
         try:
             df_katalog_raw = pd.read_csv(url_ins_katalog)
+            df_katalog_raw.columns = df_katalog_raw.columns.astype(str).str.strip()
             
             if not df_katalog_raw.empty:
-                df_katalog_raw['Ins-Eng'] = pd.to_numeric(df_katalog_raw['Ins-Eng'], errors='coerce')
-                df_katalog_raw['Ins-Rel'] = pd.to_numeric(df_katalog_raw['Ins-Rel'], errors='coerce')
-                df_katalog_raw['Ins-Sat'] = pd.to_numeric(df_katalog_raw['Ins-Sat'], errors='coerce')
-                df_katalog_raw['Ins-Rat'] = pd.to_numeric(df_katalog_raw['Ins-Rat'], errors='coerce')
-                if 'Durasi Mengajar' in df_katalog_raw.columns:
-                    df_katalog_raw['Durasi Mengajar'] = pd.to_numeric(df_katalog_raw['Durasi Mengajar'], errors='coerce')
+                for c in ['Ins-Eng', 'Ins-Rel', 'Ins-Sat', 'Ins-Rat', 'Durasi Mengajar']:
+                    if c in df_katalog_raw.columns:
+                        df_katalog_raw[c] = pd.to_numeric(df_katalog_raw[c], errors='coerce')
                 
                 col_f1, col_f2 = st.columns(2)
                 with col_f1:
