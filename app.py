@@ -25,116 +25,44 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# KEMBALI KE DESAIN UI/UX SIDEBAR PREMIUM (SEPERTI REFERENSI GAMBAR)
 st.markdown("""
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
-    /* Styling Uploader */
-    [data-testid="stFileUploader"] {
-        background: #ffffff;
-        border: 2px dashed #17a2b8;
-        border-radius: 12px;
-        padding: 20px;
-    }
+    [data-testid="stFileUploader"] { background: #ffffff; border: 2px dashed #17a2b8; border-radius: 12px; padding: 20px; }
     
-    /* ====================================================
-       UI/UX UPGRADE: Sidebar "Soft Teal" Concept
-       ==================================================== */
+    [data-testid="stSidebar"] { background-color: #f1f5f9 !important; }
     
-    /* 1. Background Sidebar menjadi Abu-abu Muda */
-    [data-testid="stSidebar"] {
-        background-color: #f1f5f9 !important;
-    }
+    [data-testid="stSidebar"] [data-testid="stRadio"] > div { gap: 12px; }
     
-    /* 2. Jarak antar menu */
-    [data-testid="stSidebar"] [data-testid="stRadio"] > div {
-        gap: 12px; 
-    }
-    
-    /* 3. Sembunyikan icon lingkaran bawaan radio button */
     [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] > div:first-child,
-    [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label > div:first-child {
-        display: none !important;
-    }
+    [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label > div:first-child { display: none !important; }
     
-    /* 4. Desain Default Menu (Putih Solid + Shadow Tipis) */
     [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"],
-    [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label {
-        background-color: #FFFFFF; 
-        border-radius: 10px;
-        padding: 12px 15px;
-        cursor: pointer;
-        transition: all 0.3s ease-in-out;
-        box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.05);
-        border: none;
-        margin: 0;
-    }
+    [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label { background-color: #FFFFFF; border-radius: 10px; padding: 12px 15px; cursor: pointer; transition: all 0.3s ease-in-out; box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.05); border: none; margin: 0; }
     
-    /* Memastikan margin teks sejajar */
     [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] div[data-testid="stMarkdownContainer"],
-    [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label div[data-testid="stMarkdownContainer"] {
-        margin-left: 0px !important;
-    }
+    [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label div[data-testid="stMarkdownContainer"] { margin-left: 0px !important; }
     
-    /* Font style Default Menu */
     [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] p,
-    [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label p {
-        font-size: 15px;
-        font-weight: 500;
-        color: #475569; 
-        margin: 0;
-    }
+    [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label p { font-size: 15px; font-weight: 500; color: #475569; margin: 0; }
     
-    /* Hover effect */
     [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"]:hover,
-    [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label:hover {
-        background-color: #F8FAFC;
-        transform: translateY(-2px);
-        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.08);
-    }
+    [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label:hover { background-color: #F8FAFC; transform: translateY(-2px); box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.08); }
     
-    /* 5. Desain Menu AKTIF (Teal/Cyan Gradient + Aksen Garis Kiri) */
     [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"]:has(input:checked),
-    [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label:has(input:checked) {
-        background: linear-gradient(90deg, #17a2b8 0%, #20c997 100%); 
-        box-shadow: 0px 4px 12px rgba(23, 162, 184, 0.3);
-        border-left: 6px solid #0f766e; /* Aksen garis gelap di kiri */
-        border-radius: 10px;
-    }
+    [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label:has(input:checked) { background: linear-gradient(90deg, #17a2b8 0%, #20c997 100%); box-shadow: 0px 4px 12px rgba(23, 162, 184, 0.3); border-left: 6px solid #0f766e; border-radius: 10px; }
+    
     [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"]:has(input:checked) p,
-    [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label:has(input:checked) p {
-        color: #FFFFFF !important;
-        font-weight: 600;
-    }
+    [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label:has(input:checked) p { color: #FFFFFF !important; font-weight: 600; }
     
-    /* 6. Desain Tombol "Sinkron Data Terkini" */
-    [data-testid="stSidebar"] button[kind="secondary"] {
-        background: linear-gradient(90deg, #17a2b8 0%, #20c997 100%);
-        color: white !important;
-        border: none;
-        border-radius: 20px; /* Bentuk kapsul penuh */
-        padding: 12px;
-        font-weight: bold;
-        box-shadow: 0px 4px 12px rgba(23, 162, 184, 0.3);
-        transition: all 0.3s ease;
-        margin-top: 20px;
-    }
+    [data-testid="stSidebar"] button[kind="secondary"] { background: linear-gradient(90deg, #17a2b8 0%, #20c997 100%); color: white !important; border: none; border-radius: 20px; padding: 12px; font-weight: bold; box-shadow: 0px 4px 12px rgba(23, 162, 184, 0.3); transition: all 0.3s ease; margin-top: 20px; }
+    
     [data-testid="stSidebar"] button[kind="secondary"] div,
-    [data-testid="stSidebar"] button[kind="secondary"] p {
-        color: white !important;
-    }
-    [data-testid="stSidebar"] button[kind="secondary"]:hover {
-        transform: scale(1.02);
-        box-shadow: 0px 6px 15px rgba(23, 162, 184, 0.4);
-        border-color: transparent;
-        color: white !important;
-    }
+    [data-testid="stSidebar"] button[kind="secondary"] p { color: white !important; }
     
-    /* Garis pembatas (divider) di atas tombol sinkron */
-    [data-testid="stSidebar"] hr {
-        margin-top: 30px;
-        border-top: 1px solid #cbd5e1;
-    }
+    [data-testid="stSidebar"] button[kind="secondary"]:hover { transform: scale(1.02); box-shadow: 0px 6px 15px rgba(23, 162, 184, 0.4); border-color: transparent; color: white !important; }
+    
+    [data-testid="stSidebar"] hr { margin-top: 30px; border-top: 1px solid #cbd5e1; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -305,7 +233,6 @@ def format_tanggal_indo(tgl_input):
     if pd.isna(tgl_input) or str(tgl_input).strip() in ["", "-", "NOTGL", "NaT"]:
         return "-"
     try:
-        # Konversi ke datetime jika masih berbentuk string
         if not isinstance(tgl_input, datetime):
             tgl_input = pd.to_datetime(str(tgl_input).split(" ")[0])
             
@@ -314,7 +241,7 @@ def format_tanggal_indo(tgl_input):
         tahun = tgl_input.year
         return f"{hari} {bulan} {tahun}"
     except Exception:
-        return str(tgl_input) # Fallback jika gagal
+        return str(tgl_input)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # SESSION STATE defaults
@@ -864,7 +791,6 @@ elif menu_selection == "📤 DATA ENTRY":
                         is_instruktur = ('Nama' in df_raw.columns and 'Kode Diklat' in df_raw.columns and 'Confidence Level' not in df_raw.columns)
                         is_l1 = ('Ins-Eng-1 of 2' in df_raw.columns and not is_instruktur)
 
-                        # --- JALUR L1 ---
                         if is_l1:
                             detect_and_show_column_mismatch(df_raw, INS_COL_NAMES, f.name, "INS")
                             detect_and_show_column_mismatch(df_raw, MAT_COL_NAMES, f.name, "MAT")
@@ -894,7 +820,6 @@ elif menu_selection == "📤 DATA ENTRY":
                             file_log.append({"File":f.name,"Tipe":"🔵 Evaluasi L1","Baris":len(df_raw)})
                             st.session_state.riwayat_upload.append({"nama":f.name,"waktu":datetime.now().strftime("%d/%m/%Y %H:%M"),"tipe":"L1","baris":len(df_raw)})
 
-                        # --- JALUR SMILE ---
                         elif is_smile:
                             df_smile = df_raw.copy()
                             rename_map = {}
@@ -911,7 +836,6 @@ elif menu_selection == "📤 DATA ENTRY":
                             file_log.append({"File":f.name,"Tipe":"🟣 SMILE","Baris":len(df_raw)})
                             st.session_state.riwayat_upload.append({"nama":f.name,"waktu":datetime.now().strftime("%d/%m/%Y %H:%M"),"tipe":"SMILE","baris":len(df_raw)})
 
-                        # --- JALUR L2 ---
                         elif is_l2:
                             df_mapped = pd.DataFrame(index=df_raw.index, columns=TARGET_COLUMNS)
                             df_mapped['Kode Pembelajaran']       = df_raw.get('Kode Judul', df_raw.get('Kode Pembelajaran'))
@@ -934,7 +858,6 @@ elif menu_selection == "📤 DATA ENTRY":
                             file_log.append({"File":f.name,"Tipe":"🟢 L2 HXMS","Baris":len(df_raw)})
                             st.session_state.riwayat_upload.append({"nama":f.name,"waktu":datetime.now().strftime("%d/%m/%Y %H:%M"),"tipe":"L2","baris":len(df_raw)})
 
-                        # --- JALUR INSTRUKTUR ---
                         elif is_instruktur:
                             df_raw = df_raw[~df_raw['Nama'].astype(str).str.strip().str.upper().isin(['UPDL JAKARTA','JAKARTA'])].reset_index(drop=True)
                             df_ins = build_instruktur_df(df_raw) 
@@ -1559,7 +1482,6 @@ elif menu_selection == "📑 REPORT & KATALOG":
             df_master.columns = df_master.columns.astype(str).str.strip()
             
             if 'Judul Pembelajaran' in df_master.columns:
-                # Modifikasi Poin 1: Gabungkan Judul dan Tanggal untuk Dropdown
                 df_master['Opsi_Dropdown'] = df_master.apply(
                     lambda x: f"{str(x.get('Judul Pembelajaran', '-')).strip()} ({format_tanggal_indo(x.get('Tgl Mulai'))} s.d {format_tanggal_indo(x.get('Tgl Selesai'))})", 
                     axis=1
@@ -1580,18 +1502,15 @@ elif menu_selection == "📑 REPORT & KATALOG":
                             df_kelas = df_master[df_master['Opsi_Dropdown'] == opsi_pilih].iloc[0]
                             judul_pilih = df_kelas.get('Judul Pembelajaran', '-')
                             
-                            # 1. Dasar Pelaksanaan
                             kode_pemb = df_kelas.get('Kode Pembelajaran', '-')
                             no_surat = df_kelas.get('No Surat Penugasan', '-')
                             no_surat_panggil = df_kelas.get('Nomor Surat Pemanggilan Peserta', '-')
                             if pd.isna(no_surat_panggil) or str(no_surat_panggil).strip() == "": no_surat_panggil = "-"
 
-                            # Modifikasi Poin 3 & 4: Pembersihan Format Tanggal
                             tgl_surat_format = format_tanggal_indo(df_kelas.get('Tanggal Surat Penugasan'))
                             tgl_mulai_format = format_tanggal_indo(df_kelas.get('Tgl Mulai'))
                             tgl_selesai_format = format_tanggal_indo(df_kelas.get('Tgl Selesai'))
 
-                            # Modifikasi Poin 6: Dasar Pelaksanaan Jenis Program - Kode SR
                             kode_sr_raw = df_kelas.get('Kode Service Request', '')
                             jenis_prog = df_kelas.get('Jenis Program', '')
                             kode_sr_raw = "" if pd.isna(kode_sr_raw) else str(kode_sr_raw).strip()
@@ -1606,7 +1525,6 @@ elif menu_selection == "📑 REPORT & KATALOG":
                             else:
                                 dasar_pelaksanaan_teks = "-"
                             
-                            # 2. Jumlah Peserta
                             rencana_peserta = df_kelas.get('Rencana Jumlah Peserta', 0)
                             if pd.isna(rencana_peserta): rencana_peserta = 0
                             diundang = df_kelas.get('Peserta Diundang', 0)
@@ -1634,7 +1552,6 @@ elif menu_selection == "📑 REPORT & KATALOG":
                             if pd.isna(isi_l1): isi_l1 = 0
                             pct_isi = f_pct_str(df_kelas.get('% Pengisian L1', '-'))
                             
-                            # 3. Waktu, Metode, Tempat
                             instruktur = df_kelas.get('Instruktur/ Fasilitator', '-')
                             if pd.isna(instruktur) or str(instruktur).strip() == "": instruktur = "[ Ketik Nama Instruktur Disini ]"
                             
@@ -1651,7 +1568,6 @@ elif menu_selection == "📑 REPORT & KATALOG":
                             metode_raw = str(df_kelas.get('Strategi Pelaksanaan', '-')).strip().upper()
                             metode = dict_metode.get(metode_raw, metode_raw)
                             
-                            # 4. Realisasi Biaya
                             def format_rp(val):
                                 try: return f"Rp {int(float(val)):,}".replace(',', '.')
                                 except: return "Rp 0"
@@ -1659,7 +1575,6 @@ elif menu_selection == "📑 REPORT & KATALOG":
                             rab = format_rp(df_kelas.get('RAB Pelaksanaan', 0))
                             realisasi = format_rp(df_kelas.get('Realisasi Biaya Pelaksanaan', 0))
                             
-                            # 5. Evaluasi
                             def f_skor(v):
                                 try: return f"{float(v):.2f}"
                                 except: return "-"
@@ -1670,7 +1585,6 @@ elif menu_selection == "📑 REPORT & KATALOG":
                             skor_sp_on = f_skor(df_kelas.get('RATA DS', 0))
                             skor_tot = f_skor(df_kelas.get('RATA-RATA KESELURUHAN', 0))
                             
-                            # Modifikasi Poin 5: Kondisional Sarana Prasarana & Penomoran
                             show_offline = metode_raw in ['ICT', 'BL', 'HL']
                             show_online = metode_raw in ['DL', 'SL', 'BL', 'HL']
                             
@@ -1691,7 +1605,6 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                 
                             no_urut_total = no_urut_tabel
                             
-                            # 6. Komentar
                             pos_html, neg_html = "-", "-"
                             jml_pos_kelas, jml_neg_kelas = 0, 0
                             try:
@@ -1727,7 +1640,6 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                 pos_html = f"Gagal memuat komentar: {e_k}"
                                 neg_html = f"Gagal memuat komentar: {e_k}"
 
-                            # 7. AI EXECUTIVE SUMMARY
                             narasi_eksekutif_kelas = ""
                             try:
                                 prompt_kelas = f"""
@@ -1794,7 +1706,6 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                 <!-- CONTENT PAGE -->
                                 <div style="padding: 20px 40px;">
                                     
-                                    <!-- Modifikasi Poin 2: EXECUTIVE SUMMARY rata tengah -->
                                     <h4 style="text-align: center; color:#0055A4; border-bottom: none; margin-bottom: 5px;">EXECUTIVE SUMMARY</h4>
                                     <p style="text-align: justify; margin-top: 0;">{narasi_eksekutif_kelas}</p>
                                     
