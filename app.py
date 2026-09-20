@@ -301,7 +301,7 @@ def analisis_sentimen_opensource(teks):
 # MENU NAVIGASI (SIDEBAR)
 # ─────────────────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.markdown("### 🧭 Menu Navigasi")
+    st.markdown("### 🧭 JAKARTA INSIGHT HUB")
     
     menu_selection = st.radio(
         "Pilih Modul Aplikasi:",
@@ -309,9 +309,9 @@ with st.sidebar:
             "📤 DATA ENTRY",
             "📈 ANALYTICS",
             "📊 DASHBOARD",
+            "📑 REPORT & KATALOG",
             "🤖 AI ASSISTANT",
             "🚨 EARLY WARNING",
-            "📑 REPORT & KATALOG",
             "⚙️ PENGATURAN"
         ]
     )
