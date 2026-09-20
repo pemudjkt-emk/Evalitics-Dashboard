@@ -343,7 +343,7 @@ with st.sidebar:
             "📈 ANALYTICS",
             "📊 DASHBOARD",
             "📑 REPORT & KATALOG",
-            "🤖 AI ASSISTANT",
+            "🤖  AI ASSISTANT",
             "🚨 SENTIMENT ANALYSIS",
             "⚙️ PENGATURAN"
         ]
