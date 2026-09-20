@@ -342,9 +342,9 @@ with st.sidebar:
             "📤 DATA ENTRY",
             "📈 ANALYTICS",
             "📊 DASHBOARD",
-            "🤖 AI ASSISTANT",
-            "🚨 EARLY WARNING",
             "📑 REPORT & KATALOG",
+            "🤖 AI ASSISTANT",
+            "🚨 SENTIMENT ANALYSIS",
             "⚙️ PENGATURAN"
         ]
     )
