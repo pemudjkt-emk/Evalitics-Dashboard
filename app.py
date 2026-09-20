@@ -40,10 +40,7 @@ st.markdown("""
     [data-testid="stSidebar"] [data-testid="stRadio"] > div {
         gap: 8px; 
     }
-    [data-testid="stSidebar"] [data-testid="stRadio"] label > div:first-child {
-        display: none !important;
-    }
-    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] > div:first-child {
+    [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label > div:first-child {
         display: none !important;
     }
     [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label {
@@ -54,15 +51,12 @@ st.markdown("""
         transition: all 0.3s ease-in-out;
         border: none;
         margin: 0;
-        display: flex;
-        align-items: center;
     }
     [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label div[data-testid="stMarkdownContainer"] {
         margin-left: 0px !important;
-        width: 100%;
     }
     [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label p {
-        font-size: 16px !important; 
+        font-size: 15px;
         font-weight: 600;
         color: #475569; 
         margin: 0;
@@ -340,7 +334,7 @@ def analisis_sentimen_opensource(teks):
 # MENU NAVIGASI (SIDEBAR)
 # ─────────────────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.markdown("### 🧭 Menu Navigasi")
+    st.markdown("### 🧭 JAKARTA INSIGHT HUB")
     
     menu_selection = st.radio(
         "Pilih Modul Aplikasi:",
@@ -348,9 +342,9 @@ with st.sidebar:
             "📤 DATA ENTRY",
             "📈 ANALYTICS",
             "📊 DASHBOARD",
-            "🤖 AI ASSISTANT",
-            "🚨 EARLY WARNING",
             "📑 REPORT & KATALOG",
+            "🤖  AI ASSISTANT",
+            "🚨 SENTIMENT ANALYSIS",
             "⚙️ PENGATURAN"
         ]
     )
@@ -1404,7 +1398,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
                             - PIC KI yang bertugas: {teks_pic_ki}.
                             
                             Pedoman Penulisan:
-                            1. Paragraf 1: Analisis capaian skor keseluruhan, kepatuhan terhadap standar TMP (4.50), and efektivitas koordinasi dengan PIC KI.
+                            1. Paragraf 1: Analisis capaian skor keseluruhan, kepatuhan terhadap standar TMP (4.50), dan efektivitas koordinasi dengan PIC KI.
                             2. Paragraf 2: Sorotan area kritis Kuadran 1 yang memerlukan intervensi prioritas beserta ringkasan suara pelanggan (komentar masukan).
                             3. Gunakan Bahasa Indonesia baku korporat PLN, lugas, preskriptif, tanpa format markdown bintang tebal berlebih.
                             """
@@ -1833,7 +1827,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
             st.error(f"Gagal memuat Master Data Laporan: {e}")
 
     # ─────────────────────────────────────────────────────────────────────────
-    # --- SUB TAB 3: KATALOG INSTRUKTUR (FIXED URL LOADER) ---
+    # --- SUB TAB 3: KATALOG INSTRUKTUR ---
     # ─────────────────────────────────────────────────────────────────────────
     with sub_katalog:
         st.markdown("### 👨‍🏫 Katalog & Rapor Instruktur Terbobot")
