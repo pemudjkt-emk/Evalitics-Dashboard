@@ -25,7 +25,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# KODE PERBAIKAN UI/UX (GABUNGAN SIDEBAR LAMA + TAB, SELECTBOX, BUTTON BARU)
+# KODE PERBAIKAN UI/UX SIDEBAR (GABUNGAN PLAN A & PLAN B RATA KIRI PENUH)
 custom_css = """
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 <style>
@@ -51,13 +51,6 @@ custom_css = """
 [data-testid="stSidebar"] button[kind="secondary"] p { color: white !important; }
 [data-testid="stSidebar"] button[kind="secondary"]:hover { transform: scale(1.02); box-shadow: 0px 6px 15px rgba(23, 162, 184, 0.4); border-color: transparent; color: white !important; }
 [data-testid="stSidebar"] hr { margin-top: 30px; border-top: 1px solid #cbd5e1; }
-.stTabs [data-baseweb="tab-list"] button p { font-size: 26px !important; font-weight: 800 !important; }
-.stSelectbox div[data-baseweb="select"] { font-size: 22px !important; min-height: 48px !important; }
-.stSelectbox div[data-baseweb="select"] span { font-size: 22px !important; }
-ul[data-baseweb="menu"] li { font-size: 20px !important; }
-button[kind="primary"] { background: linear-gradient(90deg, #17a2b8 0%, #20c997 100%) !important; color: white !important; border: none !important; border-radius: 30px !important; padding: 12px 24px !important; font-weight: bold !important; box-shadow: 0px 4px 12px rgba(23, 162, 184, 0.3) !important; transition: all 0.3s ease !important; }
-button[kind="primary"] div, button[kind="primary"] p { color: white !important; font-size: 18px !important; }
-button[kind="primary"]:hover { transform: scale(1.02) !important; box-shadow: 0px 6px 15px rgba(23, 162, 184, 0.4) !important; color: white !important; }
 </style>
 """
 st.markdown(custom_css, unsafe_allow_html=True)
@@ -1345,7 +1338,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                 - PIC KI yang bertugas: {teks_pic_ki}.
                                 
                                 Pedoman Penulisan:
-                                1. Paragraf 1: Analisis capaian skor keseluruhan, kepatuhan terhadap standar TMP (4.50), and efektivitas koordinasi dengan PIC KI.
+                                1. Paragraf 1: Analisis capaian skor keseluruhan, kepatuhan terhadap standar TMP (4.50), dan efektivitas koordinasi dengan PIC KI.
                                 2. Paragraf 2: Sorotan area kritis Kuadran 1 yang memerlukan intervensi prioritas beserta ringkasan suara pelanggan (komentar masukan).
                                 3. Gunakan Bahasa Indonesia baku korporat PLN, lugas, preskriptif, tanpa format markdown bintang tebal berlebih.
                                 """
@@ -1466,7 +1459,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
     # ─────────────────────────────────────────────────────────────────────────
     with sub_lap_pembelajaran:
         st.markdown("### 📄 Generator Laporan Pembelajaran Per Kelas")
-        st.write("Menyusun laporan pelaksanaan pembelajaran secara spesifik per kelas dari Master Data Laporan, mencakup realisasi peserta, biaya, dan evaluasi)
+        st.write("Menyusun laporan pelaksanaan spesifik per kelas dari Master Data Laporan, mencakup realisasi peserta, biaya, evaluasi, dan komentar berstandar *Consulting Style*.")
         
         try:
             url_master = "https://docs.google.com/spreadsheets/d/" + str(sheet_id) + "/gviz/tq?tqx=out:csv&sheet=Master_Data_Laporan"
