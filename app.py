@@ -1466,7 +1466,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
     # ─────────────────────────────────────────────────────────────────────────
     with sub_lap_pembelajaran:
         st.markdown("### 📄 Generator Laporan Pembelajaran Per Kelas")
-        st.write("Menyusun laporan pelaksanaan pembelajaran secara spesifik per kelas dari Master Data Laporan, mencakup realisasi peserta, biaya, dan evaluasi.)
+        st.write("Menyusun laporan pelaksanaan pembelajaran secara spesifik per kelas dari Master Data Laporan, mencakup realisasi peserta, biaya, dan evaluasi)
         
         try:
             url_master = "https://docs.google.com/spreadsheets/d/" + str(sheet_id) + "/gviz/tq?tqx=out:csv&sheet=Master_Data_Laporan"
