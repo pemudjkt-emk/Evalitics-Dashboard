@@ -25,120 +25,35 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-st.markdown("""
+# KODE PERBAIKAN UI/UX SIDEBAR (GABUNGAN PLAN A & PLAN B RATA KIRI PENUH)
+custom_css = """
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 <style>
-[data-testid="stFileUploader"] {
-background: #ffffff;
-border: 2px dashed #17a2b8;
-border-radius: 12px;
-padding: 20px;
-}
-[data-testid="stSidebar"] {
-background-color: #f1f5f9 !important;
-}
-[data-testid="stSidebar"] [data-testid="stRadio"] > div {
-gap: 8px; 
-}
-[data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label > div:first-child {
-display: none !important;
-}
-[data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label {
-background-color: transparent; 
-border-radius: 30px;
-padding: 12px 18px;
-cursor: pointer;
-transition: all 0.3s ease-in-out;
-border: none;
-margin: 0;
-width: 100%;
-box-sizing: border-box;
-display: block;
-}
-[data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label div[data-testid="stMarkdownContainer"] {
-margin-left: 0px !important;
-}
-[data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label p {
-font-size: 15px;
-font-weight: 600;
-color: #475569; 
-margin: 0;
-}
-[data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label:hover {
-background-color: #e2e8f0;
-transform: translateY(-1px);
-}
-[data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label:has(input:checked) {
-background: linear-gradient(90deg, #17a2b8 0%, #20c997 100%); 
-box-shadow: 0px 4px 12px rgba(23, 162, 184, 0.3);
-border-radius: 30px;
-}
-[data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label:has(input:checked) p {
-color: #FFFFFF !important;
-font-weight: 700;
-letter-spacing: 0.5px;
-}
-[data-testid="stSidebar"] button[kind="secondary"] {
-background: linear-gradient(90deg, #17a2b8 0%, #20c997 100%);
-color: white !important;
-border: none;
-border-radius: 30px;
-padding: 12px;
-font-weight: bold;
-box-shadow: 0px 4px 12px rgba(23, 162, 184, 0.3);
-transition: all 0.3s ease;
-margin-top: 20px;
-}
+[data-testid="stFileUploader"] { background: #ffffff; border: 2px dashed #17a2b8; border-radius: 12px; padding: 20px; }
+[data-testid="stSidebar"] { background-color: #f1f5f9 !important; }
+[data-testid="stSidebar"] [data-testid="stRadio"] > div { gap: 12px; }
+[data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] > div:first-child,
+[data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label > div:first-child { display: none !important; }
+[data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"],
+[data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label { background-color: #FFFFFF; border-radius: 10px; padding: 12px 15px; cursor: pointer; transition: all 0.3s ease-in-out; box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.05); border: none; margin: 0; width: 100%; box-sizing: border-box; display: block; }
+[data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] div[data-testid="stMarkdownContainer"],
+[data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label div[data-testid="stMarkdownContainer"] { margin-left: 0px !important; }
+[data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] p,
+[data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label p { font-size: 15px; font-weight: 500; color: #475569; margin: 0; }
+[data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"]:hover,
+[data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label:hover { background-color: #F8FAFC; transform: translateY(-2px); box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.08); }
+[data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"]:has(input:checked),
+[data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label:has(input:checked) { background: linear-gradient(90deg, #17a2b8 0%, #20c997 100%); box-shadow: 0px 4px 12px rgba(23, 162, 184, 0.3); border-left: 6px solid #0f766e; border-radius: 10px; }
+[data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"]:has(input:checked) p,
+[data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label:has(input:checked) p { color: #FFFFFF !important; font-weight: 600; }
+[data-testid="stSidebar"] button[kind="secondary"] { background: linear-gradient(90deg, #17a2b8 0%, #20c997 100%); color: white !important; border: none; border-radius: 20px; padding: 12px; font-weight: bold; box-shadow: 0px 4px 12px rgba(23, 162, 184, 0.3); transition: all 0.3s ease; margin-top: 20px; }
 [data-testid="stSidebar"] button[kind="secondary"] div,
-[data-testid="stSidebar"] button[kind="secondary"] p {
-color: white !important;
-}
-[data-testid="stSidebar"] button[kind="secondary"]:hover {
-transform: scale(1.02);
-box-shadow: 0px 6px 15px rgba(23, 162, 184, 0.4);
-border-color: transparent;
-color: white !important;
-}
-[data-testid="stSidebar"] hr {
-margin-top: 30px;
-border-top: 1px solid #cbd5e1;
-}
-.stTabs [data-baseweb="tab-list"] button p {
-font-size: 26px !important;
-font-weight: 800 !important;
-}
-.stSelectbox div[data-baseweb="select"] {
-font-size: 22px !important;
-min-height: 48px !important;
-}
-.stSelectbox div[data-baseweb="select"] span {
-font-size: 22px !important;
-}
-ul[data-baseweb="menu"] li {
-font-size: 20px !important;
-}
-button[kind="primary"] {
-background: linear-gradient(90deg, #17a2b8 0%, #20c997 100%) !important;
-color: white !important;
-border: none !important;
-border-radius: 30px !important;
-padding: 12px 24px !important;
-font-weight: bold !important;
-box-shadow: 0px 4px 12px rgba(23, 162, 184, 0.3) !important;
-transition: all 0.3s ease !important;
-}
-button[kind="primary"] div,
-button[kind="primary"] p {
-color: white !important;
-font-size: 18px !important;
-}
-button[kind="primary"]:hover {
-transform: scale(1.02) !important;
-box-shadow: 0px 6px 15px rgba(23, 162, 184, 0.4) !important;
-color: white !important;
-}
+[data-testid="stSidebar"] button[kind="secondary"] p { color: white !important; }
+[data-testid="stSidebar"] button[kind="secondary"]:hover { transform: scale(1.02); box-shadow: 0px 6px 15px rgba(23, 162, 184, 0.4); border-color: transparent; color: white !important; }
+[data-testid="stSidebar"] hr { margin-top: 30px; border-top: 1px solid #cbd5e1; }
 </style>
-""", unsafe_allow_html=True)
+"""
+st.markdown(custom_css, unsafe_allow_html=True)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # HEADER (TETAP DI KONTEN UTAMA AGAR EKSKLUSIF)
@@ -301,6 +216,21 @@ def get_sheet_max_no(sheet):
     except:
         return 0
 
+def format_tanggal_indo(tgl_input):
+    """Mengubah format timestamp/tanggal menjadi format 15 April 2026"""
+    if pd.isna(tgl_input) or str(tgl_input).strip() in ["", "-", "NOTGL", "NaT"]:
+        return "-"
+    try:
+        if not isinstance(tgl_input, datetime):
+            tgl_input = pd.to_datetime(str(tgl_input).split(" ")[0])
+            
+        hari = tgl_input.day
+        bulan = BULAN_MAP_ID.get(tgl_input.month, "")
+        tahun = tgl_input.year
+        return f"{hari} {bulan} {tahun}"
+    except Exception:
+        return str(tgl_input)
+
 # ─────────────────────────────────────────────────────────────────────────────
 # SESSION STATE defaults
 # ─────────────────────────────────────────────────────────────────────────────
@@ -371,7 +301,7 @@ def analisis_sentimen_opensource(teks):
 # MENU NAVIGASI (SIDEBAR)
 # ─────────────────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.markdown("### 🧭 Menu Navigasi")
+    st.markdown("### 🧭 JAKARTA INSIGHT HUB")
     
     menu_selection = st.radio(
         "Pilih Modul Aplikasi:",
@@ -379,9 +309,9 @@ with st.sidebar:
             "📤 DATA ENTRY",
             "📈 ANALYTICS",
             "📊 DASHBOARD",
+            "📑 REPORT & KATALOG",
             "🤖 AI ASSISTANT",
             "🚨 EARLY WARNING",
-            "📑 REPORT & KATALOG",
             "⚙️ PENGATURAN"
         ]
     )
@@ -849,7 +779,6 @@ elif menu_selection == "📤 DATA ENTRY":
                         is_instruktur = ('Nama' in df_raw.columns and 'Kode Diklat' in df_raw.columns and 'Confidence Level' not in df_raw.columns)
                         is_l1 = ('Ins-Eng-1 of 2' in df_raw.columns and not is_instruktur)
 
-                        # --- JALUR L1 ---
                         if is_l1:
                             detect_and_show_column_mismatch(df_raw, INS_COL_NAMES, f.name, "INS")
                             detect_and_show_column_mismatch(df_raw, MAT_COL_NAMES, f.name, "MAT")
@@ -879,7 +808,6 @@ elif menu_selection == "📤 DATA ENTRY":
                             file_log.append({"File":f.name,"Tipe":"🔵 Evaluasi L1","Baris":len(df_raw)})
                             st.session_state.riwayat_upload.append({"nama":f.name,"waktu":datetime.now().strftime("%d/%m/%Y %H:%M"),"tipe":"L1","baris":len(df_raw)})
 
-                        # --- JALUR SMILE ---
                         elif is_smile:
                             df_smile = df_raw.copy()
                             rename_map = {}
@@ -896,7 +824,6 @@ elif menu_selection == "📤 DATA ENTRY":
                             file_log.append({"File":f.name,"Tipe":"🟣 SMILE","Baris":len(df_raw)})
                             st.session_state.riwayat_upload.append({"nama":f.name,"waktu":datetime.now().strftime("%d/%m/%Y %H:%M"),"tipe":"SMILE","baris":len(df_raw)})
 
-                        # --- JALUR L2 ---
                         elif is_l2:
                             df_mapped = pd.DataFrame(index=df_raw.index, columns=TARGET_COLUMNS)
                             df_mapped['Kode Pembelajaran']       = df_raw.get('Kode Judul', df_raw.get('Kode Pembelajaran'))
@@ -919,7 +846,6 @@ elif menu_selection == "📤 DATA ENTRY":
                             file_log.append({"File":f.name,"Tipe":"🟢 L2 HXMS","Baris":len(df_raw)})
                             st.session_state.riwayat_upload.append({"nama":f.name,"waktu":datetime.now().strftime("%d/%m/%Y %H:%M"),"tipe":"L2","baris":len(df_raw)})
 
-                        # --- JALUR INSTRUKTUR ---
                         elif is_instruktur:
                             df_raw = df_raw[~df_raw['Nama'].astype(str).str.strip().str.upper().isin(['UPDL JAKARTA','JAKARTA'])].reset_index(drop=True)
                             df_ins = build_instruktur_df(df_raw) 
@@ -1212,7 +1138,7 @@ elif menu_selection == "🚨 EARLY WARNING":
     except Exception as e: st.error(f"❌ Gagal memuat data dari Sheet 'Detail Komentar L1'. Detail error: {e}")
 
 # ══════════════════════════════════════════════════════════════════════════════
-# KONTEN: 📑 REPORT & KATALOG (UPDATED - FULL DATA PIPELINE & AI FIX)
+# KONTEN: 📑 REPORT & KATALOG
 # ══════════════════════════════════════════════════════════════════════════════
 elif menu_selection == "📑 REPORT & KATALOG":
     sub_rep_generator, sub_lap_pembelajaran, sub_katalog = st.tabs(["📑 Report Generator", "📄 Laporan Pembelajaran", "👨‍🏫 Katalog Instruktur"])
@@ -1537,9 +1463,6 @@ elif menu_selection == "📑 REPORT & KATALOG":
         
         try:
             url_master = "https://docs.google.com/spreadsheets/d/" + str(sheet_id) + "/gviz/tq?tqx=out:csv&sheet=Master_Data_Laporan"
-            import urllib.request
-            import io
-            
             req_master = urllib.request.Request(url_master, headers={'User-Agent': 'Mozilla/5.0'})
             with urllib.request.urlopen(req_master) as response:
                 df_master = pd.read_csv(io.BytesIO(response.read()))
@@ -1547,33 +1470,48 @@ elif menu_selection == "📑 REPORT & KATALOG":
             df_master.columns = df_master.columns.astype(str).str.strip()
             
             if 'Judul Pembelajaran' in df_master.columns:
-                list_judul = df_master['Judul Pembelajaran'].dropna().astype(str).str.strip().unique().tolist()
+                df_master['Opsi_Dropdown'] = df_master.apply(
+                    lambda x: f"{str(x.get('Judul Pembelajaran', '-')).strip()} ({format_tanggal_indo(x.get('Tgl Mulai'))} s.d {format_tanggal_indo(x.get('Tgl Selesai'))})", 
+                    axis=1
+                )
+                list_opsi = df_master['Opsi_Dropdown'].dropna().unique().tolist()
                 
-                if list_judul:
+                if list_opsi:
                     with st.container(border=True):
                         col_j1, col_j2 = st.columns([2, 1])
                         with col_j1:
-                            judul_pilih = st.selectbox("📚 Pilih Judul Pembelajaran:", list_judul, key="judul_report_pembelajaran")
+                            opsi_pilih = st.selectbox("📚 Pilih Judul Pembelajaran:", list_opsi, key="judul_report_pembelajaran")
                         with col_j2:
                             st.markdown("<br>", unsafe_allow_html=True)
                             btn_gen_kelas = st.button("🚀 Generate Laporan Kelas", type="primary", use_container_width=True)
                     
                     if btn_gen_kelas:
-                        with st.spinner(f"Mengekstrak data pelaksanaan {judul_pilih}..."):
-                            df_kelas = df_master[df_master['Judul Pembelajaran'].astype(str).str.strip() == judul_pilih].iloc[0]
+                        with st.spinner("Mengekstrak data pelaksanaan kelas..."):
+                            df_kelas = df_master[df_master['Opsi_Dropdown'] == opsi_pilih].iloc[0]
+                            judul_pilih = df_kelas.get('Judul Pembelajaran', '-')
                             
                             kode_pemb = df_kelas.get('Kode Pembelajaran', '-')
                             no_surat = df_kelas.get('No Surat Penugasan', '-')
-                            tgl_surat = df_kelas.get('Tanggal Surat Penugasan', '-')
                             no_surat_panggil = df_kelas.get('Nomor Surat Pemanggilan Peserta', '-')
                             if pd.isna(no_surat_panggil) or str(no_surat_panggil).strip() == "": no_surat_panggil = "-"
 
+                            tgl_surat_format = format_tanggal_indo(df_kelas.get('Tanggal Surat Penugasan'))
+                            tgl_mulai_format = format_tanggal_indo(df_kelas.get('Tgl Mulai'))
+                            tgl_selesai_format = format_tanggal_indo(df_kelas.get('Tgl Selesai'))
+
                             kode_sr_raw = df_kelas.get('Kode Service Request', '')
-                            if pd.isna(kode_sr_raw): kode_sr_raw = ""
                             jenis_prog = df_kelas.get('Jenis Program', '')
-                            if pd.isna(jenis_prog): jenis_prog = ""
-                            kode_sr = f"{kode_sr_raw} - {jenis_prog}".strip(" -")
-                            if not kode_sr: kode_sr = "-"
+                            kode_sr_raw = "" if pd.isna(kode_sr_raw) else str(kode_sr_raw).strip()
+                            jenis_prog = "" if pd.isna(jenis_prog) else str(jenis_prog).strip()
+                            
+                            if jenis_prog and kode_sr_raw:
+                                dasar_pelaksanaan_teks = f"{jenis_prog} - {kode_sr_raw}"
+                            elif jenis_prog:
+                                dasar_pelaksanaan_teks = jenis_prog
+                            elif kode_sr_raw:
+                                dasar_pelaksanaan_teks = kode_sr_raw
+                            else:
+                                dasar_pelaksanaan_teks = "-"
                             
                             rencana_peserta = df_kelas.get('Rencana Jumlah Peserta', 0)
                             if pd.isna(rencana_peserta): rencana_peserta = 0
@@ -1602,9 +1540,6 @@ elif menu_selection == "📑 REPORT & KATALOG":
                             if pd.isna(isi_l1): isi_l1 = 0
                             pct_isi = f_pct_str(df_kelas.get('% Pengisian L1', '-'))
                             
-                            tgl_mulai = df_kelas.get('Tgl Mulai', '-')
-                            tgl_selesai = df_kelas.get('Tgl Selesai', '-')
-                            
                             instruktur = df_kelas.get('Instruktur/ Fasilitator', '-')
                             if pd.isna(instruktur) or str(instruktur).strip() == "": instruktur = "[ Ketik Nama Instruktur Disini ]"
                             
@@ -1618,8 +1553,8 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                 "BL": "Blended Learning (BL)",
                                 "HL": "Hybrid Learning (HL)"
                             }
-                            metode_raw = str(df_kelas.get('Strategi Pelaksanaan', '-')).strip()
-                            metode = dict_metode.get(metode_raw.upper(), metode_raw)
+                            metode_raw = str(df_kelas.get('Strategi Pelaksanaan', '-')).strip().upper()
+                            metode = dict_metode.get(metode_raw, metode_raw)
                             
                             def format_rp(val):
                                 try: return f"Rp {int(float(val)):,}".replace(',', '.')
@@ -1638,6 +1573,26 @@ elif menu_selection == "📑 REPORT & KATALOG":
                             skor_sp_on = f_skor(df_kelas.get('RATA DS', 0))
                             skor_tot = f_skor(df_kelas.get('RATA-RATA KESELURUHAN', 0))
                             
+                            show_offline = metode_raw in ['ICT', 'BL', 'HL']
+                            show_online = metode_raw in ['DL', 'SL', 'BL', 'HL']
+                            
+                            sarpras_html = ""
+                            no_urut_tabel = 3
+                            
+                            if show_offline:
+                                sarpras_html += f"""
+                                <tr><td style="text-align:center;">{no_urut_tabel}</td><td>Sarana Prasarana Offline (In-Class)</td><td style="text-align:center; font-weight:bold;">{skor_sp_off}</td></tr>
+                                """
+                                no_urut_tabel += 1
+                                
+                            if show_online:
+                                sarpras_html += f"""
+                                <tr><td style="text-align:center;">{no_urut_tabel}</td><td>Sarana Prasarana Online (Digital)</td><td style="text-align:center; font-weight:bold;">{skor_sp_on}</td></tr>
+                                """
+                                no_urut_tabel += 1
+                                
+                            no_urut_total = no_urut_tabel
+                            
                             pos_html, neg_html = "-", "-"
                             jml_pos_kelas, jml_neg_kelas = 0, 0
                             try:
@@ -1647,6 +1602,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                     df_k_raw = pd.read_csv(io.BytesIO(res_k.read()))
                                 
                                 df_k_raw.columns = df_k_raw.columns.astype(str).str.strip()
+                                
                                 col_judul_k = df_k_raw.columns[4] if len(df_k_raw.columns) > 4 else 'Judul Diklat'
                                 col_teks_k  = df_k_raw.columns[10] if len(df_k_raw.columns) > 10 else 'Komentar'
                                 col_jenis_k = df_k_raw.columns[13] if len(df_k_raw.columns) > 13 else 'Jenis'
@@ -1737,13 +1693,15 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                 
                                 <!-- CONTENT PAGE -->
                                 <div style="padding: 20px 40px;">
-                                    <p><b>Executive Summary:</b><br>{narasi_eksekutif_kelas}</p>
+                                    
+                                    <h4 style="text-align: center; color:#0055A4; border-bottom: none; margin-bottom: 5px;">EXECUTIVE SUMMARY</h4>
+                                    <p style="text-align: justify; margin-top: 0;">{narasi_eksekutif_kelas}</p>
                                     
                                     <h4>1. DASAR PELAKSANAAN</h4>
                                     <p>Pembelajaran ini dilaksanakan berdasarkan penugasan Pusdiklat melalui :</p>
                                     <ul>
-                                        <li>Surat Penugasan No. <b>{no_surat}</b> pada tanggal <b>{tgl_surat}</b></li>
-                                        <li>Service Request (SR): <b>{kode_sr}</b></li>
+                                        <li>Surat Penugasan No. <b>{no_surat}</b> pada tanggal <b>{tgl_surat_format}</b></li>
+                                        <li>Dasar Penugasan: <b>{dasar_pelaksanaan_teks}</b></li>
                                         <li>Nomor Surat Pemanggilan Peserta: <b>{no_surat_panggil}</b></li>
                                     </ul>
                                     
@@ -1761,7 +1719,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                     <h4>3. WAKTU, METODE DAN TEMPAT PEMBELAJARAN</h4>
                                     <p>Adapun pembelajaran <b>{judul_pilih}</b> dilaksanakan dengan rincian:</p>
                                     <ul>
-                                        <li><b>Tanggal:</b> {tgl_mulai} s.d {tgl_selesai}</li>
+                                        <li><b>Tanggal:</b> {tgl_mulai_format} s.d {tgl_selesai_format}</li>
                                         <li><b>Waktu:</b> 08.00 - 16.00 WIB</li>
                                         <li><b>Metode:</b> {metode}</li>
                                         <li><b>Tempat:</b> {tempat}</li>
@@ -1785,9 +1743,8 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                         <tr><th style="width: 10%; text-align:center;">No</th><th style="width: 60%;">Indikator Kepuasan</th><th style="width: 30%; text-align:center;">Skor (1-5)</th></tr>
                                         <tr><td style="text-align:center;">1</td><td>Materi</td><td style="text-align:center; font-weight:bold;">{skor_mat}</td></tr>
                                         <tr><td style="text-align:center;">2</td><td>Instruktur</td><td style="text-align:center; font-weight:bold;">{skor_ins}</td></tr>
-                                        <tr><td style="text-align:center;">3</td><td>Sarana Prasarana Offline (In-Class)</td><td style="text-align:center; font-weight:bold;">{skor_sp_off}</td></tr>
-                                        <tr><td style="text-align:center;">4</td><td>Sarana Prasarana Online (Digital)</td><td style="text-align:center; font-weight:bold;">{skor_sp_on}</td></tr>
-                                        <tr style="background-color: #f1f5f9;"><td style="text-align:center; font-weight:bold; color:#003366;">5</td><td style="font-weight:bold; color:#003366;">Rata-Rata Keseluruhan</td><td style="text-align:center; font-weight:bold; color:#003366; font-size:12pt;">{skor_tot}</td></tr>
+                                        {sarpras_html}
+                                        <tr style="background-color: #f1f5f9;"><td style="text-align:center; font-weight:bold; color:#003366;">{no_urut_total}</td><td style="font-weight:bold; color:#003366;">Rata-Rata Keseluruhan</td><td style="text-align:center; font-weight:bold; color:#003366; font-size:12pt;">{skor_tot}</td></tr>
                                     </table>
 
                                     <h4>6. CUSTOMER VOICE</h4>
@@ -1851,14 +1808,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
         url_ins_katalog = f'https://docs.google.com/spreadsheets/d/{sheet_id_ins}/gviz/tq?tqx=out:csv&sheet=Detail%20Instruktur'
         
         try:
-            import urllib.request
-            import io
-            
-            req = urllib.request.Request(url_ins_katalog, headers={'User-Agent': 'Mozilla/5.0'})
-            with urllib.request.urlopen(req) as response:
-                csv_bytes = response.read()
-            df_katalog_raw = pd.read_csv(io.BytesIO(csv_bytes))
-
+            df_katalog_raw = pd.read_csv(url_ins_katalog)
             df_katalog_raw.columns = df_katalog_raw.columns.astype(str).str.strip()
             
             if not df_katalog_raw.empty:
