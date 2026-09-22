@@ -1469,13 +1469,9 @@ elif menu_selection == "📑 REPORT & KATALOG":
         st.write("Menyusun draf laporan evaluasi spesifik per judul pembelajaran/kelas.")
         
         try:
-            # ⬇️ PERBAIKAN: ISOLASI SUMBER DATA KHUSUS LAPORAN PEMBELAJARAN ⬇️
             sheet_id_laporan = '1By4lZLCgYJOKs7IuY-6n-Dbp7USceB4zoxrlDh4a1CM'
-            
-            # Penggabungan string aman dari jebakan Auto-Markdown
             url_master = "https://docs.google.com/spreadsheets/d/" + sheet_id_laporan + "/gviz/tq?tqx=out:csv&sheet=Implementation"
             
-            # Menggunakan urllib agar stabil dan tidak error [Errno 2]
             import urllib.request
             import io
             
@@ -1488,7 +1484,8 @@ elif menu_selection == "📑 REPORT & KATALOG":
             
             if 'Judul Pembelajaran' in df_master.columns:
                 df_master['Opsi_Dropdown'] = df_master.apply(
-                    lambda x: f"{str(x.get('Judul Pembelajaran', '-')).strip()} ({format_tanggal_indo(x.get('Tgl Mulai'))} s.d {format_tanggal_indo(x.get('Tgl Selesai'))})", 
+                    # 1. PERBAIKAN: Menampilkan 'Tgl Akhir' di nama dropdown
+                    lambda x: f"{str(x.get('Judul Pembelajaran', '-')).strip()} ({format_tanggal_indo(x.get('Tgl Mulai'))} s.d {format_tanggal_indo(x.get('Tgl Akhir', x.get('Tgl Selesai')))})", 
                     axis=1
                 )
                 list_opsi = df_master['Opsi_Dropdown'].dropna().unique().tolist()
@@ -1514,7 +1511,9 @@ elif menu_selection == "📑 REPORT & KATALOG":
 
                             tgl_surat_format = format_tanggal_indo(df_kelas.get('Tanggal Surat Penugasan'))
                             tgl_mulai_format = format_tanggal_indo(df_kelas.get('Tgl Mulai'))
-                            tgl_selesai_format = format_tanggal_indo(df_kelas.get('Tgl Selesai'))
+                            
+                            # 1. PERBAIKAN: Tanggal Selesai ditarik dari kolom 'Tgl Akhir'
+                            tgl_selesai_format = format_tanggal_indo(df_kelas.get('Tgl Akhir', '-'))
 
                             kode_sr_raw = df_kelas.get('Kode Service Request', '')
                             jenis_prog = df_kelas.get('Jenis Program', '')
@@ -1577,6 +1576,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                 try: return f"Rp {int(float(val)):,}".replace(',', '.')
                                 except: return "Rp 0"
                                     
+                            # 2. PERBAIKAN: Menarik Biaya langsung dari kolom target
                             rab = format_rp(df_kelas.get('RAB Pelaksanaan', 0))
                             realisasi = format_rp(df_kelas.get('Realisasi Biaya Pelaksanaan', 0))
                             
@@ -1584,6 +1584,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                 try: return f"{float(v):.2f}"
                                 except: return "-"
                                 
+                            # 3. PERBAIKAN: Memastikan ditarik dari RATA MAT, RATA INST, RATA SP, RATA DS
                             skor_mat = f_skor(df_kelas.get('RATA MAT', 0))
                             skor_ins = f_skor(df_kelas.get('RATA INST', 0))
                             skor_sp_off = f_skor(df_kelas.get('RATA SP', 0))
@@ -1610,40 +1611,25 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                 
                             no_urut_total = no_urut_tabel
                             
+                            # 4. PERBAIKAN: Customer Voice ditarik langsung dari sheet Implementation
                             pos_html, neg_html = "-", "-"
                             jml_pos_kelas, jml_neg_kelas = 0, 0
+                            
                             try:
-                                url_k = "https://docs.google.com/spreadsheets/d/" + str(sheet_id) + "/gviz/tq?tqx=out:csv&sheet=Detail%20Komentar%20L1"
-                                req_k = urllib.request.Request(url_k, headers={'User-Agent': 'Mozilla/5.0'})
-                                with urllib.request.urlopen(req_k) as res_k:
-                                    df_k_raw = pd.read_csv(io.BytesIO(res_k.read()))
+                                apresi_raw = str(df_kelas.get('KOMENTAR APRESIASI', '')).strip()
+                                masuk_raw = str(df_kelas.get('KOMENTAR MASUKAN', '')).strip()
                                 
-                                df_k_raw.columns = df_k_raw.columns.astype(str).str.strip()
+                                pos_texts = [t.strip() for t in apresi_raw.split('\n') if t.strip() and t.lower() not in ['nan', 'none', '-']]
+                                neg_texts = [t.strip() for t in masuk_raw.split('\n') if t.strip() and t.lower() not in ['nan', 'none', '-']]
                                 
-                                col_judul_k = df_k_raw.columns[4] if len(df_k_raw.columns) > 4 else 'Judul Diklat'
-                                col_teks_k  = df_k_raw.columns[10] if len(df_k_raw.columns) > 10 else 'Komentar'
-                                col_jenis_k = df_k_raw.columns[13] if len(df_k_raw.columns) > 13 else 'Jenis'
+                                jml_pos_kelas = len(pos_texts)
+                                jml_neg_kelas = len(neg_texts)
                                 
-                                df_k_bln = df_k_raw[df_k_raw[col_judul_k].astype(str).str.strip().str.lower() == str(judul_pilih).strip().lower()].copy()
-                                
-                                if not df_k_bln.empty:
-                                    def tentukan_kategori_komentar(row):
-                                        val_n = str(row.get(col_jenis_k, '')).strip().lower()
-                                        if 'positif' in val_n or 'apresiasi' in val_n: return 'Positif'
-                                        elif 'negatif' in val_n or 'masukan' in val_n or 'keluhan' in val_n or 'saran' in val_n: return 'Negatif'
-                                        return analisis_sentimen_opensource(row.get(col_teks_k, ''))
-
-                                    df_k_bln['Sentimen'] = df_k_bln.apply(tentukan_kategori_komentar, axis=1)
-                                    pos_texts = df_k_bln[df_k_bln['Sentimen'] == 'Positif'][col_teks_k].dropna().tolist()
-                                    neg_texts = df_k_bln[df_k_bln['Sentimen'] == 'Negatif'][col_teks_k].dropna().tolist()
-                                    
-                                    jml_pos_kelas, jml_neg_kelas = len(pos_texts), len(neg_texts)
-                                    
-                                    pos_html = "<ul style='margin:0; padding-left:15px; color: #334155; line-height: 1.6;'>" + "".join([f"<li style='margin-bottom:6px;'>{t}</li>" for t in pos_texts]) + "</ul>" if pos_texts else "<span style='color:#94a3b8; font-style:italic;'>Nihil / Tidak ada catatan apresiasi.</span>"
-                                    neg_html = "<ul style='margin:0; padding-left:15px; color: #334155; line-height: 1.6;'>" + "".join([f"<li style='margin-bottom:6px;'>{t}</li>" for t in neg_texts]) + "</ul>" if neg_texts else "<span style='color:#94a3b8; font-style:italic;'>Nihil / Tidak ada catatan masukan.</span>"
+                                pos_html = "<ul style='margin:0; padding-left:15px; color: #334155; line-height: 1.6;'>" + "".join([f"<li style='margin-bottom:6px;'>{t}</li>" for t in pos_texts]) + "</ul>" if pos_texts else "<span style='color:#94a3b8; font-style:italic;'>Nihil / Tidak ada catatan apresiasi.</span>"
+                                neg_html = "<ul style='margin:0; padding-left:15px; color: #334155; line-height: 1.6;'>" + "".join([f"<li style='margin-bottom:6px;'>{t}</li>" for t in neg_texts]) + "</ul>" if neg_texts else "<span style='color:#94a3b8; font-style:italic;'>Nihil / Tidak ada catatan masukan.</span>"
                             except Exception as e_k:
-                                pos_html = f"Gagal memuat komentar: {e_k}"
-                                neg_html = f"Gagal memuat komentar: {e_k}"
+                                pos_html = f"<span style='color:#b71c1c; font-style:italic;'>Gagal memuat: {e_k}</span>"
+                                neg_html = f"<span style='color:#b71c1c; font-style:italic;'>Gagal memuat: {e_k}</span>"
 
                             narasi_eksekutif_kelas = ""
                             try:
