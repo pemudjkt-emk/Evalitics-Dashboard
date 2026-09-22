@@ -1013,6 +1013,9 @@ elif menu_selection == "📤 DATA ENTRY":
                             client = init_gsheets_connection()
                             gsheet_file = client.open(sheet_name_setting)
 
+                            # ---------------------------------------------------------
+                            # 1. PUSH MASTER DATA (SMILE + L1)
+                            # ---------------------------------------------------------
                             if has_smile_pipe:
                                 sht_master = gsheet_file.worksheet(ws_master_target)
                                 if not sht_master.row_values(1):
@@ -1024,6 +1027,9 @@ elif menu_selection == "📤 DATA ENTRY":
                                 sht_master.append_rows(rows_master, value_input_option='USER_ENTERED', table_range='A1')
                                 st.success(f"🟣 Berhasil mengirim {len(rows_master)} baris ke Tab **{ws_master_target}**")
 
+                            # ---------------------------------------------------------
+                            # 2. PUSH L1 TERTUTUP (L1 + L2)
+                            # ---------------------------------------------------------
                             if has_l1l2:
                                 sht_l1 = gsheet_file.worksheet(ws_l1_target)
                                 if not sht_l1.row_values(1):
@@ -1035,6 +1041,9 @@ elif menu_selection == "📤 DATA ENTRY":
                                 sht_l1.append_rows(rows_l1, value_input_option='USER_ENTERED', table_range='A1')
                                 st.success(f"🔵 Berhasil mengirim {len(rows_l1)} baris ke Tab **{ws_l1_target}**")
 
+                            # ---------------------------------------------------------
+                            # 3. PUSH DETAIL INSTRUKTUR
+                            # ---------------------------------------------------------
                             if has_ins:
                                 sht_ins = gsheet_file.worksheet(ws_ins_target)
                                 if not sht_ins.row_values(1):
@@ -1043,6 +1052,95 @@ elif menu_selection == "📤 DATA ENTRY":
                                 rows_ins = [clean_row_for_sheets(r) for r in df_ins_push.values.tolist()]
                                 sht_ins.append_rows(rows_ins, value_input_option='USER_ENTERED', table_range='A1')
                                 st.success(f"🟠 Berhasil mengirim {len(rows_ins)} baris ke Tab **{ws_ins_target}**")
+
+                            # ---------------------------------------------------------
+                            # 4. JALUR BARU: INJECT (SUNTIK) L1 KE SHEET IMPLEMENTATION
+                            # ---------------------------------------------------------
+                            if all_l1_dfs:
+                                try:
+                                    sheet_id_impl = '1By4lZLCgYJOKs7IuY-6n-Dbp7USceB4zoxrlDh4a1CM'
+                                    impl_file = client.open_by_key(sheet_id_impl)
+                                    sht_impl = impl_file.worksheet("Implementation")
+                                    
+                                    impl_values = sht_impl.get_all_values()
+                                    if len(impl_values) > 0:
+                                        headers_impl = [str(h).strip() for h in impl_values[0]]
+                                        
+                                        idx_kode = headers_impl.index('Kode Pembelajaran') if 'Kode Pembelajaran' in headers_impl else -1
+                                        idx_tgl = headers_impl.index('Tgl Mulai') if 'Tgl Mulai' in headers_impl else -1
+                                        
+                                        # Kamus pemetaan (Dari nama kolom Dataframe ke Nama Kolom Sheet Implementation)
+                                        col_mapping = {
+                                            'Laporan Bulan': 'Laporan Bulan',
+                                            'Tempat Pelaksanaan': 'Tempat Pelaksanaan',
+                                            'Peserta Isi L1': 'Peserta Isi L1',
+                                            '% Pengisian L1': '% Pengisian',  # Di L1 df namanya % Pengisian
+                                            '% Valid L1': '% Valid',          # Di L1 df namanya % Valid
+                                            'RATA INST': 'RATA INST',
+                                            'RATA MAT': 'RATA MAT',
+                                            'RATA SP': 'RATA SP',
+                                            'RATA DS': 'RATA DS',
+                                            'RATA-RATA KESELURUHAN': 'RATA-RATA KESELURUHAN'
+                                        }
+                                        
+                                        map_target_idx = {sheet_col: headers_impl.index(sheet_col) for sheet_col in col_mapping.keys() if sheet_col in headers_impl}
+                                        
+                                        if idx_kode != -1 and idx_tgl != -1:
+                                            cells_to_update = []
+                                            updated_rows_count = 0
+                                            
+                                            for _, row in df_l1_l2_push.iterrows():
+                                                # Kunci 1 & 2 dari L1
+                                                kode_l1 = str(row.get('Kode Pembelajaran', '')).strip().upper().replace(' ', '')
+                                                tgl_raw = row.get('Tanggal Mulai', '')
+                                                tgl_l1 = pd.to_datetime(tgl_raw, errors='coerce').strftime('%Y%m%d') if pd.notna(pd.to_datetime(tgl_raw, errors='coerce')) else 'NOTGL'
+                                                kode_unik_l1 = f"{kode_l1}.{tgl_l1}"
+                                                
+                                                for row_idx, impl_row in enumerate(impl_values):
+                                                    if row_idx == 0: continue
+                                                    
+                                                    # Cocokkan dengan Kunci di Implementation
+                                                    if len(impl_row) > max(idx_kode, idx_tgl):
+                                                        k_impl = str(impl_row[idx_kode]).strip().upper().replace(' ', '')
+                                                        t_raw = impl_row[idx_tgl]
+                                                        t_impl = pd.to_datetime(t_raw, errors='coerce').strftime('%Y%m%d') if pd.notna(pd.to_datetime(t_raw, errors='coerce')) else 'NOTGL'
+                                                        kode_unik_impl = f"{k_impl}.{t_impl}"
+                                                        
+                                                        if kode_unik_l1 == kode_unik_impl:
+                                                            row_sheet = row_idx + 1 # Gspread index basis 1
+                                                            
+                                                            for sheet_col, col_idx in map_target_idx.items():
+                                                                df_col_name = col_mapping[sheet_col]
+                                                                val_to_insert = row.get(df_col_name, "")
+                                                                
+                                                                if pd.isna(val_to_insert): 
+                                                                    val_to_insert = ""
+                                                                elif isinstance(val_to_insert, float):
+                                                                    if math.isnan(val_to_insert) or math.isinf(val_to_insert): 
+                                                                        val_to_insert = ""
+                                                                    elif val_to_insert == int(val_to_insert): 
+                                                                        val_to_insert = int(val_to_insert)
+                                                                    else: 
+                                                                        val_to_insert = round(val_to_insert, 4)
+                                                                elif isinstance(val_to_insert, pd.Timestamp):
+                                                                    val_to_insert = val_to_insert.strftime('%Y-%m-%d')
+                                                                    
+                                                                # Hanya timpa jika nilainya TIDAK KOSONG (Anti-Erase Data Eksisting)
+                                                                if val_to_insert != "":
+                                                                    cells_to_update.append(gspread.Cell(row=row_sheet, col=col_idx + 1, value=val_to_insert))
+                                                                    
+                                                            updated_rows_count += 1
+                                                            break # Pindah ke row L1 berikutnya agar tidak melooping sisa baris
+                                                            
+                                            if cells_to_update:
+                                                sht_impl.update_cells(cells_to_update, value_input_option='USER_ENTERED')
+                                                st.success(f"💉 Berhasil men-suntikkan (inject) data L1 ke **{updated_rows_count} baris** kelas di Sheet **Implementation**!")
+                                            else:
+                                                st.warning("⚠️ File L1 diproses, tapi tidak ada pasangan 'Kode & Tanggal' yang cocok di Sheet Implementation untuk disuntik.")
+                                        else:
+                                            st.warning("⚠️ Gagal Inject: Kolom 'Kode Pembelajaran' atau 'Tgl Mulai' tidak ditemukan di Sheet Implementation.")
+                                except Exception as e_impl:
+                                    st.error(f"❌ Gagal inject data evaluasi ke Sheet Implementation: {e_impl}")
 
                             st.balloons()
                         except Exception as e_push:
