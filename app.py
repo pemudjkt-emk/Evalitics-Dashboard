@@ -1482,7 +1482,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
             req_master = urllib.request.Request(url_master, headers={'User-Agent': 'Mozilla/5.0'})
             with urllib.request.urlopen(req_master) as response:
                 csv_bytes_master = response.read()
-            df = pd.read_csv(io.BytesIO(csv_bytes_master))
+            df_master = pd.read_csv(io.BytesIO(csv_bytes_master))
             
             df_master.columns = df_master.columns.astype(str).str.strip()
             
