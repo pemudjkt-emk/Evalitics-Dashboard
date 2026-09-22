@@ -1570,26 +1570,22 @@ elif menu_selection == "📑 REPORT & KATALOG":
                             metode_raw = str(df_kelas.get('Strategi Pelaksanaan', '-')).strip().upper()
                             metode = dict_metode.get(metode_raw, metode_raw)
                             
-                            # --- 1. DATA CLEANSER UNTUK NOMINAL BIAYA ---
                             def format_rp(val):
                                 if pd.isna(val) or str(val).strip() == "": return "Rp 0"
                                 try: 
                                     return f"Rp {int(float(val)):,}".replace(',', '.')
                                 except: 
-                                    # Jika error, bersihkan string dari Rp, spasi, dan atur pemisah
                                     v_str = str(val).upper().replace('RP', '').replace(' ', '')
-                                    v_str = v_str.replace('.', '').replace(',', '.') # Hapus titik, ubah koma jadi desimal
+                                    v_str = v_str.replace('.', '').replace(',', '.') 
                                     try: return f"Rp {int(float(v_str)):,}".replace(',', '.')
                                     except: return "Rp 0"
                                     
                             rab = format_rp(df_kelas.get('RAB Pelaksanaan', 0))
                             realisasi = format_rp(df_kelas.get('Realisasi Biaya Pelaksanaan', 0))
                             
-                            # --- 2. DATA CLEANSER UNTUK SKOR KEPUASAN ---
                             def f_skor(v):
                                 if pd.isna(v) or str(v).strip() == "": return "-"
                                 try: 
-                                    # Pastikan koma Indonesia diubah menjadi titik desimal standar
                                     return f"{float(str(v).replace(',', '.')):.2f}"
                                 except: 
                                     return "-"
@@ -1651,18 +1647,20 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                 - Kehadiran: {pct_hadir} ({hadir} dari {diundang} diundang)
                                 - Kelulusan: {pct_lulus} ({lulus} lulus)
                                 - Realisasi Biaya: {realisasi} (RAB: {rab})
-                                - Skor Kepuasan (Skala 1-5, Target 4.50): Keseluruhan {skor_tot}, Materi {skor_mat}, Instruktur {skor_ins}, Sarana Offline {skor_sp_off}, Sarana Digital {skor_sp_on}.
+                                - Skor Kepuasan (Skala 1-5, Target 4.50): Keseluruhan {skor_tot}, Materi {skor_mat}, Instruktur {skor_ins}.
                                 - Partisipasi Evaluasi: {pct_isi} ({int(isi_l1)} peserta)
                                 - Voice of Customer: {jml_pos_kelas} komentar apresiasi dan {jml_neg_kelas} masukan/keluhan.
                                 
-                                Tugas:
-                                Berikan analisis naratif yang tajam dan preskriptif mengenai efektivitas dan kesuksesan kelas ini. Berikan pula rekomendasi singkat untuk perbaikan batch selanjutnya berdasarkan metrik dan suara peserta (jika ada keluhan).
-                                Gunakan bahasa korporat baku PLN, lugas, preskriptif, dan tanpa format markdown tebal (* atau **) yang berlebihan.
+                                Tugas & Aturan Wajib:
+                                1. Berikan analisis naratif yang tajam mengenai efektivitas kelas ini.
+                                2. WAJIB SEBUTKAN secara eksplisit nilai Skor Kepuasan Rata-Rata Keseluruhan yaitu {skor_tot} di dalam paragraf ringkasan.
+                                3. Berikan rekomendasi singkat untuk perbaikan batch selanjutnya.
+                                4. Gunakan bahasa korporat baku PLN, tanpa format markdown tebal (* atau **) yang berlebihan.
                                 """
                                 ai_resp_kelas = model.generate_content(prompt_kelas)
                                 narasi_eksekutif_kelas = ai_resp_kelas.text.strip().replace('\n', '<br>')
                             except Exception as e_ai_kelas:
-                                narasi_eksekutif_kelas = f"Dokumen ini merangkum <i>post-implementation review</i> untuk pelaksanaan program <b>{judul_pilih}</b> ({kode_pemb}), menyajikan evaluasi metrik kehadiran ({pct_hadir}), efisiensi anggaran, dan tingkat kepuasan pelanggan (Skor: {skor_tot}) guna memastikan penyelarasan operasional dengan standar mutu <i>Service Excellence</i> UPDL Jakarta."
+                                narasi_eksekutif_kelas = f"Dokumen ini merangkum <i>post-implementation review</i> untuk pelaksanaan program <b>{judul_pilih}</b> ({kode_pemb}), menyajikan evaluasi metrik kehadiran ({pct_hadir}), efisiensi anggaran, dan tingkat kepuasan pelanggan dengan Skor Rata-rata Keseluruhan sebesar <b>{skor_tot}</b>, guna memastikan penyelarasan operasional dengan standar mutu <i>Service Excellence</i> UPDL Jakarta."
                                 
                             html_kelas = f"""
                             <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
@@ -1770,16 +1768,22 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                         </tr>
                                     </table>
 
-                                    <br><br><br>
-                                    <table style="width:100%; border: none;">
-                                        <tr>
-                                            <td style="width:50%; border: none;"></td>
-                                            <td style="width:50%; border: none; text-align:center;">
-                                                Mengetahui,<br><b>MANAGER UPDL JAKARTA</b><br><br><br><br><br>
-                                                <b>ZAKI YAMANI KERTAPATI</b>
-                                            </td>
-                                        </tr>
-                                    </table>
+                                    <!-- WRAPPER UNTUK MENCEGAH TERPISAH HALAMAN ANTARA NARASI PENUTUP DAN TANDA TANGAN -->
+                                    <div style="page-break-inside: avoid; break-inside: avoid;">
+                                        <p style="text-align: justify; margin-top: 30px; font-size: 11pt; color: #334155; line-height: 1.6;">
+                                            Demikian laporan kegiatan pembelajaran ini disusun dengan sebenar-benarnya sebagai bentuk pertanggungjawaban atas pelaksanaan program. Kami berharap hasil dan evaluasi dari kegiatan ini dapat memberikan kontribusi positif serta peningkatan kompetensi bagi seluruh peserta.
+                                        </p>
+                                        <br><br>
+                                        <table style="width:100%; border: none;">
+                                            <tr>
+                                                <td style="width:50%; border: none;"></td>
+                                                <td style="width:50%; border: none; text-align:center;">
+                                                    Mengetahui,<br><b>MANAGER UPDL JAKARTA</b><br><br><br><br><br>
+                                                    <b>ZAKI YAMANI KERTAPATI</b>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
 
                                     <h3 style="page-break-before: always; color:#003366; border-bottom: 2px solid #003366; padding-bottom:5px;">7. LAMPIRAN DOKUMEN</h3>
                                     <p>Berikut adalah kelengkapan administrasi dan bukti pelaksanaan program:</p>
