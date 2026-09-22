@@ -1465,14 +1465,24 @@ elif menu_selection == "📑 REPORT & KATALOG":
     # --- SUB TAB 2: LAPORAN PEMBELAJARAN (PER KELAS/JUDUL) ---
     # ─────────────────────────────────────────────────────────────────────────
     with sub_lap_pembelajaran:
-        st.markdown("### 📄 Generator Laporan Pembelajaran Per Kelas")
-        st.write("Menyusun laporan pelaksanaan spesifik per kelas dari Master Data Laporan, mencakup realisasi peserta, biaya, evaluasi, dan komentar berstandar *Consulting Style*.")
+        st.markdown("### 📄 Generator Laporan Pembelajaran (Per Kelas)")
+        st.write("Menyusun draf laporan evaluasi spesifik per judul pembelajaran/kelas.")
         
         try:
-            url_master = "https://docs.google.com/spreadsheets/d/" + str(sheet_id) + "/gviz/tq?tqx=out:csv&sheet=Master_Data_Laporan"
+            # ⬇️ PERBAIKAN: ISOLASI SUMBER DATA KHUSUS LAPORAN PEMBELAJARAN ⬇️
+            sheet_id_laporan = '1By4lZLCgYJOKs7IuY-6n-Dbp7USceB4zoxrlDh4a1CM'
+            
+            # Penggabungan string aman dari jebakan Auto-Markdown
+            url_master = "https://docs.google.com/spreadsheets/d/" + sheet_id_laporan + "/gviz/tq?tqx=out:csv&sheet=Implementation"
+            
+            # Menggunakan urllib agar stabil dan tidak error [Errno 2]
+            import urllib.request
+            import io
+            
             req_master = urllib.request.Request(url_master, headers={'User-Agent': 'Mozilla/5.0'})
             with urllib.request.urlopen(req_master) as response:
-                df_master = pd.read_csv(io.BytesIO(response.read()))
+                csv_bytes_master = response.read()
+            df = pd.read_csv(io.BytesIO(csv_bytes_master))
             
             df_master.columns = df_master.columns.astype(str).str.strip()
             
