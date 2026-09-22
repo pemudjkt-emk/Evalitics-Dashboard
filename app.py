@@ -1469,6 +1469,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
         st.write("Menyusun draf laporan evaluasi spesifik per judul pembelajaran/kelas.")
         
         try:
+            # ISOLASI SUMBER DATA KHUSUS LAPORAN PEMBELAJARAN
             sheet_id_laporan = '1By4lZLCgYJOKs7IuY-6n-Dbp7USceB4zoxrlDh4a1CM'
             url_master = "https://docs.google.com/spreadsheets/d/" + sheet_id_laporan + "/gviz/tq?tqx=out:csv&sheet=Implementation"
             
@@ -1484,7 +1485,6 @@ elif menu_selection == "📑 REPORT & KATALOG":
             
             if 'Judul Pembelajaran' in df_master.columns:
                 df_master['Opsi_Dropdown'] = df_master.apply(
-                    # 1. PERBAIKAN: Menampilkan 'Tgl Akhir' di nama dropdown
                     lambda x: f"{str(x.get('Judul Pembelajaran', '-')).strip()} ({format_tanggal_indo(x.get('Tgl Mulai'))} s.d {format_tanggal_indo(x.get('Tgl Akhir', x.get('Tgl Selesai')))})", 
                     axis=1
                 )
@@ -1511,9 +1511,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
 
                             tgl_surat_format = format_tanggal_indo(df_kelas.get('Tanggal Surat Penugasan'))
                             tgl_mulai_format = format_tanggal_indo(df_kelas.get('Tgl Mulai'))
-                            
-                            # 1. PERBAIKAN: Tanggal Selesai ditarik dari kolom 'Tgl Akhir'
-                            tgl_selesai_format = format_tanggal_indo(df_kelas.get('Tgl Akhir', '-'))
+                            tgl_selesai_format = format_tanggal_indo(df_kelas.get('Tgl Akhir', df_kelas.get('Tgl Selesai', '-')))
 
                             kode_sr_raw = df_kelas.get('Kode Service Request', '')
                             jenis_prog = df_kelas.get('Jenis Program', '')
@@ -1572,19 +1570,30 @@ elif menu_selection == "📑 REPORT & KATALOG":
                             metode_raw = str(df_kelas.get('Strategi Pelaksanaan', '-')).strip().upper()
                             metode = dict_metode.get(metode_raw, metode_raw)
                             
+                            # --- 1. DATA CLEANSER UNTUK NOMINAL BIAYA ---
                             def format_rp(val):
-                                try: return f"Rp {int(float(val)):,}".replace(',', '.')
-                                except: return "Rp 0"
+                                if pd.isna(val) or str(val).strip() == "": return "Rp 0"
+                                try: 
+                                    return f"Rp {int(float(val)):,}".replace(',', '.')
+                                except: 
+                                    # Jika error, bersihkan string dari Rp, spasi, dan atur pemisah
+                                    v_str = str(val).upper().replace('RP', '').replace(' ', '')
+                                    v_str = v_str.replace('.', '').replace(',', '.') # Hapus titik, ubah koma jadi desimal
+                                    try: return f"Rp {int(float(v_str)):,}".replace(',', '.')
+                                    except: return "Rp 0"
                                     
-                            # 2. PERBAIKAN: Menarik Biaya langsung dari kolom target
                             rab = format_rp(df_kelas.get('RAB Pelaksanaan', 0))
                             realisasi = format_rp(df_kelas.get('Realisasi Biaya Pelaksanaan', 0))
                             
+                            # --- 2. DATA CLEANSER UNTUK SKOR KEPUASAN ---
                             def f_skor(v):
-                                try: return f"{float(v):.2f}"
-                                except: return "-"
+                                if pd.isna(v) or str(v).strip() == "": return "-"
+                                try: 
+                                    # Pastikan koma Indonesia diubah menjadi titik desimal standar
+                                    return f"{float(str(v).replace(',', '.')):.2f}"
+                                except: 
+                                    return "-"
                                 
-                            # 3. PERBAIKAN: Memastikan ditarik dari RATA MAT, RATA INST, RATA SP, RATA DS
                             skor_mat = f_skor(df_kelas.get('RATA MAT', 0))
                             skor_ins = f_skor(df_kelas.get('RATA INST', 0))
                             skor_sp_off = f_skor(df_kelas.get('RATA SP', 0))
@@ -1611,7 +1620,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                 
                             no_urut_total = no_urut_tabel
                             
-                            # 4. PERBAIKAN: Customer Voice ditarik langsung dari sheet Implementation
+                            # --- CUSTOMER VOICE ---
                             pos_html, neg_html = "-", "-"
                             jml_pos_kelas, jml_neg_kelas = 0, 0
                             
@@ -1631,6 +1640,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                 pos_html = f"<span style='color:#b71c1c; font-style:italic;'>Gagal memuat: {e_k}</span>"
                                 neg_html = f"<span style='color:#b71c1c; font-style:italic;'>Gagal memuat: {e_k}</span>"
 
+                            # --- GEMINI AI NARRATIVE ---
                             narasi_eksekutif_kelas = ""
                             try:
                                 prompt_kelas = f"""
