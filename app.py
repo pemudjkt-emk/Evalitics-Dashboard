@@ -1768,22 +1768,26 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                         </tr>
                                     </table>
 
-                                    <!-- WRAPPER UNTUK MENCEGAH TERPISAH HALAMAN ANTARA NARASI PENUTUP DAN TANDA TANGAN -->
-                                    <div style="page-break-inside: avoid; break-inside: avoid;">
-                                        <p style="text-align: justify; margin-top: 30px; font-size: 11pt; color: #334155; line-height: 1.6;">
-                                            Demikian laporan kegiatan pembelajaran ini disusun dengan sebenar-benarnya sebagai bentuk pertanggungjawaban atas pelaksanaan program. Kami berharap hasil dan evaluasi dari kegiatan ini dapat memberikan kontribusi positif serta peningkatan kompetensi bagi seluruh peserta.
-                                        </p>
-                                        <br><br>
-                                        <table style="width:100%; border: none;">
-                                            <tr>
-                                                <td style="width:50%; border: none;"></td>
-                                                <td style="width:50%; border: none; text-align:center;">
-                                                    Mengetahui,<br><b>MANAGER UPDL JAKARTA</b><br><br><br><br><br>
-                                                    <b>ZAKI YAMANI KERTAPATI</b>
-                                                </td>
-                                            </tr>
-                                        </table>
-                                    </div>
+                                    <!-- WRAPPER TABEL UNTUK MENCEGAH TERPISAH HALAMAN DI MS WORD -->
+                                    <table style="width:100%; border:none; page-break-inside:avoid; border-collapse:collapse; margin-top:20px;">
+                                        <tr style="page-break-inside:avoid;">
+                                            <td style="border:none; padding:0;">
+                                                <p style="text-align: justify; font-size: 11pt; color: #334155; line-height: 1.6;">
+                                                    Demikian laporan kegiatan pembelajaran ini disusun dengan sebenar-benarnya sebagai bentuk pertanggungjawaban atas pelaksanaan program. Kami berharap hasil dan evaluasi dari kegiatan ini dapat memberikan kontribusi positif serta peningkatan kompetensi bagi seluruh peserta.
+                                                </p>
+                                                <br><br>
+                                                <table style="width:100%; border: none;">
+                                                    <tr>
+                                                        <td style="width:50%; border: none;"></td>
+                                                        <td style="width:50%; border: none; text-align:center;">
+                                                            Mengetahui,<br><b>MANAGER UPDL JAKARTA</b><br><br><br><br><br>
+                                                            <b>ZAKI YAMANI KERTAPATI</b>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                    </table>
 
                                     <h3 style="page-break-before: always; color:#003366; border-bottom: 2px solid #003366; padding-bottom:5px;">7. LAMPIRAN DOKUMEN</h3>
                                     <p>Berikut adalah kelengkapan administrasi dan bukti pelaksanaan program:</p>
