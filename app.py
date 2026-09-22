@@ -1466,7 +1466,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
     # ─────────────────────────────────────────────────────────────────────────
     with sub_lap_pembelajaran:
         st.markdown("### 📄 Generator Laporan Pembelajaran Per Kelas")
-        st.write("Menyusun laporan pelaksanaan spesifik per kelas dari Master Data Laporan, mencakup realisasi peserta, biaya, evaluasi, dan komentar berstandar *Consulting Style*.")
+        st.write("Menyusun laporan pelaksanaan spesifik per kelas berdasarkan format standar.")
         
         try:
             # ⬇️ ISOLASI SUMBER DATA BARU (IMPLEMENTATION) ⬇️
@@ -1483,8 +1483,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
             df_master = pd.read_csv(io.BytesIO(csv_bytes_master))
             df_master.columns = df_master.columns.astype(str).str.strip()
             
-            # --- 1. SOLUSI TANGGAL SELESAI ---
-            # Mapping Tgl Akhir ke standard sistem
+            # --- PEMETAAN KOLOM ---
             if 'Tgl Akhir' in df_master.columns:
                 df_master.rename(columns={'Tgl Akhir': 'Tanggal Selesai'}, inplace=True)
             if 'Tgl Mulai' in df_master.columns:
@@ -1493,7 +1492,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
             # Pembuatan Opsi Dropdown
             if 'Judul Pembelajaran' in df_master.columns:
                 df_master['Opsi_Dropdown'] = df_master.apply(
-                    lambda x: f"{str(x.get('Judul Pembelajaran', '-')).strip()} ({format_tanggal_indo(x.get('Tanggal Mulai', '-'))} s.d {format_tanggal_indo(x.get('Tanggal Selesai', '-'))})", 
+                    lambda x: f"{str(x.get('Judul Pembelajaran', '-')).strip()} ({str(x.get('Tanggal Mulai', '-'))} s.d {str(x.get('Tanggal Selesai', '-'))})", 
                     axis=1
                 )
                 list_opsi = df_master['Opsi_Dropdown'].dropna().unique().tolist()
@@ -1508,22 +1507,40 @@ elif menu_selection == "📑 REPORT & KATALOG":
                             btn_gen_kelas = st.button("🚀 Generate Laporan Kelas", type="primary", use_container_width=True)
                         
                         if btn_gen_kelas:
-                            with st.spinner("Mengekstrak data pelaksanaan dan menyusun laporan..."):
+                            with st.spinner("Menyusun laporan..."):
                                 df_kelas = df_master[df_master['Opsi_Dropdown'] == opsi_pilih].iloc[0]
                                 
-                                # Data Administrasi & Peserta
+                                # 1. DATA ADMINISTRASI UMUM
                                 judul_pilih = str(df_kelas.get('Judul Pembelajaran', '-'))
-                                kode_pemb = str(df_kelas.get('Kode Pembelajaran', '-'))
-                                jml_diundang = str(df_kelas.get('Peserta Diundang', '-'))
-                                jml_hadir = str(df_kelas.get('Peserta Hadir', '-'))
-                                jml_lulus = str(df_kelas.get('Peserta Lulus', '-'))
+                                no_surat_tugas = str(df_kelas.get('No Surat Penugasan', '-'))
+                                tgl_surat_tugas = str(df_kelas.get('Tanggal Surat Penugasan', '-'))
+                                no_surat_panggil = str(df_kelas.get('Nomor Surat Pemanggilan Peserta', '-'))
+                                kode_sr = str(df_kelas.get('Kode Service Request', '-'))
+                                jenis_prog = str(df_kelas.get('Jenis Program', '-'))
+                                sr_gabungan = f"{kode_sr} - {jenis_prog}"
                                 
-                                # Format Waktu Pelaksanaan
-                                tgl_mulai_format = format_tanggal_indo(df_kelas.get('Tanggal Mulai'))
-                                tgl_selesai_format = format_tanggal_indo(df_kelas.get('Tanggal Selesai'))
-                                waktu_pelaksanaan = f"{tgl_mulai_format} s.d. {tgl_selesai_format}"
+                                # 2. DATA KEPESERTAAN
+                                rec_peserta = str(df_kelas.get('Rencana Jumlah Peserta', '-'))
+                                pst_diundang = str(df_kelas.get('Peserta Diundang', '-'))
+                                pst_hadir = str(df_kelas.get('Peserta Hadir', '-'))
+                                pst_lulus = str(df_kelas.get('Peserta Lulus', '-'))
+                                pct_hadir = str(df_kelas.get('% Kehadiran', '-'))
+                                if pct_hadir != '-' and not pct_hadir.endswith('%'): pct_hadir += ' %'
+                                pct_lulus = str(df_kelas.get('% Kelulusan', '-'))
+                                if pct_lulus != '-' and not pct_lulus.endswith('%'): pct_lulus += ' %'
                                 
-                                # --- 2. SOLUSI RENCANA & REALISASI BIAYA ---
+                                # 3. WAKTU & METODE
+                                tgl_mulai = str(df_kelas.get('Tanggal Mulai', '-'))
+                                tgl_selesai = str(df_kelas.get('Tanggal Selesai', '-'))
+                                instruktur = str(df_kelas.get('Instruktur/ Fasilitator', '-'))
+                                tempat = str(df_kelas.get('Tempat Pelaksanaan', '-'))
+                                
+                                # Mapping Metode
+                                metode_raw = str(df_kelas.get('Strategi Pelaksanaan', '-')).upper()
+                                map_metode = {'ICT': 'In Class Training (ICT)', 'DL': 'Distance Learning (DL)', 'SL': 'Self Learning (SL)', 'BL': 'Blended Learning (BL)', 'HL': 'Hybrid Learning (HL)'}
+                                metode_fix = map_metode.get(metode_raw, metode_raw)
+                                
+                                # 4. BIAYA (Format Rupiah)
                                 def format_rupiah(angka):
                                     try:
                                         if pd.isna(angka) or str(angka).strip() == "": return "Rp 0"
@@ -1535,112 +1552,112 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                 rab_pelaksanaan = format_rupiah(df_kelas.get('RAB Pelaksanaan', 0))
                                 realisasi_biaya = format_rupiah(df_kelas.get('Realisasi Biaya Pelaksanaan', 0))
                                 
-                                # --- 3. SOLUSI SKOR KEPUASAN (Ambil Langsung) ---
+                                # 5. EVALUASI
+                                pst_isi_l1 = str(df_kelas.get('Peserta Isi L1', '-'))
+                                pct_isi_l1 = str(df_kelas.get('% Pengisian L1', '-'))
+                                if pct_isi_l1 != '-' and not pct_isi_l1.endswith('%'): pct_isi_l1 += ' %'
+                                
                                 def get_skor(col_name):
                                     try: return float(df_kelas.get(col_name, 0.0))
                                     except: return 0.0
                                 
                                 skor_materi = get_skor('RATA MAT')
                                 skor_inst = get_skor('RATA INST')
-                                skor_sp = get_skor('RATA SP')
-                                skor_ds = get_skor('RATA DS')
-                                
-                                # Kalkulasi Rata-rata Total jika tidak ada di kolom
+                                skor_sp = get_skor('RATA SP') # Sarana Offline
+                                skor_ds = get_skor('RATA DS') # Sarana Online
                                 rata_keseluruhan = get_skor('RATA-RATA KESELURUHAN')
-                                if rata_keseluruhan == 0.0:
-                                    komponen_aktif = [s for s in [skor_materi, skor_inst, skor_sp, skor_ds] if s > 0]
-                                    rata_keseluruhan = sum(komponen_aktif)/len(komponen_aktif) if komponen_aktif else 0.0
-
-                                # --- 4. SOLUSI CUSTOMER VOICE (Tanpa Sentimen Analisis) ---
+                                
+                                # 6. CUSTOMER VOICE (Ambil Langsung)
                                 def format_komentar_html(teks):
-                                    if pd.isna(teks) or str(teks).strip() in ["", "-"]:
-                                        return "<i>Tidak ada komentar.</i>"
+                                    if pd.isna(teks) or str(teks).strip() in ["", "-"]: return "<i>Tidak ada komentar.</i>"
                                     lines = str(teks).split('\n')
-                                    li_items = "".join([f"<li style='margin-bottom:4px;'>{line.strip()}</li>" for line in lines if line.strip()])
-                                    return f"<ul style='margin: 0; padding-left: 20px;'>{li_items}</ul>" if li_items else "<i>Tidak ada komentar.</i>"
+                                    li_items = "".join([f"<li>{line.strip()}</li>" for line in lines if line.strip()])
+                                    return f"<ul>{li_items}</ul>" if li_items else "<i>Tidak ada komentar.</i>"
                                 
                                 html_apresiasi = format_komentar_html(df_kelas.get('KOMENTAR APRESIASI', ''))
                                 html_masukan = format_komentar_html(df_kelas.get('KOMENTAR MASUKAN', ''))
                                 
                                 # ==========================================
-                                # TEMPLATE HTML TO WORD GENERATOR
+                                # TEMPLATE HTML TO WORD GENERATOR (SESUAI KONSEP AWAL)
                                 # ==========================================
                                 html_content_kelas = f"""
                                 <html><head><meta charset="utf-8"></head>
                                 <body style="font-family: 'Times New Roman', Times, serif; line-height: 1.5; font-size: 11.5pt;">
                                     <h2 style="text-align:center; color:#003366; margin-bottom: 2px;">LAPORAN PELAKSANAAN PEMBELAJARAN</h2>
-                                    <h3 style="text-align:center; margin-top: 0;">UPDL JAKARTA</h3>
-                                    <hr style="border: 1.5px solid black; margin-bottom: 15px;">
+                                    <h2 style="text-align:center; color:#003366; margin-top: 0; text-transform: uppercase;">{judul_pilih}</h2>
+                                    <hr style="border: 1.5px solid black; margin-bottom: 20px;">
                                     
-                                    <h4 style="color:#0055A4; margin-bottom: 5px;">1. INFORMASI UMUM</h4>
-                                    <table style="width:100%; border:none; margin-bottom:15px; font-size:11pt;">
-                                        <tr><td style="width:30%;"><b>Judul Pembelajaran</b></td><td style="width:2%;">:</td><td>{judul_pilih}</td></tr>
-                                        <tr><td><b>Kode Pembelajaran</b></td><td>:</td><td>{kode_pemb}</td></tr>
-                                        <tr><td><b>Waktu Pelaksanaan</b></td><td>:</td><td>{waktu_pelaksanaan}</td></tr>
+                                    <h4 style="margin-bottom: 5px;">1. Dasar Pelaksanaan</h4>
+                                    <p style="text-align: justify; margin-top: 5px;">Pembelajaran ini dilaksanakan berdasarkan penugasan Pusdiklat melalui:</p>
+                                    <ul style="margin-top: 0;">
+                                        <li>Surat Penugasan No. {no_surat_tugas} pada tanggal {tgl_surat_tugas}</li>
+                                        <li>Nomor Surat Pemanggilan Peserta: {no_surat_panggil}</li>
+                                        <li>Service Request (SR): {sr_gabungan}</li>
+                                    </ul>
+
+                                    <h4 style="margin-bottom: 5px;">2. Informasi Kepesertaan</h4>
+                                    <p style="text-align: justify; margin-top: 5px;">Berikut adalah rincian partisipasi dan kelulusan peserta pembelajaran:</p>
+                                    <table style="width:100%; border-collapse: collapse; text-align:left; font-size:11.5pt; margin-bottom: 15px;" border="1">
+                                        <tr><td style="padding: 10px; width: 50%; vertical-align: middle;">Rencana Jumlah Peserta</td><td style="padding: 10px; text-align: center; vertical-align: middle;">{rec_peserta}</td></tr>
+                                        <tr><td style="padding: 10px; vertical-align: middle;">Peserta Diundang</td><td style="padding: 10px; text-align: center; vertical-align: middle;">{pst_diundang}</td></tr>
+                                        <tr><td style="padding: 10px; vertical-align: middle;">Peserta Hadir</td><td style="padding: 10px; text-align: center; vertical-align: middle;">{pst_hadir}</td></tr>
+                                        <tr><td style="padding: 10px; vertical-align: middle;">Persentase Peserta Hadir</td><td style="padding: 10px; text-align: center; vertical-align: middle;">{pct_hadir}</td></tr>
+                                        <tr><td style="padding: 10px; vertical-align: middle;">Peserta Lulus</td><td style="padding: 10px; text-align: center; vertical-align: middle;">{pst_lulus}</td></tr>
+                                        <tr><td style="padding: 10px; vertical-align: middle;">Persentase Peserta Lulus</td><td style="padding: 10px; text-align: center; vertical-align: middle;">{pct_lulus}</td></tr>
                                     </table>
 
-                                    <h4 style="color:#0055A4; margin-bottom: 5px;">2. REALISASI PESERTA</h4>
-                                    <table style="width:100%; border-collapse: collapse; text-align:left; font-size:11pt; margin-bottom: 15px;" border="1">
-                                        <tr style="background-color:#003366; color:white;">
-                                            <th style="padding: 6px;">Peserta Diundang</th>
-                                            <th style="padding: 6px;">Peserta Hadir</th>
-                                            <th style="padding: 6px;">Peserta Lulus</th>
+                                    <h4 style="margin-bottom: 5px;">3. Waktu, Metode dan Tempat Pembelajaran</h4>
+                                    <p style="text-align: justify; margin-top: 5px;">Adapun Pembelajaran {judul_pilih} dilaksanakan dengan rincian:</p>
+                                    <table style="width:100%; border:none; margin-bottom:15px; font-size:11.5pt;">
+                                        <tr><td style="width:25%;">Tanggal</td><td style="width:2%;">:</td><td>{tgl_mulai} s.d {tgl_selesai}</td></tr>
+                                        <tr><td>Waktu</td><td>:</td><td>08.00 - 16.00 WIB</td></tr>
+                                        <tr><td>Metode</td><td>:</td><td>{metode_fix}</td></tr>
+                                        <tr><td>Tempat</td><td>:</td><td>{tempat}</td></tr>
+                                        <tr><td>Narasumber / Instruktur</td><td>:</td><td>{instruktur}</td></tr>
+                                    </table>
+
+                                    <h4 style="margin-bottom: 5px;">4. Biaya Pembelajaran</h4>
+                                    <p style="text-align: justify; margin-top: 5px;">Realisasi Biaya Penyelenggaraan Pembelajaran {judul_pilih} adalah sebagai berikut:</p>
+                                    <table style="width:100%; border-collapse: collapse; text-align:left; font-size:11.5pt; margin-bottom: 15px;" border="1">
+                                        <tr><td style="padding: 10px; width: 50%; vertical-align: middle;">Rencana Biaya (RAB)</td><td style="padding: 10px; vertical-align: middle;">{rab_pelaksanaan}</td></tr>
+                                        <tr><td style="padding: 10px; vertical-align: middle;">Realisasi Biaya Pelaksanaan</td><td style="padding: 10px; vertical-align: middle;">{realisasi_biaya}</td></tr>
+                                    </table>
+
+                                    <h4 style="margin-bottom: 5px;">5. Evaluasi Pembelajaran</h4>
+                                    <p style="text-align: justify; margin-top: 5px;">Hasil Evaluasi pembelajaran menggunakan data pengisian evaluasi level 1 oleh peserta melalui HXMS sebagai berikut:</p>
+                                    <p style="text-align: justify;"><b>Tingkat Partisipasi:</b> Persentasi partisipasi pengisian peserta sebesar {pct_isi_l1} ({pst_isi_l1} orang dari total {pst_hadir} peserta hadir).</p>
+                                    
+                                    <p style="text-align: justify; margin-bottom: 5px;"><b>Skor Kepuasan Peserta:</b></p>
+                                    <table style="width:100%; border-collapse: collapse; text-align:left; font-size:11.5pt; margin-bottom: 15px;" border="1">
+                                        <tr style="text-align:center; font-weight:bold;">
+                                            <th style="padding: 6px; width: 10%;">No</th>
+                                            <th style="padding: 6px; width: 60%;">Indikator Kepuasan</th>
+                                            <th style="padding: 6px; width: 30%;">Skor (1-5)</th>
                                         </tr>
-                                        <tr>
-                                            <td style="padding: 6px; text-align:center;"><b>{jml_diundang}</b></td>
-                                            <td style="padding: 6px; text-align:center;"><b>{jml_hadir}</b></td>
-                                            <td style="padding: 6px; text-align:center;"><b>{jml_lulus}</b></td>
+                                        <tr><td style="padding: 6px; text-align:center;">1</td><td style="padding: 6px;">Materi</td><td style="padding: 6px; text-align:center;">{skor_materi:.2f}</td></tr>
+                                        <tr><td style="padding: 6px; text-align:center;">2</td><td style="padding: 6px;">Instruktur</td><td style="padding: 6px; text-align:center;">{skor_inst:.2f}</td></tr>
+                                        <tr><td style="padding: 6px; text-align:center;">3</td><td style="padding: 6px;">Sarana Prasarana Offline</td><td style="padding: 6px; text-align:center;">{skor_sp:.2f}</td></tr>
+                                        <tr><td style="padding: 6px; text-align:center;">4</td><td style="padding: 6px;">Sarana Prasarana Online</td><td style="padding: 6px; text-align:center;">{skor_ds:.2f}</td></tr>
+                                        <tr style="font-weight:bold;">
+                                            <td style="padding: 6px; text-align:center;" colspan="2">Rata-Rata Keseluruhan</td>
+                                            <td style="padding: 6px; text-align:center;">{rata_keseluruhan:.2f}</td>
                                         </tr>
                                     </table>
 
-                                    <h4 style="color:#0055A4; margin-bottom: 5px;">3. BIAYA PELAKSANAAN</h4>
-                                    <table style="width:100%; border-collapse: collapse; text-align:left; font-size:11pt; margin-bottom: 15px;" border="1">
-                                        <tr style="background-color:#003366; color:white;">
-                                            <th style="padding: 6px;">Rencana Biaya (RAB)</th>
-                                            <th style="padding: 6px;">Realisasi Biaya</th>
-                                        </tr>
-                                        <tr>
-                                            <td style="padding: 6px; text-align:center;"><b>{rab_pelaksanaan}</b></td>
-                                            <td style="padding: 6px; text-align:center;"><b>{realisasi_biaya}</b></td>
-                                        </tr>
-                                    </table>
-
-                                    <h4 style="color:#0055A4; margin-bottom: 5px;">4. SKOR EVALUASI MUTU L1</h4>
-                                    <table style="width:100%; border-collapse: collapse; text-align:left; font-size:11pt; margin-bottom: 15px;" border="1">
-                                        <tr style="background-color:#003366; color:white;">
-                                            <th style="padding: 6px;">Pilar Evaluasi</th>
-                                            <th style="padding: 6px; text-align:center;">Skor</th>
-                                            <th style="padding: 6px; text-align:center;">Standar</th>
-                                        </tr>
-                                        <tr><td style="padding: 6px;">Materi Pembelajaran</td><td style="padding: 6px; text-align:center;"><b>{skor_materi:.2f}</b></td><td style="padding: 6px; text-align:center;">4.50</td></tr>
-                                        <tr><td style="padding: 6px;">Instruktur / Fasilitator</td><td style="padding: 6px; text-align:center;"><b>{skor_inst:.2f}</b></td><td style="padding: 6px; text-align:center;">4.50</td></tr>
-                                        <tr><td style="padding: 6px;">Sarana & Prasarana Offline</td><td style="padding: 6px; text-align:center;"><b>{skor_sp:.2f}</b></td><td style="padding: 6px; text-align:center;">4.50</td></tr>
-                                        <tr><td style="padding: 6px;">Sarana Digital (Online)</td><td style="padding: 6px; text-align:center;"><b>{skor_ds:.2f}</b></td><td style="padding: 6px; text-align:center;">4.50</td></tr>
-                                        <tr style="background-color:#f2f2f2;">
-                                            <td style="padding: 6px;"><b>RATA-RATA KESELURUHAN</b></td>
-                                            <td style="padding: 6px; text-align:center;"><b>{rata_keseluruhan:.2f}</b></td>
-                                            <td style="padding: 6px; text-align:center;"><b>4.50</b></td>
-                                        </tr>
-                                    </table>
-
-                                    <h4 style="color:#0055A4; margin-bottom: 5px;">5. CUSTOMER VOICE</h4>
-                                    <div style="border: 1px solid #000; padding: 10px; margin-bottom: 10px;">
-                                        <p style="margin-top: 0; margin-bottom: 5px; color:#1b5e20;"><b>🟢 KOMENTAR APRESIASI:</b></p>
-                                        {html_apresiasi}
-                                    </div>
-                                    <div style="border: 1px solid #000; padding: 10px; margin-bottom: 20px;">
-                                        <p style="margin-top: 0; margin-bottom: 5px; color:#b71c1c;"><b>🔴 KOMENTAR MASUKAN / EVALUASI:</b></p>
-                                        {html_masukan}
-                                    </div>
+                                    <h4 style="margin-bottom: 5px;">6. Customer Voice</h4>
+                                    <p style="margin-top: 5px; margin-bottom: 0;"><b>Komentar Apresiasi:</b></p>
+                                    {html_apresiasi}
+                                    <p style="margin-top: 10px; margin-bottom: 0;"><b>Komentar Masukan / Evaluasi:</b></p>
+                                    {html_masukan}
                                     
                                     <br><br>
-                                    <table style="width:100%; text-align:center; border: none;">
+                                    <table style="width:100%; text-align:center; border: none; font-size: 11.5pt;">
                                         <tr>
                                             <td style="width:50%; border: none;"></td>
                                             <td style="width:50%; border: none;">
-                                                Jakarta, {datetime.now().strftime('%d %B %Y')}<br>
-                                                Tim Pengendalian Mutu & Kinerja<br><br><br><br>
-                                                <b>( Zaki Yamani Kertapati )</b>
+                                                Mengetahui,<br>
+                                                MANAGER UPDL JAKARTA<br><br><br><br><br>
+                                                <b>ZAKI YAMANI KERTAPATI</b>
                                             </td>
                                         </tr>
                                     </table>
@@ -1651,7 +1668,7 @@ elif menu_selection == "📑 REPORT & KATALOG":
                                 st.download_button(
                                     label=f"📥 DOWNLOAD LAPORAN KELAS WORD (.doc)",
                                     data=html_content_kelas.encode('utf-8'),
-                                    file_name=f"Laporan_Pelaksanaan_{kode_pemb}.doc",
+                                    file_name=f"Laporan_Pelaksanaan_Kelas.doc",
                                     mime="application/msword",
                                     type="primary"
                                 )
