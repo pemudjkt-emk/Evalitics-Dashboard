@@ -1578,19 +1578,6 @@ elif menu_selection == "📑 REPORT & KATALOG":
             with urllib.request.urlopen(req_master) as response:
                 csv_bytes_master = response.read()
             df_master = pd.read_csv(io.BytesIO(csv_bytes_master))
-            # 🛡️ PEMBERSIH DATA OTOMATIS: Mencegah error "invalid literal for int()"
-kolom_rawan_koma = [
-    'Peserta Hadir', 'Peserta Lulus', 'Peserta Diundang', 
-    'Rencana Jumlah Peserta', 'Jumlah Peserta Lulus L2', 
-    'Jumlah Peserta Isi L2', 'Peserta Isi L1'
-]
-
-for col in kolom_rawan_koma:
-    if col in df_master.columns:
-        # Ubah koma jadi titik, abaikan error string lain, ubah ke integer murni
-        df_master[col] = df_master[col].astype(str).str.replace(',', '.', regex=False)
-        df_master[col] = pd.to_numeric(df_master[col], errors='coerce').fillna(0).astype(int)
-            
             df_master.columns = df_master.columns.astype(str).str.strip()
             
             if 'Judul Pembelajaran' in df_master.columns:
