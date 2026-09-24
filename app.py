@@ -25,7 +25,22 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
-
+### ─────────────────────────────────────────────────────────────────────────────
+### KAMUS ID SPREADSHEET 11 UPDL
+### ─────────────────────────────────────────────────────────────────────────────
+KAMUS_ID_UPDL = {
+    "UPDL JAKARTA": "MASUKKAN_ID_SHEET_JAKARTA_DISINI",
+    "UPDL PADANG": "MASUKKAN_ID_SHEET_PADANG_DISINI",
+    "UPDL SEMARANG": "MASUKKAN_ID_SHEET_SEMARANG_DISINI",
+    "UPDL SURABAYA": "MASUKKAN_ID_SHEET_SURABAYA_DISINI",
+    "UPDL MAKASSAR": "MASUKKAN_ID_SHEET_MAKASSAR_DISINI",
+    "UPDL BANJARBARU": "MASUKKAN_ID_SHEET_BANJARBARU_DISINI",
+    "UPDL BOGOR": "MASUKKAN_ID_SHEET_BOGOR_DISINI",
+    "UPDL TUNTUNGAN": "MASUKKAN_ID_SHEET_TUNTUNGAN_DISINI",
+    "UPDL PALEMBANG": "MASUKKAN_ID_SHEET_PALEMBANG_DISINI",
+    "UPDL BALI": "MASUKKAN_ID_SHEET_BALI_DISINI",
+    "UPDL PANDAAN": "MASUKKAN_ID_SHEET_PANDAAN_DISINI"
+}
 # ─────────────────────────────────────────────────────────────────────────────
 # CONSTANTS (Data Entry & Pipeline)
 # ─────────────────────────────────────────────────────────────────────────────
