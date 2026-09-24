@@ -1625,7 +1625,7 @@ else:
                     list_updl = sorted(df_master['Sumber Data Implementasi'].dropna().unique().tolist())
                     
                     with st.container(border=True):
-                        col_u, col_j, col_btn = st.columns([1.5, 2, 1])
+                        col_u, col_j, col_btn = st.columns([1, 4, 1])
                         with col_u:
                             opsi_updl = st.selectbox("🏢 Pilih UPDL:", list_updl, key="updl_report")
                         
