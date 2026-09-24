@@ -29,6 +29,20 @@ st.set_page_config(
 # ─────────────────────────────────────────────────────────────────────────────
 # CONSTANTS (Data Entry & Pipeline)
 # ─────────────────────────────────────────────────────────────────────────────
+# Kamus Data Manager UPDL (Tambahkan/Sesuaikan Disini)
+MANAGER_DICT = {
+    "UPDL JAKARTA": "ZAKI YAMANI KERTAPATI",
+    "UPDL SURALAYA": "ERWIN",
+    "UPDL SEMARANG": "NAMA MANAGER SEMARANG",
+    "UPDL BOGOR": "NAMA MANAGER BOGOR",
+    "UPDL PANDAAN": "NAMA MANAGER PANDAAN",
+    "UPDL PADANG": "NAMA MANAGER PADANG",
+    "UPDL PALEMBANG": "NAMA MANAGER PALEMBANG",
+    "UPDL MAKASSAR": "NAMA MANAGER MAKASSAR",
+    "UPDL BANJARBARU": "NAMA MANAGER BANJARBARU",
+    "UPDL TUNTUNGAN": "NAMA MANAGER TUNTUNGAN"
+}
+
 TARGET_COLUMNS = [
     'No', 'Laporan Bulan', 'Kode Unik', 'Kode Pembelajaran', 'Judul Pembelajaran/Kegiatan',
     'Batch', 'PIC KI', 'Tanggal Mulai', 'Tanggal Selesai', 'Cut off Data',
@@ -75,7 +89,7 @@ DETAIL_INSTRUKTUR_COLUMNS = [
 BULAN_MAP_ID = {1:'Januari',2:'Februari',3:'Maret',4:'April',5:'Mei',6:'Juni',
                 7:'Juli',8:'Agustus',9:'September',10:'Oktober',11:'November',12:'Desember'}
 
-# URL Sumber Data Global
+# URL Sumber Data Global (Untuk Modul Selain Laporan Pembelajaran)
 sheet_id = '1IDAmFwTbBQDZcKM3eiiEDcA3KwM9WKqW4zCrk__6-PU'
 sheet_name = 'L1%20Tertutup' 
 url = "https://docs.google.com/spreadsheets/d/" + str(sheet_id) + "/gviz/tq?tqx=out:csv&sheet=" + str(sheet_name)
@@ -1596,45 +1610,52 @@ else:
                 st.markdown("## 📄 Generator Laporan Pembelajaran (Akses Terbatas)")
             else:
                 st.markdown("### 📄 Generator Laporan Pembelajaran Per Kelas")
-            st.write("Menyusun laporan pelaksanaan spesifik per kelas dari Master Data Laporan, mencakup realisasi peserta, biaya, evaluasi, dan komentar berstandar *Consulting Style*.")
+            st.write("Menyusun laporan pelaksanaan spesifik per kelas dari Master Data Laporan Nasional, mencakup realisasi peserta, biaya, evaluasi, dan komentar berstandar *Consulting Style*.")
             
             try:
-                url_master = "https://docs.google.com/spreadsheets/d/" + str(sheet_id) + "/gviz/tq?tqx=out:csv&sheet=Master_Data_Laporan"
-                req_master = urllib.request.Request(url_master, headers={'User-Agent': 'Mozilla/5.0'})
+                sheet_id_nasional = '1h-5D5susznSg6nDl2cqgxVu05zSVyTSW19VICYDLtuU'
+                url_master_nasional = f"https://docs.google.com/spreadsheets/d/{sheet_id_nasional}/gviz/tq?tqx=out:csv&sheet=I_Gabungan_Detail"
+                req_master = urllib.request.Request(url_master_nasional, headers={'User-Agent': 'Mozilla/5.0'})
                 with urllib.request.urlopen(req_master) as response:
                     df_master = pd.read_csv(io.BytesIO(response.read()))
                 
                 df_master.columns = df_master.columns.astype(str).str.strip()
                 
-                if 'Judul Pembelajaran' in df_master.columns:
-                    df_master['Opsi_Dropdown'] = df_master.apply(
-                        lambda x: f"{str(x.get('Judul Pembelajaran', '-')).strip()} ({format_tanggal_indo(x.get('Tgl Mulai'))} s.d {format_tanggal_indo(x.get('Tgl Selesai'))})", 
-                        axis=1
-                    )
-                    list_opsi = df_master['Opsi_Dropdown'].dropna().unique().tolist()
+                if 'Sumber Data Implementasi' in df_master.columns and 'Judul Pembelajaran/ Asesmen/ Sertifikasi/ KSM' in df_master.columns:
+                    list_updl = sorted(df_master['Sumber Data Implementasi'].dropna().unique().tolist())
                     
-                    if list_opsi:
-                        with st.container(border=True):
-                            col_j1, col_j2 = st.columns([2, 1])
-                            with col_j1:
-                                opsi_pilih = st.selectbox("📚 Pilih Judul Pembelajaran:", list_opsi, key="judul_report_pembelajaran")
-                            with col_j2:
-                                st.markdown("<br>", unsafe_allow_html=True)
-                                btn_gen_kelas = st.button("🚀 Generate Laporan Kelas", type="primary", use_container_width=True)
+                    with st.container(border=True):
+                        col_u, col_j, col_btn = st.columns([1.5, 2, 1])
+                        with col_u:
+                            opsi_updl = st.selectbox("🏢 Pilih UPDL:", list_updl, key="updl_report")
+                        
+                        df_updl = df_master[df_master['Sumber Data Implementasi'] == opsi_updl].copy()
+                        
+                        df_updl['Opsi_Dropdown'] = df_updl.apply(
+                            lambda x: f"{str(x.get('Judul Pembelajaran/ Asesmen/ Sertifikasi/ KSM', '-')).strip()} ({format_tanggal_indo(x.get('Tanggal Mulai'))} s.d {format_tanggal_indo(x.get('Tanggal Selesai'))})", 
+                            axis=1
+                        )
+                        list_opsi = df_updl['Opsi_Dropdown'].dropna().unique().tolist()
+                        
+                        with col_j:
+                            opsi_pilih = st.selectbox("📚 Pilih Judul Pembelajaran:", list_opsi, key="judul_report_pembelajaran")
+                        with col_btn:
+                            st.markdown("<br>", unsafe_allow_html=True)
+                            btn_gen_kelas = st.button("🚀 Generate Laporan Kelas", type="primary", use_container_width=True)
                         
                         if btn_gen_kelas:
                             with st.spinner("Mengekstrak data pelaksanaan kelas..."):
-                                df_kelas = df_master[df_master['Opsi_Dropdown'] == opsi_pilih].iloc[0]
-                                judul_pilih = df_kelas.get('Judul Pembelajaran', '-')
+                                df_kelas = df_updl[df_updl['Opsi_Dropdown'] == opsi_pilih].iloc[0]
+                                judul_pilih = df_kelas.get('Judul Pembelajaran/ Asesmen/ Sertifikasi/ KSM', '-')
                                 
                                 kode_pemb = df_kelas.get('Kode Pembelajaran', '-')
-                                no_surat = df_kelas.get('No Surat Penugasan', '-')
+                                no_surat = df_kelas.get('No Surat Penugasan ke UP', '-')
                                 no_surat_panggil = df_kelas.get('Nomor Surat Pemanggilan Peserta', '-')
                                 if pd.isna(no_surat_panggil) or str(no_surat_panggil).strip() == "": no_surat_panggil = "-"
 
-                                tgl_surat_format = format_tanggal_indo(df_kelas.get('Tanggal Surat Penugasan'))
-                                tgl_mulai_format = format_tanggal_indo(df_kelas.get('Tgl Mulai'))
-                                tgl_selesai_format = format_tanggal_indo(df_kelas.get('Tgl Selesai'))
+                                tgl_surat_format = format_tanggal_indo(df_kelas.get('Tanggal Surat Penugasan ke UP'))
+                                tgl_mulai_format = format_tanggal_indo(df_kelas.get('Tanggal Mulai'))
+                                tgl_selesai_format = format_tanggal_indo(df_kelas.get('Tanggal Selesai'))
 
                                 kode_sr_raw = df_kelas.get('Kode Service Request', '')
                                 jenis_prog = df_kelas.get('Jenis Program', '')
@@ -1673,15 +1694,12 @@ else:
                                 pct_hadir = f_pct_str(df_kelas.get('% Kehadiran', '-'))
                                 pct_lulus = f_pct_str(df_kelas.get('% Kelulusan', '-'))
                                 
-                                isi_l1 = df_kelas.get('Peserta Isi L1', 0)
-                                if pd.isna(isi_l1): isi_l1 = 0
-                                pct_isi = f_pct_str(df_kelas.get('% Pengisian L1', '-'))
-                                
                                 instruktur = df_kelas.get('Instruktur/ Fasilitator', '-')
                                 if pd.isna(instruktur) or str(instruktur).strip() == "": instruktur = "[ Ketik Nama Instruktur Disini ]"
                                 
-                                tempat = df_kelas.get('Tempat Pelaksanaan', df_kelas.get('Lokasi Pelaksanaan', '-'))
-                                if pd.isna(tempat) or str(tempat).strip() == "": tempat = "PT PLN (Persero) UPDL JAKARTA"
+                                tempat = df_kelas.get('Lokasi Pelaksanaan', '-')
+                                updl_key = str(opsi_updl).strip().upper()
+                                if pd.isna(tempat) or str(tempat).strip() == "": tempat = f"PT PLN (Persero) {updl_key}"
                                 
                                 dict_metode = {
                                     "ICT": "In Class Training (ICT)",
@@ -1700,93 +1718,29 @@ else:
                                 rab = format_rp(df_kelas.get('RAB Pelaksanaan', 0))
                                 realisasi = format_rp(df_kelas.get('Realisasi Biaya Pelaksanaan', 0))
                                 
-                                def f_skor(v):
-                                    try: return f"{float(v):.2f}"
-                                    except: return "-"
-                                    
-                                skor_mat = f_skor(df_kelas.get('RATA MAT', 0))
-                                skor_ins = f_skor(df_kelas.get('RATA INST', 0))
-                                skor_sp_off = f_skor(df_kelas.get('RATA SP', 0))
-                                skor_sp_on = f_skor(df_kelas.get('RATA DS', 0))
-                                skor_tot = f_skor(df_kelas.get('RATA-RATA KESELURUHAN', 0))
-                                
-                                show_offline = metode_raw in ['ICT', 'BL', 'HL']
-                                show_online = metode_raw in ['DL', 'SL', 'BL', 'HL']
-                                
-                                sarpras_html = ""
-                                no_urut_tabel = 3
-                                
-                                if show_offline:
-                                    sarpras_html += f"""
-                                    <tr><td style="text-align:center;">{no_urut_tabel}</td><td>Sarana Prasarana Offline (In-Class)</td><td style="text-align:center; font-weight:bold;">{skor_sp_off}</td></tr>
-                                    """
-                                    no_urut_tabel += 1
-                                    
-                                if show_online:
-                                    sarpras_html += f"""
-                                    <tr><td style="text-align:center;">{no_urut_tabel}</td><td>Sarana Prasarana Online (Digital)</td><td style="text-align:center; font-weight:bold;">{skor_sp_on}</td></tr>
-                                    """
-                                    no_urut_tabel += 1
-                                    
-                                no_urut_total = no_urut_tabel
-                                
-                                pos_html, neg_html = "-", "-"
-                                jml_pos_kelas, jml_neg_kelas = 0, 0
-                                try:
-                                    url_k = "https://docs.google.com/spreadsheets/d/" + str(sheet_id) + "/gviz/tq?tqx=out:csv&sheet=Detail%20Komentar%20L1"
-                                    req_k = urllib.request.Request(url_k, headers={'User-Agent': 'Mozilla/5.0'})
-                                    with urllib.request.urlopen(req_k) as res_k:
-                                        df_k_raw = pd.read_csv(io.BytesIO(res_k.read()))
-                                    
-                                    df_k_raw.columns = df_k_raw.columns.astype(str).str.strip()
-                                    
-                                    col_judul_k = df_k_raw.columns[4] if len(df_k_raw.columns) > 4 else 'Judul Diklat'
-                                    col_teks_k  = df_k_raw.columns[10] if len(df_k_raw.columns) > 10 else 'Komentar'
-                                    col_jenis_k = df_k_raw.columns[13] if len(df_k_raw.columns) > 13 else 'Jenis'
-                                    
-                                    df_k_bln = df_k_raw[df_k_raw[col_judul_k].astype(str).str.strip().str.lower() == str(judul_pilih).strip().lower()].copy()
-                                    
-                                    if not df_k_bln.empty:
-                                        def tentukan_kategori_komentar(row):
-                                            val_n = str(row.get(col_jenis_k, '')).strip().lower()
-                                            if 'positif' in val_n or 'apresiasi' in val_n: return 'Positif'
-                                            elif 'negatif' in val_n or 'masukan' in val_n or 'keluhan' in val_n or 'saran' in val_n: return 'Negatif'
-                                            return analisis_sentimen_opensource(row.get(col_teks_k, ''))
-
-                                        df_k_bln['Sentimen'] = df_k_bln.apply(tentukan_kategori_komentar, axis=1)
-                                        pos_texts = df_k_bln[df_k_bln['Sentimen'] == 'Positif'][col_teks_k].dropna().tolist()
-                                        neg_texts = df_k_bln[df_k_bln['Sentimen'] == 'Negatif'][col_teks_k].dropna().tolist()
-                                        
-                                        jml_pos_kelas, jml_neg_kelas = len(pos_texts), len(neg_texts)
-                                        
-                                        pos_html = "<ul style='margin:0; padding-left:15px; color: #334155; line-height: 1.6;'>" + "".join([f"<li style='margin-bottom:6px;'>{t}</li>" for t in pos_texts]) + "</ul>" if pos_texts else "<span style='color:#94a3b8; font-style:italic;'>Nihil / Tidak ada catatan apresiasi.</span>"
-                                        neg_html = "<ul style='margin:0; padding-left:15px; color: #334155; line-height: 1.6;'>" + "".join([f"<li style='margin-bottom:6px;'>{t}</li>" for t in neg_texts]) + "</ul>" if neg_texts else "<span style='color:#94a3b8; font-style:italic;'>Nihil / Tidak ada catatan masukan.</span>"
-                                except Exception as e_k:
-                                    pos_html = f"Gagal memuat komentar: {e_k}"
-                                    neg_html = f"Gagal memuat komentar: {e_k}"
+                                # Tanda Tangan Dinamis
+                                manager_name = MANAGER_DICT.get(updl_key, "[ NAMA MANAGER BELUM DIATUR ]")
+                                nama_unit_pendek = updl_key.replace("UPDL ", "")
 
                                 narasi_eksekutif_kelas = ""
                                 try:
                                     prompt_kelas = f"""
-                                    Bertindaklah sebagai Quality Management Specialist di PLN UPDL Jakarta.
+                                    Bertindaklah sebagai Quality Management Specialist di PLN {updl_key}.
                                     Buatkan Ringkasan Eksekutif (maksimal 2 paragraf) untuk Laporan Pelaksanaan Pembelajaran kelas "{judul_pilih}" (Kode: {kode_pemb}).
                                     
                                     Fakta Pelaksanaan:
                                     - Kehadiran: {pct_hadir} ({hadir} dari {diundang} diundang)
                                     - Kelulusan: {pct_lulus} ({lulus} lulus)
                                     - Realisasi Biaya: {realisasi} (RAB: {rab})
-                                    - Skor Kepuasan (Skala 1-5, Target 4.50): Keseluruhan {skor_tot}, Materi {skor_mat}, Instruktur {skor_ins}, Sarana Offline {skor_sp_off}, Sarana Digital {skor_sp_on}.
-                                    - Partisipasi Evaluasi: {pct_isi} ({int(isi_l1)} peserta)
-                                    - Voice of Customer: {jml_pos_kelas} komentar apresiasi dan {jml_neg_kelas} masukan/keluhan.
                                     
                                     Tugas:
-                                    Berikan analisis naratif yang tajam dan preskriptif mengenai efektivitas dan kesuksesan kelas ini. Berikan pula rekomendasi singkat untuk perbaikan batch selanjutnya berdasarkan metrik dan suara peserta (jika ada keluhan).
+                                    Berikan analisis naratif yang tajam mengenai efektivitas pelaksanaan kelas ini dari sisi kehadiran dan penyerapan anggaran.
                                     Gunakan bahasa korporat baku PLN, lugas, preskriptif, dan tanpa format markdown tebal (* atau **) yang berlebihan.
                                     """
                                     ai_resp_kelas = model.generate_content(prompt_kelas)
                                     narasi_eksekutif_kelas = ai_resp_kelas.text.strip().replace('\n', '<br>')
                                 except Exception as e_ai_kelas:
-                                    narasi_eksekutif_kelas = f"Dokumen ini merangkum <i>post-implementation review</i> untuk pelaksanaan program <b>{judul_pilih}</b> ({kode_pemb}), menyajikan evaluasi metrik kehadiran ({pct_hadir}), efisiensi anggaran, dan tingkat kepuasan pelanggan (Skor: {skor_tot}) guna memastikan penyelarasan operasional dengan standar mutu <i>Service Excellence</i> UPDL Jakarta."
+                                    narasi_eksekutif_kelas = f"Dokumen ini merangkum <i>post-implementation review</i> untuk pelaksanaan program <b>{judul_pilih}</b> ({kode_pemb}), menyajikan evaluasi metrik kehadiran ({pct_hadir}) dan efisiensi anggaran, guna memastikan penyelarasan operasional dengan standar mutu <i>Service Excellence</i> {updl_key}."
                                     
                                 html_kelas = f"""
                                 <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
@@ -1823,7 +1777,7 @@ else:
                                         <div class="cover-code">({kode_pemb})</div>
                                         
                                         <br><br><br><br><br><br><br><br><br><br><br><br>
-                                        <div class="cover-footer">PT PLN (PERSERO) UPDL JAKARTA</div>
+                                        <div class="cover-footer">PT PLN (PERSERO) {updl_key}</div>
                                     </div>
                                     
                                     <br clear="all" style="page-break-before:always" />
@@ -1871,41 +1825,23 @@ else:
                                             <tr><td>Realisasi Biaya</td><td style="text-align:right; color: #003366;"><b>{realisasi}</b></td></tr>
                                         </table>
 
-                                        <h4 style="page-break-before: always;">5. EVALUASI PEMBELAJARAN</h4>
-                                        <p>Hasil Evaluasi pembelajaran menggunakan data pengisian evaluasi level 1 oleh peserta melalui HXMS sebagai berikut :</p>
-                                        <p><b>1. Tingkat Partisipasi</b></p>
-                                        <p>Persentase partisipasi pengisian peserta sebesar <b>{pct_isi}</b> ({int(isi_l1)} orang dari total {int(hadir)} peserta).</p>
-                                        <p><b>2. Skor Kepuasan Peserta</b></p>
-                                        <table class="zebra">
-                                            <tr><th style="width: 10%; text-align:center;">No</th><th style="width: 60%;">Indikator Kepuasan</th><th style="width: 30%; text-align:center;">Skor (1-5)</th></tr>
-                                            <tr><td style="text-align:center;">1</td><td>Materi</td><td style="text-align:center; font-weight:bold;">{skor_mat}</td></tr>
-                                            <tr><td style="text-align:center;">2</td><td>Instruktur</td><td style="text-align:center; font-weight:bold;">{skor_ins}</td></tr>
-                                            {sarpras_html}
-                                            <tr style="background-color: #f1f5f9;"><td style="text-align:center; font-weight:bold; color:#003366;">{no_urut_total}</td><td style="font-weight:bold; color:#003366;">Rata-Rata Keseluruhan</td><td style="text-align:center; font-weight:bold; color:#003366; font-size:12pt;">{skor_tot}</td></tr>
-                                        </table>
-
-                                        <h4>6. CUSTOMER VOICE</h4>
-                                        <p>Berikut adalah komentar apresiasi dan masukan dari peserta:</p>
-                                        <table>
-                                            <tr><th style="width: 50%; text-align:center; background-color: #0f172a;">Komentar Apresiasi ({jml_pos_kelas})</th><th style="width: 50%; text-align:center; background-color: #0f172a;">Komentar Masukan / Evaluasi ({jml_neg_kelas})</th></tr>
-                                            <tr>
-                                                <td style="padding: 12px; background-color: #f8fafc;">{pos_html}</td>
-                                                <td style="padding: 12px; background-color: #fff1f2;">{neg_html}</td>
-                                            </tr>
-                                        </table>
+                                        <h4 style="page-break-before: always;">5. EVALUASI PEMBELAJARAN & CUSTOMER VOICE</h4>
+                                        <p style="text-align:center; padding: 20px; background-color: #f8fafc; border: 1px dashed #cbd5e1; color: #64748b; font-style: italic;">
+                                            Seksi data evaluasi dan komentar peserta (Customer Voice) saat ini sedang dalam proses penyesuaian integrasi dengan format sumber data nasional.
+                                        </p>
 
                                         <br><br><br>
                                         <table style="width:100%; border: none;">
                                             <tr>
                                                 <td style="width:50%; border: none;"></td>
                                                 <td style="width:50%; border: none; text-align:center;">
-                                                    Mengetahui,<br><b>MANAGER UPDL JAKARTA</b><br><br><br><br><br>
-                                                    <b>ZAKI YAMANI KERTAPATI</b>
+                                                    Mengetahui,<br><b>MANAGER {nama_unit_pendek}</b><br><br><br><br><br>
+                                                    <b>{manager_name}</b>
                                                 </td>
                                             </tr>
                                         </table>
 
-                                        <h3 style="page-break-before: always; color:#003366; border-bottom: 2px solid #003366; padding-bottom:5px;">7. LAMPIRAN DOKUMEN</h3>
+                                        <h3 style="page-break-before: always; color:#003366; border-bottom: 2px solid #003366; padding-bottom:5px;">6. LAMPIRAN DOKUMEN</h3>
                                         <p>Berikut adalah kelengkapan administrasi dan bukti pelaksanaan program:</p>
                                         <ul style="line-height:2.0; font-weight:bold; color: #0055A4;">
                                             <li>Lampiran 1: Dasar Surat Penugasan</li>
@@ -1929,10 +1865,10 @@ else:
                                 )
                                 with st.expander("👀 Pratinjau Desain Dokumen (Live Preview)"):
                                     st.markdown(html_kelas, unsafe_allow_html=True)
-                    else:
-                        st.info("⚠️ Belum ada data 'Judul Pembelajaran' yang tersedia di Master Data Laporan.")
+                else:
+                    st.info("⚠️ Belum ada data 'Sumber Data Implementasi' atau 'Judul Pembelajaran' yang tersedia di Master Data Nasional.")
             except Exception as e:
-                st.error(f"Gagal memuat Master Data Laporan: {e}")
+                st.error(f"Gagal memuat Master Data Laporan Nasional: {e}")
 
         # ─────────────────────────────────────────────────────────────────────────
         # --- SUB TAB 3: KATALOG INSTRUKTUR ---
