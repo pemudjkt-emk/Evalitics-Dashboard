@@ -1171,7 +1171,7 @@ else:
                                     else:
                                         raise Exception("Model tidak tersedia atau data tidak lengkap")
                                 except Exception as e:
-                                    # Fallback
+                                    # Fallback jika gagal generate
                                     def fallback_row(asp, s_min, s_max, c_min, desc):
                                         return f"""
                                         <tr>
