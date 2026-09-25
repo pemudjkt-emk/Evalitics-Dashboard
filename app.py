@@ -369,7 +369,7 @@ if not st.session_state["logged_in"]:
         st.markdown('</div>', unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════════════════════
-# HAL halaman UTAMA APLIKASI (JIKA BERHASIL LOGIN)
+# HALAMAN UTAMA APLIKASI (JIKA BERHASIL LOGIN)
 # ══════════════════════════════════════════════════════════════════════════════
 else:
     # ─────────────────────────────────────────────────────────────────────────
@@ -891,10 +891,82 @@ else:
                                 (7, 'MAT7', 'Rating', 'Berapa tingkat kepuasan terhadap materi secara keseluruhan?')
                             ]
 
+                            # ─────────────────────────────────────────────────────────────────
+                            # NEW CODE: AI EXECUTIVE SUMMARY UNTUK MATERI
+                            # ─────────────────────────────────────────────────────────────────
+                            with st.spinner("Membuat Executive Summary Aspek Materi..."):
+                                valid_scores = {k: v for k, v in skor_overall.items() if pd.notna(v)}
+                                if valid_scores:
+                                    max_idx = max(valid_scores, key=valid_scores.get)
+                                    min_idx = min(valid_scores, key=valid_scores.get)
+                                    max_val = valid_scores[max_idx]
+                                    min_val = valid_scores[min_idx]
+                                    
+                                    mat_dict = {item[0]: item[3] for item in mat_info}
+                                    max_desc = mat_dict.get(max_idx, "")
+                                    min_desc = mat_dict.get(min_idx, "")
+                                else:
+                                    max_idx, min_idx, max_val, min_val = 1, 1, 0, 0
+                                    max_desc = min_desc = "-"
+                                    
+                                pic_avg = {}
+                                for pic, scores in skor_pic.items():
+                                    v_scores = [v for v in scores.values() if pd.notna(v)]
+                                    pic_avg[pic] = np.mean(v_scores) if v_scores else 0
+                                
+                                sorted_pics = sorted(pic_avg.items(), key=lambda x: x[1], reverse=True)
+                                pic_rank_str = ", ".join([f"{p} ({score:.2f})" for p, score in sorted_pics])
+                                
+                                bulan_terpilih_str = ", ".join([str(b) for b in df_filtered_dash['Laporan Bulan'].dropna().unique()])
+                                if not bulan_terpilih_str: bulan_terpilih_str = "periode ini"
+                                
+                                skor_mat7_overall = skor_overall.get(7, 0)
+                                
+                                exec_summary_html = ""
+                                try:
+                                    if model:
+                                        prompt_mat = f"""
+                                        Anda adalah Quality Evaluator di PLN. Buatkan ringkasan analisis untuk laporan Aspek Materi bulan {bulan_terpilih_str}.
+                                        Gunakan persis 2 sub-judul (cetak tebal):
+                                        
+                                        **Latar Belakang & Gambaran Umum**
+                                        (Buat 1 paragraf: Evaluasi kualitas modul dan materi PLN UPDL Jakarta bulan {bulan_terpilih_str} diukur melalui 7 indikator (MAT1–MAT7) mencakup 4 aspek: Engagement, Relevance, Satisfaction, Rating. Batas standar Tingkat Mutu Pelayanan (TMP) yang ditetapkan adalah 4.50.)
+                                        
+                                        **Temuan Utama & Kinerja Keseluruhan**
+                                        (Gunakan format bullet points:)
+                                        - **Rata-rata Keseluruhan:** Skor kepuasan materi secara keseluruhan (MAT7 - Rating) tercatat sebesar {skor_mat7_overall:.2f}. Kinerja per PIC KI menunjukkan {pic_rank_str}.
+                                        - **Indikator Tertinggi:** Aspek ini dipimpin oleh MAT{max_idx} sebesar {max_val:.2f} ("{max_desc}"). (Beri 1 kalimat pujian/makna analitik).
+                                        - **Area Perhatian Utama:** Nilai terendah berada pada indikator MAT{min_idx} sebesar {min_val:.2f} ("{min_desc}"). (Beri 1 kalimat rekomendasi).
+                                        
+                                        Gunakan gaya bahasa konsultan/profesional, tanpa awalan/akhiran tambahan. Jangan gunakan format heading Markdown (##), cukup cetak tebal (**) untuk judul.
+                                        """
+                                        ai_mat_resp = model.generate_content(prompt_mat)
+                                        # Parse plain markdown directly to streamlits markdown engine inside HTML
+                                        exec_summary_html = ai_mat_resp.text
+                                    else:
+                                        raise Exception("Model tidak tersedia")
+                                except Exception as e:
+                                    # Fallback jika AI limit/gagal
+                                    exec_summary_html = f"""
+                                    **Latar Belakang & Gambaran Umum**\n
+                                    Evaluasi kualitas modul dan materi pembelajaran di PLN UPDL Jakarta bulan {bulan_terpilih_str} diukur melalui 7 indikator (MAT1–MAT7) yang mencakup 4 aspek: Engagement, Relevance, Satisfaction, dan Overall Rating. Batas standar Tingkat Mutu Pelayanan (TMP) yang ditetapkan adalah 4.50.\n\n
+                                    **Temuan Utama & Kinerja Keseluruhan**
+                                    * **Rata-rata Keseluruhan:** Skor kepuasan materi secara keseluruhan (MAT7 - Rating) tercatat sebesar {skor_mat7_overall:.2f}. Kinerja per PIC KI: {pic_rank_str}.
+                                    * **Indikator Tertinggi:** MAT{max_idx} menempati posisi teratas sebesar {max_val:.2f} ("{max_desc}").
+                                    * **Area Perhatian Utama:** Nilai terendah berada pada indikator MAT{min_idx} sebesar {min_val:.2f} ("{min_desc}").
+                                    """
+                                
+                                # Render kotak Executive Summary
+                                st.markdown('<div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; border-left: 5px solid #0d6373; margin-top: 15px; margin-bottom: 20px;">', unsafe_allow_html=True)
+                                st.markdown(f"<h2 style='color: #0d6373; margin-top:0; margin-bottom:15px; font-size: 24px; text-align: center;'>Executive Summary</h2>", unsafe_allow_html=True)
+                                st.markdown(exec_summary_html)
+                                st.markdown('</div>', unsafe_allow_html=True)
+                            # ─────────────────────────────────────────────────────────────────
+
                             # Styling HTML - DENGAN PENYELARASAN WARNA (#0d6373)
                             html_css = """
                             <style>
-                            .tm-wrap { display: flex; gap: 10px; align-items: stretch; margin-top: 15px; margin-bottom: 25px; }
+                            .tm-wrap { display: flex; gap: 10px; align-items: stretch; margin-bottom: 25px; }
                             .tm-sum { border-collapse: collapse; font-family: sans-serif; font-size: 13px; width: 100%; height: 100%; border-radius: 4px; overflow: hidden; }
                             .tm-sum th { background-color: #0d6373; color: white; padding: 12px; border: 1px solid #ffffff; text-align: center; font-weight: bold; }
                             .tm-sum td { padding: 12px; border: 2px solid #ffffff; text-align: center; color: #333; background-color: #f5f4f0; }
@@ -1836,8 +1908,8 @@ else:
             
             try:
                 # ISOLASI SUMBER DATA KHUSUS LAPORAN PEMBELAJARAN
-                sheet_id_laporan = '1By4lZLCgYJOKs7IuY-6n-Dbp7USceB4zoxrlDh4a1CM'
-                url_master = "https://docs.google.com/spreadsheets/d/" + sheet_id_laporan + "/gviz/tq?tqx=out:csv&sheet=Implementation"
+                sheet_id_nasional = '1h-5D5susznSg6nDl2cqgxVu05zSVyTSW19VICYDLtuU'
+                url_master = "https://docs.google.com/spreadsheets/d/" + sheet_id_nasional + "/gviz/tq?tqx=out:csv&sheet=I_Gabungan_Detail"
                 
                 req_master = urllib.request.Request(url_master, headers={'User-Agent': 'Mozilla/5.0'})
                 with urllib.request.urlopen(req_master) as response:
