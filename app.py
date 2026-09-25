@@ -50,8 +50,8 @@ MANAGER_DICT = {
     "UPDL JAKARTA": "ZAKI YAMANI KERTAPATI",
     "UPDL SURALAYA": "ERWIN",
     "UPDL SEMARANG": "NAMA MANAGER SEMARANG",
-    "UPDL BOGOR": "AHMAD RIDANI",
-    "UPDL PANDAAN": "STOZN",
+    "UPDL BOGOR": "NAMA MANAGER BOGOR",
+    "UPDL PANDAAN": "NAMA MANAGER PANDAAN",
     "UPDL PADANG": "NAMA MANAGER PADANG",
     "UPDL PALEMBANG": "NAMA MANAGER PALEMBANG",
     "UPDL MAKASSAR": "NAMA MANAGER MAKASSAR",
@@ -976,38 +976,68 @@ else:
                                     df_k_bln['PIC_MAP'] = df_k_bln[col_judul_k].astype(str).str.lower().str.strip().map(map_judul_pic)
                                     df_k_valid = df_k_bln[df_k_bln['PIC_MAP'].notna()].copy()
                                     
-                                    def get_sentiment(row):
-                                        val_n = str(row.get(col_jenis_k, '')).strip().lower()
-                                        if 'positif' in val_n or 'apresiasi' in val_n: return 'Positif'
-                                        elif 'negatif' in val_n or 'masukan' in val_n or 'keluhan' in val_n or 'saran' in val_n: return 'Negatif'
-                                        return analisis_sentimen_opensource(row.get(col_teks_k, ''))
-                                        
-                                    df_k_valid['Sentimen'] = df_k_valid.apply(get_sentiment, axis=1)
+                                    # FITUR BARU: Hanya Mengambil Jenis Komentar Terkait "Mat" (Materi)
+                                    df_k_valid = df_k_valid[df_k_valid[col_jenis_k].astype(str).str.lower().str.contains('mat', na=False)]
                                     
-                                    voc_html = """
-                                    <table class='tm-mat' style='width:100%;'>
-                                    <tr>
-                                        <th style='background-color:#0d6373; width:15%;'>PIC KI</th>
-                                        <th style='background-color:#0d6373; width:42.5%;'>Komentar Apresiasi</th>
-                                        <th style='background-color:#0d6373; width:42.5%;'>Komentar Masukan</th>
-                                    </tr>
-                                    """
-                                    
-                                    for pic in pic_list:
-                                        df_pic_k = df_k_valid[df_k_valid['PIC_MAP'] == pic]
-                                        komentar_pos = df_pic_k[df_pic_k['Sentimen'] == 'Positif'][col_teks_k].dropna().tolist()
-                                        komentar_neg = df_pic_k[df_pic_k['Sentimen'] == 'Negatif'][col_teks_k].dropna().tolist()
+                                    if not df_k_valid.empty:
+                                        def get_sentiment(row):
+                                            val_n = str(row.get(col_jenis_k, '')).strip().lower()
+                                            if 'positif' in val_n or 'apresiasi' in val_n: return 'Positif'
+                                            elif 'negatif' in val_n or 'masukan' in val_n or 'keluhan' in val_n or 'saran' in val_n: return 'Negatif'
+                                            return analisis_sentimen_opensource(row.get(col_teks_k, ''))
+                                            
+                                        df_k_valid['Sentimen'] = df_k_valid.apply(get_sentiment, axis=1)
                                         
-                                        pos_li = "".join([f"<li style='margin-bottom:4px;'>{k}</li>" for k in komentar_pos]) if komentar_pos else "<div style='text-align:center; color:#999;'>-</div>"
-                                        neg_li = "".join([f"<li style='margin-bottom:4px;'>{k}</li>" for k in komentar_neg]) if komentar_neg else "<div style='text-align:center; color:#999;'>-</div>"
+                                        # PERUBAHAN STRUKTUR TABEL
+                                        voc_html = """
+                                        <table class='tm-mat' style='width:100%;'>
+                                        <tr>
+                                            <th style='background-color:#0d6373; width:15%;'>PIC KI</th>
+                                            <th style='background-color:#0d6373; width:30%;'>Judul Pembelajaran</th>
+                                            <th style='background-color:#0d6373; width:27.5%;'>Komentar Apresiasi</th>
+                                            <th style='background-color:#0d6373; width:27.5%;'>Komentar Masukan</th>
+                                        </tr>
+                                        """
                                         
-                                        pos_block = f"<ul style='margin:0; padding-left:15px; text-align:left;'>{pos_li}</ul>" if komentar_pos else pos_li
-                                        neg_block = f"<ul style='margin:0; padding-left:15px; text-align:left;'>{neg_li}</ul>" if komentar_neg else neg_li
+                                        for pic in pic_list:
+                                            df_pic_k = df_k_valid[df_k_valid['PIC_MAP'] == pic]
+                                            
+                                            # Jika ada judul di bawah PIC ini
+                                            if not df_pic_k.empty:
+                                                judul_terkait = df_pic_k[col_judul_k].unique().tolist()
+                                                first_row_pic = True # Flag untuk rowspan PIC KI
+                                                
+                                                for jdl in judul_terkait:
+                                                    df_jdl = df_pic_k[df_pic_k[col_judul_k] == jdl]
+                                                    komentar_pos = df_jdl[df_jdl['Sentimen'] == 'Positif'][col_teks_k].dropna().tolist()
+                                                    komentar_neg = df_jdl[df_jdl['Sentimen'] == 'Negatif'][col_teks_k].dropna().tolist()
+                                                    
+                                                    # Abaikan jika tidak ada komentar sama sekali di judul ini
+                                                    if not komentar_pos and not komentar_neg:
+                                                        continue
+                                                        
+                                                    pos_li = "".join([f"<li style='margin-bottom:4px;'>{k}</li>" for k in komentar_pos]) if komentar_pos else "<div style='text-align:center; color:#999;'>-</div>"
+                                                    neg_li = "".join([f"<li style='margin-bottom:4px;'>{k}</li>" for k in komentar_neg]) if komentar_neg else "<div style='text-align:center; color:#999;'>-</div>"
+                                                    
+                                                    pos_block = f"<ul style='margin:0; padding-left:15px; text-align:left;'>{pos_li}</ul>" if komentar_pos else pos_li
+                                                    neg_block = f"<ul style='margin:0; padding-left:15px; text-align:left;'>{neg_li}</ul>" if komentar_neg else neg_li
+                                                    
+                                                    voc_html += "<tr>"
+                                                    if first_row_pic:
+                                                        # Hitung total judul unik yang punya komentar
+                                                        jml_judul_aktif = df_pic_k[df_pic_k[col_teks_k].notna()][col_judul_k].nunique()
+                                                        voc_html += f"<td rowspan='{jml_judul_aktif}' style='background-color:#f5f4f0; font-weight:bold; vertical-align:middle;'>{pic}</td>"
+                                                        first_row_pic = False
+                                                    
+                                                    voc_html += f"<td style='vertical-align:top; text-align:left; font-weight:bold;'>{jdl}</td>"
+                                                    voc_html += f"<td style='vertical-align:top;'>{pos_block}</td>"
+                                                    voc_html += f"<td style='vertical-align:top;'>{neg_block}</td>"
+                                                    voc_html += "</tr>"
                                         
-                                        voc_html += f"<tr><td style='background-color:#f5f4f0; font-weight:bold;'>{pic}</td><td style='vertical-align:top;'>{pos_block}</td><td style='vertical-align:top;'>{neg_block}</td></tr>"
-                                        
-                                    voc_html += "</table>"
-                                    st.markdown(voc_html, unsafe_allow_html=True)
+                                        voc_html += "</table>"
+                                        st.markdown(voc_html, unsafe_allow_html=True)
+                                    else:
+                                        st.info("ℹ️ Tidak ada data komentar yang spesifik membahas Materi (Mat) pada bulan yang Anda saring.")
                                 else:
                                     st.info("ℹ️ Tidak ada data komentar (Voice of Customer) pada bulan yang Anda saring.")
                             except Exception as ek:
@@ -2029,13 +2059,32 @@ else:
                                 """
                                 
                                 st.success(f"✅ Dokumen Laporan Pembelajaran {judul_pilih} berhasil disusun!")
+                                
+                                file_name = f"Laporan_Pelaksanaan_{kode_pemb.replace('.','_')}.doc"
+                                file_bytes = html_kelas.encode('utf-8')
+                                
                                 st.download_button(
                                     label="📥 DOWNLOAD LAPORAN KELAS (.doc)",
-                                    data=html_kelas.encode('utf-8'),
-                                    file_name=f"Laporan_Pelaksanaan_{kode_pemb.replace('.','_')}.doc",
+                                    data=file_bytes,
+                                    file_name=file_name,
                                     mime="application/msword",
                                     type="primary"
                                 )
+                                
+                                # --- PROSES UPLOAD OTOMATIS KE GOOGLE DRIVE ---
+                                if updl_key in DRIVE_FOLDER_DICT:
+                                    target_folder = DRIVE_FOLDER_DICT[updl_key]
+                                    with st.spinner(f"☁️ Sedang mengarsipkan otomatis ke Google Drive ({updl_key})..."):
+                                        res_upload = upload_dokumen_ke_drive(file_bytes, file_name, target_folder)
+                                        if res_upload == "ERROR_IMPORT":
+                                            st.warning("⚠️ Laporan berhasil di-generate, namun gagal diarsip ke Drive. Module 'google-api-python-client' belum terinstall di server.")
+                                        elif str(res_upload).startswith("ERROR"):
+                                            st.error(f"⚠️ Gagal mengarsipkan ke Google Drive: {res_upload}")
+                                        else:
+                                            st.success(f"✅ Arsip laporan berhasil diamankan ke Google Drive!")
+                                else:
+                                    st.info("ℹ️ ID Folder Drive untuk UPDL ini belum diatur. Laporan hanya tersedia untuk diunduh lokal.")
+
                                 with st.expander("👀 Pratinjau Desain Dokumen (Live Preview)"):
                                     st.markdown(html_kelas, unsafe_allow_html=True)
                 else:
