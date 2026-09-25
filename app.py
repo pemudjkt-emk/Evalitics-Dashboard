@@ -899,8 +899,7 @@ else:
                             .tm-sum th { background-color: #0d6373; color: white; padding: 12px; border: 1px solid #ffffff; text-align: center; font-weight: bold; }
                             .tm-sum td { padding: 12px; border: 2px solid #ffffff; text-align: center; color: #333; background-color: #f5f4f0; }
                             .tm-mat { border-collapse: collapse; font-family: sans-serif; font-size: 12px; width: 100%; border: 1px solid #333; }
-                            .tm-mat th { background-color: #174b59; color: white; padding: 10px 5px; border: 1px solid #111; text-align: center; font-weight: bold; }
-                            .tm-mat th.bg-green { background-color: #4a7729; }
+                            .tm-mat th { background-color: #0d6373; color: white; padding: 10px 5px; border: 1px solid #111; text-align: center; font-weight: bold; }
                             .tm-mat td { padding: 8px 10px; border: 1px solid #555; text-align: center; color: #111; background-color: #ffffff; }
                             .tm-mat td.text-left { text-align: left; }
                             .tm-mat td.font-bold { font-weight: bold; }
@@ -917,7 +916,7 @@ else:
                             mat_html = "<div style='flex: 6.5; overflow-x: auto;'><table class='tm-mat'><tr>"
                             mat_html += "<th>No</th><th>Indikator</th><th>Aspek</th><th style='width:35%;'>Penjelasan</th><th>Skor L1<br>Overall</th>"
                             for pic in pic_list:
-                                mat_html += f"<th class='bg-green'>{pic}</th>"
+                                mat_html += f"<th>{pic}</th>"
                             mat_html += "</tr>"
                             
                             # Baris Tabel Kanan
@@ -958,36 +957,33 @@ else:
                                 url_k = f'https://docs.google.com/spreadsheets/d/{sheet_id_komentar}/gviz/tq?tqx=out:csv&sheet=Detail%20Komentar%20L1'
                                 df_k_raw = load_csv(url_k)
                                 
-                                # Penyesuaian Indeks Kolom Sesuai Format "Detail Komentar L1"
-                                col_bulan_k = df_k_raw.columns[3] if len(df_k_raw.columns) > 3 else 'Bulan'       # Kolom D
-                                col_judul_k = df_k_raw.columns[4] if len(df_k_raw.columns) > 4 else 'Judul Diklat' # Kolom E
-                                col_teks_k  = df_k_raw.columns[10] if len(df_k_raw.columns) > 10 else 'Komentar'    # Kolom K
-                                col_jenis_k = df_k_raw.columns[13] if len(df_k_raw.columns) > 13 else 'Jenis'       # Kolom N
+                                # Penyesuaian Indeks Kolom Sesuai Format Sheet "Detail Komentar L1"
+                                # Berdasarkan informasi user:
+                                # Bulan: Kolom 4 (Index 3)
+                                # Judul: Kolom 5 (Index 4)
+                                # Teks Komentar: Kolom 11 (Index 10)
+                                # Kategori (MAT): Kolom 12 (Index 11)
+                                # PIC KI: Kolom 13 (Index 12)
+                                # Sentimen: Kolom 14 (Index 13)
+                                
+                                col_bulan_k    = df_k_raw.columns[3] if len(df_k_raw.columns) > 3 else 'Bulan'
+                                col_judul_k    = df_k_raw.columns[4] if len(df_k_raw.columns) > 4 else 'Judul'
+                                col_teks_k     = df_k_raw.columns[10] if len(df_k_raw.columns) > 10 else 'Komentar'
+                                col_kategori_k = df_k_raw.columns[11] if len(df_k_raw.columns) > 11 else 'Kategori'
+                                col_pic_k      = df_k_raw.columns[12] if len(df_k_raw.columns) > 12 else 'PIC KI'
+                                col_sentimen_k = df_k_raw.columns[13] if len(df_k_raw.columns) > 13 else 'Sentimen'
 
-                                # Filter comments exactly mapping the currently filtered months in Dashboard
+                                # Filter comments based on selected month in Dashboard
                                 bulan_terpilih = df_filtered_dash['Laporan Bulan'].dropna().unique().tolist()
                                 df_k_raw[col_bulan_k] = df_k_raw[col_bulan_k].astype(str).str.strip()
                                 df_k_bln = df_k_raw[df_k_raw[col_bulan_k].isin(bulan_terpilih)].copy()
                                 
                                 if not df_k_bln.empty:
-                                    # Create mapping from Dashboard to link Judul with PIC KI
-                                    map_judul_pic = dict(zip(df_filtered_dash['Judul Pembelajaran/Kegiatan'].astype(str).str.lower().str.strip(), df_filtered_dash['PIC KI']))
                                     
-                                    df_k_bln['PIC_MAP'] = df_k_bln[col_judul_k].astype(str).str.lower().str.strip().map(map_judul_pic)
-                                    df_k_valid = df_k_bln[df_k_bln['PIC_MAP'].notna()].copy()
-                                    
-                                    # FITUR BARU: Hanya Mengambil Jenis Komentar Terkait "Mat" (Materi)
-                                    df_k_valid = df_k_valid[df_k_valid[col_jenis_k].astype(str).str.lower().str.contains('mat', na=False)]
+                                    # FITUR BARU: Hanya Mengambil Kategori Komentar Terkait "Mat" (Materi) dari Kolom 12
+                                    df_k_valid = df_k_bln[df_k_bln[col_kategori_k].astype(str).str.lower().str.contains('mat', na=False)].copy()
                                     
                                     if not df_k_valid.empty:
-                                        def get_sentiment(row):
-                                            val_n = str(row.get(col_jenis_k, '')).strip().lower()
-                                            if 'positif' in val_n or 'apresiasi' in val_n: return 'Positif'
-                                            elif 'negatif' in val_n or 'masukan' in val_n or 'keluhan' in val_n or 'saran' in val_n: return 'Negatif'
-                                            return analisis_sentimen_opensource(row.get(col_teks_k, ''))
-                                            
-                                        df_k_valid['Sentimen'] = df_k_valid.apply(get_sentiment, axis=1)
-                                        
                                         # PERUBAHAN STRUKTUR TABEL
                                         voc_html = """
                                         <table class='tm-mat' style='width:100%;'>
@@ -999,18 +995,23 @@ else:
                                         </tr>
                                         """
                                         
+                                        # Iterate using pic_list from Dashboard to keep order, check against col_pic_k
                                         for pic in pic_list:
-                                            df_pic_k = df_k_valid[df_k_valid['PIC_MAP'] == pic]
+                                            df_pic_k = df_k_valid[df_k_valid[col_pic_k].astype(str).str.strip() == pic]
                                             
                                             # Jika ada judul di bawah PIC ini
                                             if not df_pic_k.empty:
-                                                judul_terkait = df_pic_k[col_judul_k].unique().tolist()
+                                                judul_terkait = df_pic_k[col_judul_k].dropna().unique().tolist()
                                                 first_row_pic = True # Flag untuk rowspan PIC KI
                                                 
                                                 for jdl in judul_terkait:
                                                     df_jdl = df_pic_k[df_pic_k[col_judul_k] == jdl]
-                                                    komentar_pos = df_jdl[df_jdl['Sentimen'] == 'Positif'][col_teks_k].dropna().tolist()
-                                                    komentar_neg = df_jdl[df_jdl['Sentimen'] == 'Negatif'][col_teks_k].dropna().tolist()
+                                                    
+                                                    # Ambil nilai sentimen dari Kolom 14
+                                                    sentimen_series = df_jdl[col_sentimen_k].astype(str).str.strip().str.lower()
+                                                    
+                                                    komentar_pos = df_jdl[sentimen_series.isin(['positif', 'apresiasi'])][col_teks_k].dropna().tolist()
+                                                    komentar_neg = df_jdl[sentimen_series.isin(['negatif', 'masukan', 'keluhan'])][col_teks_k].dropna().tolist()
                                                     
                                                     # Abaikan jika tidak ada komentar sama sekali di judul ini
                                                     if not komentar_pos and not komentar_neg:
@@ -1024,14 +1025,14 @@ else:
                                                     
                                                     voc_html += "<tr>"
                                                     if first_row_pic:
-                                                        # Hitung total judul unik yang punya komentar
+                                                        # Hitung total judul unik yang benar-benar punya komentar untuk rowspan
                                                         jml_judul_aktif = df_pic_k[df_pic_k[col_teks_k].notna()][col_judul_k].nunique()
                                                         voc_html += f"<td rowspan='{jml_judul_aktif}' style='background-color:#f5f4f0; font-weight:bold; vertical-align:middle;'>{pic}</td>"
                                                         first_row_pic = False
                                                     
                                                     voc_html += f"<td style='vertical-align:top; text-align:left; font-weight:bold;'>{jdl}</td>"
-                                                    voc_html += f"<td style='vertical-align:top;'>{pos_block}</td>"
-                                                    voc_html += f"<td style='vertical-align:top;'>{neg_block}</td>"
+                                                    voc_html += f"<td style='vertical-align:top; text-align:left;'>{pos_block}</td>"
+                                                    voc_html += f"<td style='vertical-align:top; text-align:left;'>{neg_block}</td>"
                                                     voc_html += "</tr>"
                                         
                                         voc_html += "</table>"
