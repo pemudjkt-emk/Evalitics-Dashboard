@@ -949,7 +949,7 @@ else:
                             st.markdown(html_css + f"<div class='tm-wrap'>{sum_html}{mat_html}</div>", unsafe_allow_html=True)
                             
                             # ─────────────────────────────────────────────────────────────────
-                            # TABEL KUALITATIF (VOC KOMENTAR)
+                            # TABEL KUALITATIF (VOC KOMENTAR) - SUMBER: DETAIL KOMENTAR L1
                             # ─────────────────────────────────────────────────────────────────
                             st.markdown("<br><h4>💬 Voice of Customer (Komentar Berdasarkan PIC KI)</h4>", unsafe_allow_html=True)
                             
@@ -958,10 +958,11 @@ else:
                                 url_k = f'https://docs.google.com/spreadsheets/d/{sheet_id_komentar}/gviz/tq?tqx=out:csv&sheet=Detail%20Komentar%20L1'
                                 df_k_raw = load_csv(url_k)
                                 
-                                col_bulan_k = df_k_raw.columns[3] if len(df_k_raw.columns) > 3 else 'Bulan'
-                                col_teks_k  = df_k_raw.columns[10] if len(df_k_raw.columns) > 10 else 'Komentar'
-                                col_jenis_k = df_k_raw.columns[13] if len(df_k_raw.columns) > 13 else 'Jenis'
-                                col_judul_k = next((c for c in ['Judul Pembelajaran/Kegiatan', 'Judul Pembelajaran', 'Judul', 'Nama Pelatihan'] if c in df_k_raw.columns), df_k_raw.columns[0])
+                                # Penyesuaian Indeks Kolom Sesuai Format "Detail Komentar L1"
+                                col_bulan_k = df_k_raw.columns[3] if len(df_k_raw.columns) > 3 else 'Bulan'       # Kolom D
+                                col_judul_k = df_k_raw.columns[4] if len(df_k_raw.columns) > 4 else 'Judul Diklat' # Kolom E
+                                col_teks_k  = df_k_raw.columns[10] if len(df_k_raw.columns) > 10 else 'Komentar'    # Kolom K
+                                col_jenis_k = df_k_raw.columns[13] if len(df_k_raw.columns) > 13 else 'Jenis'       # Kolom N
 
                                 # Filter comments exactly mapping the currently filtered months in Dashboard
                                 bulan_terpilih = df_filtered_dash['Laporan Bulan'].dropna().unique().tolist()
@@ -997,8 +998,8 @@ else:
                                         komentar_pos = df_pic_k[df_pic_k['Sentimen'] == 'Positif'][col_teks_k].dropna().tolist()
                                         komentar_neg = df_pic_k[df_pic_k['Sentimen'] == 'Negatif'][col_teks_k].dropna().tolist()
                                         
-                                        pos_li = "".join([f"<li style='margin-bottom:4px;'>{k}</li>" for k in komentar_pos]) if komentar_pos else "<div style='text-align:center;'>-</div>"
-                                        neg_li = "".join([f"<li style='margin-bottom:4px;'>{k}</li>" for k in komentar_neg]) if komentar_neg else "<div style='text-align:center;'>-</div>"
+                                        pos_li = "".join([f"<li style='margin-bottom:4px;'>{k}</li>" for k in komentar_pos]) if komentar_pos else "<div style='text-align:center; color:#999;'>-</div>"
+                                        neg_li = "".join([f"<li style='margin-bottom:4px;'>{k}</li>" for k in komentar_neg]) if komentar_neg else "<div style='text-align:center; color:#999;'>-</div>"
                                         
                                         pos_block = f"<ul style='margin:0; padding-left:15px; text-align:left;'>{pos_li}</ul>" if komentar_pos else pos_li
                                         neg_block = f"<ul style='margin:0; padding-left:15px; text-align:left;'>{neg_li}</ul>" if komentar_neg else neg_li
@@ -1011,13 +1012,6 @@ else:
                                     st.info("ℹ️ Tidak ada data komentar (Voice of Customer) pada bulan yang Anda saring.")
                             except Exception as ek:
                                 st.error(f"Gagal memuat Voice of Customer: {ek}")
-                        else:
-                            st.warning("⚠️ Kolom 'PIC KI' tidak ditemukan dalam data.")
-                else:
-                    st.warning("⚠️ Tidak ada data. Sesuaikan filter.")
-
-        except Exception as e:
-            st.error(f"Gagal memuat data: {e}")
 
     # ══════════════════════════════════════════════════════════════════════════════
     # KONTEN: 🤖 AI ASSISTANT
