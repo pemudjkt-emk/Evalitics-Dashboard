@@ -891,7 +891,7 @@ else:
                                 (7, 'MAT7', 'Rating', 'Berapa tingkat kepuasan terhadap materi secara keseluruhan?')
                             ]
 
-                            # Styling HTML
+                            # Styling HTML - DENGAN PENYELARASAN WARNA (#0d6373)
                             html_css = """
                             <style>
                             .tm-wrap { display: flex; gap: 10px; align-items: stretch; margin-top: 15px; margin-bottom: 25px; }
@@ -958,7 +958,6 @@ else:
                                 df_k_raw = load_csv(url_k)
                                 
                                 # Penyesuaian Indeks Kolom Sesuai Format Sheet "Detail Komentar L1"
-                                # Berdasarkan informasi user:
                                 # Bulan: Kolom 4 (Index 3)
                                 # Judul: Kolom 5 (Index 4)
                                 # Teks Komentar: Kolom 11 (Index 10)
@@ -967,15 +966,15 @@ else:
                                 # Sentimen: Kolom 14 (Index 13)
                                 
                                 col_bulan_k    = df_k_raw.columns[3] if len(df_k_raw.columns) > 3 else 'Bulan'
-                                col_judul_k    = df_k_raw.columns[4] if len(df_k_raw.columns) > 4 else 'Judul'
+                                col_judul_k    = df_k_raw.columns[4] if len(df_k_raw.columns) > 4 else 'Judul Diklat'
                                 col_teks_k     = df_k_raw.columns[10] if len(df_k_raw.columns) > 10 else 'Komentar'
                                 col_kategori_k = df_k_raw.columns[11] if len(df_k_raw.columns) > 11 else 'Kategori'
                                 col_pic_k      = df_k_raw.columns[12] if len(df_k_raw.columns) > 12 else 'PIC KI'
                                 col_sentimen_k = df_k_raw.columns[13] if len(df_k_raw.columns) > 13 else 'Sentimen'
 
-                                # Filter comments based on selected month in Dashboard
-                                bulan_terpilih = df_filtered_dash['Laporan Bulan'].dropna().unique().tolist()
-                                df_k_raw[col_bulan_k] = df_k_raw[col_bulan_k].astype(str).str.strip()
+                                # Filter comments based on selected month in Dashboard (Case-Insensitive)
+                                bulan_terpilih = [str(b).strip().lower() for b in df_filtered_dash['Laporan Bulan'].dropna().unique()]
+                                df_k_raw[col_bulan_k] = df_k_raw[col_bulan_k].astype(str).str.strip().str.lower()
                                 df_k_bln = df_k_raw[df_k_raw[col_bulan_k].isin(bulan_terpilih)].copy()
                                 
                                 if not df_k_bln.empty:
@@ -995,23 +994,43 @@ else:
                                         </tr>
                                         """
                                         
-                                        # Iterate using pic_list from Dashboard to keep order, check against col_pic_k
+                                        # Standardize PIC in df_k_valid to lower for matching
+                                        df_k_valid['pic_lower'] = df_k_valid[col_pic_k].astype(str).str.strip().str.lower()
+                                        
+                                        # Iterate using pic_list from Dashboard to keep order
                                         for pic in pic_list:
-                                            df_pic_k = df_k_valid[df_k_valid[col_pic_k].astype(str).str.strip() == pic]
+                                            pic_lower = str(pic).strip().lower()
+                                            df_pic_k = df_k_valid[df_k_valid['pic_lower'] == pic_lower]
                                             
                                             # Jika ada judul di bawah PIC ini
                                             if not df_pic_k.empty:
                                                 judul_terkait = df_pic_k[col_judul_k].dropna().unique().tolist()
                                                 first_row_pic = True # Flag untuk rowspan PIC KI
                                                 
+                                                # Validasi total rowspan (Hanya hitung judul yang punya teks komentar valid)
+                                                valid_judul_count = 0
+                                                for jdl in judul_terkait:
+                                                    df_jdl = df_pic_k[df_pic_k[col_judul_k] == jdl]
+                                                    if df_jdl[col_teks_k].dropna().astype(str).str.strip().ne("").any():
+                                                        valid_judul_count += 1
+                                                
+                                                if valid_judul_count == 0: continue
+                                                
                                                 for jdl in judul_terkait:
                                                     df_jdl = df_pic_k[df_pic_k[col_judul_k] == jdl]
                                                     
-                                                    # Ambil nilai sentimen dari Kolom 14
-                                                    sentimen_series = df_jdl[col_sentimen_k].astype(str).str.strip().str.lower()
+                                                    # Ambil nilai sentimen dari Kolom 14, Fallback ke AI jika kosong
+                                                    def get_sentiment(row):
+                                                        sent_val = str(row.get(col_sentimen_k, '')).strip().lower()
+                                                        if 'positif' in sent_val or 'apresiasi' in sent_val: return 'Positif'
+                                                        elif 'negatif' in sent_val or 'masukan' in sent_val or 'keluhan' in sent_val: return 'Negatif'
+                                                        # Fallback to function if empty or unrecognizable
+                                                        return analisis_sentimen_opensource(row.get(col_teks_k, ''))
                                                     
-                                                    komentar_pos = df_jdl[sentimen_series.isin(['positif', 'apresiasi'])][col_teks_k].dropna().tolist()
-                                                    komentar_neg = df_jdl[sentimen_series.isin(['negatif', 'masukan', 'keluhan'])][col_teks_k].dropna().tolist()
+                                                    df_jdl['calc_sentimen'] = df_jdl.apply(get_sentiment, axis=1)
+                                                    
+                                                    komentar_pos = df_jdl[df_jdl['calc_sentimen'] == 'Positif'][col_teks_k].dropna().tolist()
+                                                    komentar_neg = df_jdl[df_jdl['calc_sentimen'] == 'Negatif'][col_teks_k].dropna().tolist()
                                                     
                                                     # Abaikan jika tidak ada komentar sama sekali di judul ini
                                                     if not komentar_pos and not komentar_neg:
@@ -1025,9 +1044,7 @@ else:
                                                     
                                                     voc_html += "<tr>"
                                                     if first_row_pic:
-                                                        # Hitung total judul unik yang benar-benar punya komentar untuk rowspan
-                                                        jml_judul_aktif = df_pic_k[df_pic_k[col_teks_k].notna()][col_judul_k].nunique()
-                                                        voc_html += f"<td rowspan='{jml_judul_aktif}' style='background-color:#f5f4f0; font-weight:bold; vertical-align:middle;'>{pic}</td>"
+                                                        voc_html += f"<td rowspan='{valid_judul_count}' style='background-color:#f5f4f0; font-weight:bold; vertical-align:middle;'>{pic}</td>"
                                                         first_row_pic = False
                                                     
                                                     voc_html += f"<td style='vertical-align:top; text-align:left; font-weight:bold;'>{jdl}</td>"
@@ -1825,6 +1842,18 @@ else:
                 
                 df_master.columns = df_master.columns.astype(str).str.strip()
                 
+                # 🛡️ PEMBERSIH DATA OTOMATIS: Mencegah error "invalid literal for int()"
+                kolom_rawan_koma = [
+                    'Peserta Hadir', 'Peserta Lulus', 'Peserta Diundang', 
+                    'Rencana Jumlah Peserta', 'Jumlah Peserta Lulus L2', 
+                    'Jumlah Peserta Isi L2', 'Peserta Isi L1'
+                ]
+                
+                for col in kolom_rawan_koma:
+                    if col in df_master.columns:
+                        df_master[col] = df_master[col].astype(str).str.replace(',', '.', regex=False)
+                        df_master[col] = pd.to_numeric(df_master[col], errors='coerce').fillna(0).astype(int)
+
                 if 'Sumber Data Implementasi' in df_master.columns and 'Judul Pembelajaran/ Asesmen/ Sertifikasi/ KSM' in df_master.columns:
                     list_updl = sorted(df_master['Sumber Data Implementasi'].dropna().unique().tolist())
                     
@@ -1836,7 +1865,7 @@ else:
                         df_updl = df_master[df_master['Sumber Data Implementasi'] == opsi_updl].copy()
                         
                         df_updl['Opsi_Dropdown'] = df_updl.apply(
-                            lambda x: f"{str(x.get('Judul Pembelajaran/ Asesmen/ Sertifikasi/ KSM', '-')).strip()} ({format_tanggal_indo(x.get('Tanggal Mulai'))} s.d {format_tanggal_indo(x.get('Tanggal Selesai'))})", 
+                            lambda x: f"{str(x.get('Judul Pembelajaran/ Asesmen/ Sertifikasi/ KSM', '-')).strip()} ({format_tanggal_indo(x.get('Tanggal Mulai'))} s.d {format_tanggal_indo(x.get('Tgl Akhir', x.get('Tanggal Selesai')))})", 
                             axis=1
                         )
                         list_opsi = df_updl['Opsi_Dropdown'].dropna().unique().tolist()
@@ -1859,7 +1888,7 @@ else:
 
                                 tgl_surat_format = format_tanggal_indo(df_kelas.get('Tanggal Surat Penugasan ke UP'))
                                 tgl_mulai_format = format_tanggal_indo(df_kelas.get('Tanggal Mulai'))
-                                tgl_selesai_format = format_tanggal_indo(df_kelas.get('Tanggal Selesai'))
+                                tgl_selesai_format = format_tanggal_indo(df_kelas.get('Tgl Akhir', df_kelas.get('Tanggal Selesai')))
 
                                 kode_sr_raw = df_kelas.get('Kode Service Request', '')
                                 jenis_prog = df_kelas.get('Jenis Program', '')
@@ -1876,16 +1905,12 @@ else:
                                     dasar_pelaksanaan_teks = "-"
                                 
                                 rencana_peserta = df_kelas.get('Rencana Jumlah Peserta', 0)
-                                if pd.isna(rencana_peserta): rencana_peserta = 0
                                 diundang = df_kelas.get('Peserta Diundang', 0)
-                                if pd.isna(diundang): diundang = 0
                                 hadir = df_kelas.get('Peserta Hadir', 0)
-                                if pd.isna(hadir): hadir = 0
                                 lulus = df_kelas.get('Peserta Lulus', 0)
-                                if pd.isna(lulus): lulus = 0
                                 
                                 def f_pct_str(v):
-                                    v_str = str(v).strip()
+                                    v_str = str(v).replace(',', '.').strip()
                                     if v_str in ['nan', 'None', '', '-']: return "-"
                                     if '%' in v_str: return v_str
                                     try:
@@ -1901,7 +1926,7 @@ else:
                                 instruktur = df_kelas.get('Instruktur/ Fasilitator', '-')
                                 if pd.isna(instruktur) or str(instruktur).strip() == "": instruktur = "[ Ketik Nama Instruktur Disini ]"
                                 
-                                tempat = df_kelas.get('Lokasi Pelaksanaan', '-')
+                                tempat = df_kelas.get('Tempat Pelaksanaan', '-')
                                 updl_key = str(opsi_updl).strip().upper()
                                 if pd.isna(tempat) or str(tempat).strip() == "": tempat = f"PT PLN (Persero) {updl_key}"
                                 
@@ -1916,12 +1941,40 @@ else:
                                 metode = dict_metode.get(metode_raw, metode_raw)
                                 
                                 def format_rp(val):
-                                    try: return f"Rp {int(float(val)):,}".replace(',', '.')
+                                    try: 
+                                        val_clean = str(val).replace(',', '.').strip()
+                                        return f"Rp {int(float(val_clean)):,}".replace(',', '.')
                                     except: return "Rp 0"
                                         
                                 rab = format_rp(df_kelas.get('RAB Pelaksanaan', 0))
                                 realisasi = format_rp(df_kelas.get('Realisasi Biaya Pelaksanaan', 0))
                                 
+                                def f_skor(val):
+                                    try:
+                                        val_clean = str(val).replace(',', '.').strip()
+                                        return f"{float(val_clean):.2f}"
+                                    except: return "-"
+                                    
+                                s_mat = f_skor(df_kelas.get('RATA MAT', '-'))
+                                s_ins = f_skor(df_kelas.get('RATA INST', '-'))
+                                s_sp = f_skor(df_kelas.get('RATA SP', '-'))
+                                s_ds = f_skor(df_kelas.get('RATA DS', '-'))
+                                s_tot = f_skor(df_kelas.get('RATA-RATA KESELURUHAN', '-'))
+
+                                # Proses Voice of Customer
+                                kom_apresiasi_raw = str(df_kelas.get('KOMENTAR APRESIASI', '')).strip()
+                                kom_masukan_raw = str(df_kelas.get('KOMENTAR MASUKAN', '')).strip()
+                                
+                                def parse_komentar(teks):
+                                    if teks in ['nan', 'None', '', '-']: return "<div style='text-align:center;'><i>Tidak ada data.</i></div>"
+                                    items = [t.strip() for t in re.split(r'\n+', teks) if t.strip()]
+                                    if not items: return "<div style='text-align:center;'><i>Tidak ada data.</i></div>"
+                                    html_list = "".join([f"<li style='margin-bottom:4px;'>{i}</li>" for i in items])
+                                    return f"<ul style='margin-top:0; padding-left:20px;'>{html_list}</ul>"
+
+                                html_apresiasi = parse_komentar(kom_apresiasi_raw)
+                                html_masukan = parse_komentar(kom_masukan_raw)
+
                                 # Tanda Tangan Dinamis
                                 manager_name = MANAGER_DICT.get(updl_key, "[ NAMA MANAGER BELUM DIATUR ]")
                                 nama_unit_pendek = updl_key.replace("UPDL ", "")
@@ -1936,15 +1989,16 @@ else:
                                     - Kehadiran: {pct_hadir} ({hadir} dari {diundang} diundang)
                                     - Kelulusan: {pct_lulus} ({lulus} lulus)
                                     - Realisasi Biaya: {realisasi} (RAB: {rab})
+                                    - Skor Evaluasi L1: {s_tot}
                                     
                                     Tugas:
-                                    Berikan analisis naratif yang tajam mengenai efektivitas pelaksanaan kelas ini dari sisi kehadiran dan penyerapan anggaran.
+                                    Berikan analisis naratif yang tajam mengenai efektivitas pelaksanaan kelas ini.
                                     Gunakan bahasa korporat baku PLN, lugas, preskriptif, dan tanpa format markdown tebal (* atau **) yang berlebihan.
                                     """
                                     ai_resp_kelas = model.generate_content(prompt_kelas)
                                     narasi_eksekutif_kelas = ai_resp_kelas.text.strip().replace('\n', '<br>')
                                 except Exception as e_ai_kelas:
-                                    narasi_eksekutif_kelas = f"Dokumen ini merangkum <i>post-implementation review</i> untuk pelaksanaan program <b>{judul_pilih}</b> ({kode_pemb}), menyajikan evaluasi metrik kehadiran ({pct_hadir}) dan efisiensi anggaran, guna memastikan penyelarasan operasional dengan standar mutu <i>Service Excellence</i> {updl_key}."
+                                    narasi_eksekutif_kelas = f"Dokumen ini merangkum <i>post-implementation review</i> untuk pelaksanaan program <b>{judul_pilih}</b> ({kode_pemb}), menyajikan evaluasi metrik kehadiran ({pct_hadir}), efisiensi anggaran, dan indeks kepuasan L1 ({s_tot}), guna memastikan penyelarasan operasional dengan standar mutu <i>Service Excellence</i> {updl_key}."
                                     
                                 html_kelas = f"""
                                 <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
@@ -2030,9 +2084,27 @@ else:
                                         </table>
 
                                         <h4 style="page-break-before: always;">5. EVALUASI PEMBELAJARAN & CUSTOMER VOICE</h4>
-                                        <p style="text-align:center; padding: 20px; background-color: #f8fafc; border: 1px dashed #cbd5e1; color: #64748b; font-style: italic;">
-                                            Seksi data evaluasi dan komentar peserta (Customer Voice) saat ini sedang dalam proses penyesuaian integrasi dengan format sumber data nasional.
-                                        </p>
+                                        <p>Hasil rekapitulasi evaluasi kepuasan peserta terhadap penyelenggaraan pembelajaran (Level 1) adalah sebagai berikut:</p>
+                                        <table class="zebra">
+                                            <tr>
+                                                <th style="width: 70%; text-align:center;">Pilar Evaluasi</th>
+                                                <th style="width: 30%; text-align:center;">Skor Kepuasan</th>
+                                            </tr>
+                                            <tr><td>Materi Pembelajaran</td><td style="text-align:center; font-weight:bold;">{s_mat}</td></tr>
+                                            <tr><td>Instruktur & Fasilitator</td><td style="text-align:center; font-weight:bold;">{s_ins}</td></tr>
+                                            <tr><td>Sarana Prasarana Offline</td><td style="text-align:center; font-weight:bold;">{s_sp}</td></tr>
+                                            <tr><td>Sarana Prasarana Online</td><td style="text-align:center; font-weight:bold;">{s_ds}</td></tr>
+                                            <tr style="background-color: #003366; color: white;">
+                                                <td style="font-weight:bold;">Rata-Rata Komposit Keseluruhan</td>
+                                                <td style="text-align:center; font-weight:bold;">{s_tot}</td>
+                                            </tr>
+                                        </table>
+                                        
+                                        <p style="margin-top:15px; margin-bottom:5px;"><b>Komentar Apresiasi (Voice of Customer):</b></p>
+                                        {html_apresiasi}
+                                        
+                                        <p style="margin-top:10px; margin-bottom:5px;"><b>Komentar Masukan / Evaluasi:</b></p>
+                                        {html_masukan}
 
                                         <br><br><br>
                                         <table style="width:100%; border: none;">
