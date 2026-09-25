@@ -892,7 +892,7 @@ else:
                             ]
 
                             # ─────────────────────────────────────────────────────────────────
-                            # NEW CODE: AI EXECUTIVE SUMMARY UNTUK MATERI
+                            # AI EXECUTIVE SUMMARY UNTUK MATERI
                             # ─────────────────────────────────────────────────────────────────
                             with st.spinner("Membuat Executive Summary Aspek Materi..."):
                                 valid_scores = {k: v for k, v in skor_overall.items() if pd.notna(v)}
@@ -941,12 +941,10 @@ else:
                                         Gunakan gaya bahasa konsultan/profesional, tanpa awalan/akhiran tambahan. Jangan gunakan format heading Markdown (##), cukup cetak tebal (**) untuk judul.
                                         """
                                         ai_mat_resp = model.generate_content(prompt_mat)
-                                        # Parse plain markdown directly to streamlits markdown engine inside HTML
                                         exec_summary_html = ai_mat_resp.text
                                     else:
                                         raise Exception("Model tidak tersedia")
                                 except Exception as e:
-                                    # Fallback jika AI limit/gagal
                                     exec_summary_html = f"""
                                     **Latar Belakang & Gambaran Umum**\n
                                     Evaluasi kualitas modul dan materi pembelajaran di PLN UPDL Jakarta bulan {bulan_terpilih_str} diukur melalui 7 indikator (MAT1–MAT7) yang mencakup 4 aspek: Engagement, Relevance, Satisfaction, dan Overall Rating. Batas standar Tingkat Mutu Pelayanan (TMP) yang ditetapkan adalah 4.50.\n\n
@@ -956,14 +954,13 @@ else:
                                     * **Area Perhatian Utama:** Nilai terendah berada pada indikator MAT{min_idx} sebesar {min_val:.2f} ("{min_desc}").
                                     """
                                 
-                                # Render kotak Executive Summary
                                 st.markdown('<div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; border-left: 5px solid #0d6373; margin-top: 15px; margin-bottom: 20px;">', unsafe_allow_html=True)
                                 st.markdown(f"<h2 style='color: #0d6373; margin-top:0; margin-bottom:15px; font-size: 24px; text-align: center;'>Executive Summary</h2>", unsafe_allow_html=True)
                                 st.markdown(exec_summary_html)
                                 st.markdown('</div>', unsafe_allow_html=True)
                             # ─────────────────────────────────────────────────────────────────
 
-                            # Styling HTML - DENGAN PENYELARASAN WARNA (#0d6373)
+                            # Styling HTML - MATRIKS
                             html_css = """
                             <style>
                             .tm-wrap { display: flex; gap: 10px; align-items: stretch; margin-bottom: 25px; }
@@ -1020,7 +1017,7 @@ else:
                             st.markdown(html_css + f"<div class='tm-wrap'>{sum_html}{mat_html}</div>", unsafe_allow_html=True)
                             
                             # ─────────────────────────────────────────────────────────────────
-                            # TABEL KUALITATIF (VOC KOMENTAR) - SUMBER: DETAIL KOMENTAR L1
+                            # TABEL KUALITATIF (VOC KOMENTAR)
                             # ─────────────────────────────────────────────────────────────────
                             st.markdown("<br><h4>💬 Voice of Customer (Komentar Berdasarkan PIC KI)</h4>", unsafe_allow_html=True)
                             
@@ -1029,14 +1026,6 @@ else:
                                 url_k = f'https://docs.google.com/spreadsheets/d/{sheet_id_komentar}/gviz/tq?tqx=out:csv&sheet=Detail%20Komentar%20L1'
                                 df_k_raw = load_csv(url_k)
                                 
-                                # Penyesuaian Indeks Kolom Sesuai Format Sheet "Detail Komentar L1"
-                                # Bulan: Kolom 4 (Index 3)
-                                # Judul: Kolom 5 (Index 4)
-                                # Teks Komentar: Kolom 11 (Index 10)
-                                # Kategori (MAT): Kolom 12 (Index 11)
-                                # PIC KI: Kolom 13 (Index 12)
-                                # Sentimen: Kolom 14 (Index 13)
-                                
                                 col_bulan_k    = df_k_raw.columns[3] if len(df_k_raw.columns) > 3 else 'Bulan'
                                 col_judul_k    = df_k_raw.columns[4] if len(df_k_raw.columns) > 4 else 'Judul Diklat'
                                 col_teks_k     = df_k_raw.columns[10] if len(df_k_raw.columns) > 10 else 'Komentar'
@@ -1044,30 +1033,23 @@ else:
                                 col_pic_k      = df_k_raw.columns[12] if len(df_k_raw.columns) > 12 else 'PIC KI'
                                 col_sentimen_k = df_k_raw.columns[13] if len(df_k_raw.columns) > 13 else 'Sentimen'
 
-                                # Filter comments based on selected month in Dashboard (Case-Insensitive)
                                 bulan_terpilih = [str(b).strip().lower() for b in df_filtered_dash['Laporan Bulan'].dropna().unique()]
                                 df_k_raw[col_bulan_k] = df_k_raw[col_bulan_k].astype(str).str.strip().str.lower()
                                 df_k_bln = df_k_raw[df_k_raw[col_bulan_k].isin(bulan_terpilih)].copy()
                                 
                                 if not df_k_bln.empty:
-                                    
-                                    # 1. HANYA MENGAMBIL KATEGORI KOMENTAR TERKAIT "MAT"
                                     df_k_valid = df_k_bln[df_k_bln[col_kategori_k].astype(str).str.lower().str.contains('mat', na=False)].copy()
                                     
-                                    # 2. PROSES SENTIMEN UNTUK SEMUA BARIS (FALLBACK KE AI JIKA KOSONG)
                                     def get_sentiment_global(row):
                                         sent_val = str(row.get(col_sentimen_k, '')).strip().lower()
                                         if 'positif' in sent_val or 'apresiasi' in sent_val: return 'Positif'
                                         elif 'negatif' in sent_val or 'masukan' in sent_val or 'keluhan' in sent_val: return 'Negatif'
-                                        # Paksa gunakan AI jika kolom sentimen tidak terdefinisi jelas
                                         ai_res = analisis_sentimen_opensource(row.get(col_teks_k, ''))
-                                        # Jika AI bilang Netral, kita paksa masuk Positif agar tidak hilang dari tabel
                                         return 'Positif' if ai_res == 'Netral' else ai_res
                                         
                                     df_k_valid['calc_sentimen'] = df_k_valid.apply(get_sentiment_global, axis=1)
                                     
                                     if not df_k_valid.empty:
-                                        # STRUKTUR TABEL BARU (GABUNGAN PIC KI & JUDUL)
                                         voc_html = """
                                         <table class='tm-mat' style='width:100%;'>
                                         <tr>
@@ -1085,11 +1067,8 @@ else:
                                             df_pic_k = df_k_valid[df_k_valid['pic_lower'] == pic_lower]
                                             
                                             if not df_pic_k.empty:
-                                                # Ambil judul-judul unik yang dimiliki PIC ini
                                                 judul_terkait = df_pic_k[col_judul_k].dropna().unique().tolist()
                                                 
-                                                # Hitung total judul yang benar-benar punya teks komentar (tidak kosong)
-                                                # Ini digunakan untuk menentukan panjang rowspan dengan presisi
                                                 judul_dengan_komentar = []
                                                 for jdl in judul_terkait:
                                                     df_jdl = df_pic_k[df_pic_k[col_judul_k] == jdl]
@@ -1099,7 +1078,7 @@ else:
                                                 valid_judul_count = len(judul_dengan_komentar)
                                                 
                                                 if valid_judul_count == 0: 
-                                                    continue # Lewati PIC ini jika tidak ada komentar valid satupun
+                                                    continue
                                                     
                                                 first_row_pic = True
                                                 
@@ -1116,13 +1095,10 @@ else:
                                                     neg_block = f"<ul style='margin:0; padding-left:15px; text-align:left;'>{neg_li}</ul>" if komentar_neg else neg_li
                                                     
                                                     voc_html += "<tr>"
-                                                    
-                                                    # Cetak rowspan PIC KI HANYA di baris pertama untuk PIC tersebut
                                                     if first_row_pic:
                                                         voc_html += f"<td rowspan='{valid_judul_count}' style='background-color:#f5f4f0; font-weight:bold; vertical-align:middle;'>{pic}</td>"
                                                         first_row_pic = False
                                                     
-                                                    # Center alignment untuk kolom Judul Pembelajaran
                                                     voc_html += f"<td style='vertical-align:middle; text-align:center; font-weight:bold;'>{jdl}</td>"
                                                     voc_html += f"<td style='vertical-align:top; text-align:left;'>{pos_block}</td>"
                                                     voc_html += f"<td style='vertical-align:top; text-align:left;'>{neg_block}</td>"
@@ -1136,6 +1112,102 @@ else:
                                     st.info("ℹ️ Tidak ada data komentar (Voice of Customer) pada bulan yang Anda saring.")
                             except Exception as ek:
                                 st.error(f"Gagal memuat Voice of Customer: {ek}")
+
+                            # ─────────────────────────────────────────────────────────────────
+                            # OPPORTUNITY FOR IMPROVEMENT (OFI) - AI DRIVEN
+                            # ─────────────────────────────────────────────────────────────────
+                            st.markdown("<br><br><h4>📈 Opportunity For Improvement (OFI)</h4>", unsafe_allow_html=True)
+                            st.markdown("Untuk mencapai dan melampaui standar mutu pelayanan (4.50) pada periode mendatang, berikut adalah usulan rencana tindakan terstruktur berdasarkan skala prioritas:")
+                            
+                            with st.spinner("Merumuskan Opportunity for Improvement (OFI)..."):
+                                # 1. Cari Skor & Indikator Terendah per Aspek
+                                def get_min_indicator(cols):
+                                    scores = {c: skor_overall.get(c, np.nan) for c in cols if pd.notna(skor_overall.get(c, np.nan))}
+                                    if not scores: return None, None, None, None
+                                    min_c = min(scores, key=scores.get)
+                                    min_s = scores[min_c]
+                                    max_s = max(scores.values())
+                                    desc = mat_dict.get(min_c, "")
+                                    return min_c, min_s, max_s, desc
+                                
+                                eng_min_c, eng_min_s, eng_max_s, eng_desc = get_min_indicator([1, 2])
+                                sat_min_c, sat_min_s, sat_max_s, sat_desc = get_min_indicator([5, 6])
+                                rel_min_c, rel_min_s, rel_max_s, rel_desc = get_min_indicator([3, 4])
+                                
+                                ofi_html = ""
+                                try:
+                                    if model and all(v is not None for v in [eng_min_c, sat_min_c, rel_min_c]):
+                                        prompt_ofi = f"""
+                                        Anda adalah konsultan Quality Management. Buatkan tabel HTML berisi "Opportunity for Improvement" (OFI) untuk materi pembelajaran.
+                                        Tabel terdiri dari 3 kolom: 'Aspek', 'Skor', 'Temuan', dan 'OFI'.
+                                        Hasilkan HANYA baris-baris tag HTML <tr> hingga </tr> untuk 3 aspek di bawah ini, tanpa tag <table>, tanpa css, tanpa backticks markdown.
+                                        Untuk kolom 'OFI', berikan 2 rekomendasi tindakan perbaikan operasional (bullet points <ul><li>) yang spesifik dan praktis.
+                                        
+                                        Format output yang diinginkan untuk setiap baris:
+                                        <tr>
+                                            <td style='text-align:center;'>[Nama Aspek]</td>
+                                            <td style='text-align:center;'>[Skor Min - Max]</td>
+                                            <td style='text-align:left;'>[Temuan]</td>
+                                            <td style='text-align:left;'><ul><li>[OFI 1]</li><li>[OFI 2]</li></ul></td>
+                                        </tr>
+                                        
+                                        Data Aspek 1:
+                                        Aspek: Engagement
+                                        Skor Min-Max: {eng_min_s:.2f} - {eng_max_s:.2f}
+                                        Temuan: Indikator MAT{eng_min_c} ({eng_min_s:.2f}) terendah. Deskripsi: "{eng_desc}".
+                                        
+                                        Data Aspek 2:
+                                        Aspek: Satisfaction
+                                        Skor Min-Max: {sat_min_s:.2f} - {sat_max_s:.2f}
+                                        Temuan: Indikator MAT{sat_min_c} ({sat_min_s:.2f}) terendah. Deskripsi: "{sat_desc}".
+                                        
+                                        Data Aspek 3:
+                                        Aspek: Relevance
+                                        Skor Min-Max: {rel_min_s:.2f} - {rel_max_s:.2f}
+                                        Temuan: Indikator MAT{rel_min_c} ({rel_min_s:.2f}) terendah. Deskripsi: "{rel_desc}".
+                                        """
+                                        ai_ofi_resp = model.generate_content(prompt_ofi)
+                                        ofi_rows = ai_ofi_resp.text.strip().replace("```html", "").replace("```", "")
+                                    else:
+                                        raise Exception("Model tidak tersedia atau data tidak lengkap")
+                                except Exception as e:
+                                    # Fallback
+                                    def fallback_row(asp, s_min, s_max, c_min, desc):
+                                        return f"""
+                                        <tr>
+                                            <td style='text-align:center;'>{asp}</td>
+                                            <td style='text-align:center;'>{s_min:.2f} - {s_max:.2f}</td>
+                                            <td style='text-align:left;'>Nilai terendah pada MAT{c_min} ({s_min:.2f}): "{desc}"</td>
+                                            <td style='text-align:left;'>
+                                                <ul>
+                                                    <li>Perlu dilakukan evaluasi mendalam pada aspek ini bersama Subject Matter Expert.</li>
+                                                    <li>Menambahkan elemen interaktif untuk meningkatkan skor pada pelaksanaan berikutnya.</li>
+                                                </ul>
+                                            </td>
+                                        </tr>
+                                        """
+                                    ofi_rows = ""
+                                    if eng_min_c: ofi_rows += fallback_row("Engagement", eng_min_s, eng_max_s, eng_min_c, eng_desc)
+                                    if sat_min_c: ofi_rows += fallback_row("Satisfaction", sat_min_s, sat_max_s, sat_min_c, sat_desc)
+                                    if rel_min_c: ofi_rows += fallback_row("Relevance", rel_min_s, rel_max_s, rel_min_c, rel_desc)
+
+                                final_ofi_html = f"""
+                                <style>
+                                .ofi-mat {{ border-collapse: collapse; font-family: sans-serif; font-size: 13px; width: 100%; border-radius: 4px; overflow: hidden; margin-top: 10px; }}
+                                .ofi-mat th {{ background-color: #0d6373; color: white; padding: 12px; border: 2px solid #ffffff; text-align: center; font-weight: bold; }}
+                                .ofi-mat td {{ padding: 12px; border: 2px solid #ffffff; background-color: #f5f4f0; color: #333; }}
+                                </style>
+                                <table class='ofi-mat'>
+                                    <tr>
+                                        <th style='width:15%;'>Aspek</th>
+                                        <th style='width:15%;'>Skor</th>
+                                        <th style='width:25%;'>Temuan</th>
+                                        <th style='width:45%;'>OFI</th>
+                                    </tr>
+                                    {ofi_rows}
+                                </table>
+                                """
+                                st.markdown(final_ofi_html, unsafe_allow_html=True)
                         else:
                             st.warning("⚠️ Kolom 'PIC KI' tidak ditemukan dalam data.")
                 else:
