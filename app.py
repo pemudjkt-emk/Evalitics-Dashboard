@@ -1213,8 +1213,8 @@ else:
                 else:
                     st.warning("⚠️ Tidak ada data. Sesuaikan filter.")
 
-                        except Exception as e:
-                        st.error(f"Gagal memuat data: {e}")
+                except Exception as e:
+                st.error(f"Gagal memuat data: {e}")
 
     # ══════════════════════════════════════════════════════════════════════════════
     # KONTEN: 🤖 AI ASSISTANT
