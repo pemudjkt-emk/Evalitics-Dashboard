@@ -1012,7 +1012,6 @@ else:
                                     st.info("ℹ️ Tidak ada data komentar (Voice of Customer) pada bulan yang Anda saring.")
                             except Exception as ek:
                                 st.error(f"Gagal memuat Voice of Customer: {ek}")
-
     # ══════════════════════════════════════════════════════════════════════════════
     # KONTEN: 🤖 AI ASSISTANT
     # ══════════════════════════════════════════════════════════════════════════════
