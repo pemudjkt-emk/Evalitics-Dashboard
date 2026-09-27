@@ -316,7 +316,7 @@ for key, default in [
         st.session_state[key] = default
 
 # ══════════════════════════════════════════════════════════════════════════════
-# HALAMAN LOGIN (FUTURISTIC GLASSMORPHISM - FINAL REVISION)
+# HALAMAN LOGIN (FUTURISTIC GLASSMORPHISM - POSISI KANAN & WARNA TEKS GELAP)
 # ══════════════════════════════════════════════════════════════════════════════
 if not st.session_state["logged_in"]:
     b64_bg = get_base64_img("bg_login.png")
@@ -328,7 +328,7 @@ if not st.session_state["logged_in"]:
     [data-testid="stSidebar"] {{ display: none !important; }}
     [data-testid="stHeader"] {{ display: none !important; }}
     
-    /* Aman dari padding default untuk memaksimalkan grid pergeseran ke kiri */
+    /* Aman dari padding default untuk memaksimalkan grid pergeseran */
     .block-container {{ max-width: 100% !important; padding-left: 2rem !important; padding-right: 2rem !important; }}
     
     /* Pasang gambar background murni ke seluruh halaman */
@@ -354,7 +354,7 @@ if not st.session_state["logged_in"]:
         padding: 40px 30px !important;
         box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37) !important;
         max-width: 420px !important; 
-        margin-left: -5% !important; /* Ditarik ke kiri dengan margin negatif secara aman */
+        margin: 0 auto !important; /* Kembali di-center dalam kolomnya (tidak dipaksa kiri) */
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -368,11 +368,12 @@ if not st.session_state["logged_in"]:
     [data-testid="stForm"] {{ border: none !important; background: transparent !important; padding: 0 !important; width: 100%; }}
     .stTextInput label p {{ color: #cbd5e1 !important; font-size: 14px !important; }}
     .stTextInput input {{
-        border-radius: 10px !important; background-color: rgba(255, 255, 255, 0.08) !important;
+        border-radius: 10px !important; background-color: rgba(255, 255, 255, 0.9) !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important; padding: 14px 15px !important;
-        color: #ffffff !important; font-size: 14px !important; margin-bottom: 10px !important;
+        color: #111111 !important; /* WARNA TEKS SAAT DIKETIK MENJADI HITAM/GELAP */
+        font-size: 14px !important; margin-bottom: 10px !important;
     }}
-    .stTextInput input:focus {{ border-color: #20c997 !important; box-shadow: 0 0 0 1px #20c997 !important; background-color: rgba(255, 255, 255, 0.15) !important; }}
+    .stTextInput input:focus {{ border-color: #20c997 !important; box-shadow: 0 0 0 1px #20c997 !important; background-color: #ffffff !important; }}
     
     /* Tombol Aksi */
     [data-testid="stFormSubmitButton"] button {{
@@ -399,8 +400,8 @@ if not st.session_state["logged_in"]:
         </div>
     """, unsafe_allow_html=True)
 
-    # Pembagian Kolom dengan rasio aman agar tidak nabrak teks kiri
-    col_kiri, col_tengah, col_kanan = st.columns([0.4, 0.1, 1.5])
+    # REVISI: Mengembalikan rasio agar kolom form (kolom 3) terdorong ke posisi KANAN
+    col_kiri, col_tengah, col_kanan = st.columns([1.5, 0.1, 1])
     
     with col_kiri:
         st.markdown('<div style="margin-top: 5vh;"></div>', unsafe_allow_html=True)
@@ -950,7 +951,7 @@ else:
                             mat_info = [
                                 (1, 'MAT1', 'Engagement', 'Studi kasus yang diberikan mendorong diskusi dan keterlibatan aktif peserta'),
                                 (2, 'MAT2', '', 'Materi pembelajaran memotivasi saya untuk belajar lebih lanjut'),
-                                (3, 'MAT3', 'Relevance', 'Materi pembelajaran bisa saya aplikasikan pada pekerjaan'),
+                                (3, 'MAT3', 'Relevance', 'Materi pembelajaran bisa সম্মেলন aplikasikan pada pekerjaan'),
                                 (4, 'MAT4', '', 'Materi pembelajaran mampu meningkatkan kompetensi saya'),
                                 (5, 'MAT5', 'Satisfaction', 'Materi pembelajaran disajikan secara menarik'),
                                 (6, 'MAT6', '', 'Saya bersedia merekomendasikan materi ini kepada orang lain'),
