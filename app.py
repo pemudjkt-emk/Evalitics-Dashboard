@@ -328,6 +328,9 @@ if not st.session_state["logged_in"]:
     [data-testid="stSidebar"] {{ display: none !important; }}
     [data-testid="stHeader"] {{ display: none !important; }}
     
+    /* Aman dari padding default untuk memaksimalkan grid pergeseran ke kiri */
+    .block-container {{ max-width: 100% !important; padding-left: 2rem !important; padding-right: 2rem !important; }}
+    
     /* Pasang gambar background murni ke seluruh halaman */
     .stApp {{ {bg_style} }}
     
@@ -351,7 +354,7 @@ if not st.session_state["logged_in"]:
         padding: 40px 30px !important;
         box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37) !important;
         max-width: 420px !important; 
-        margin-left: 5% !important;
+        margin-left: -5% !important; /* Ditarik ke kiri dengan margin negatif secara aman */
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -396,8 +399,8 @@ if not st.session_state["logged_in"]:
         </div>
     """, unsafe_allow_html=True)
 
-    # REVISI: Mengubah proporsi grid untuk menggeser kotak kaca lebih ke kiri (Rasio Tengah diperkecil)
-    col_kiri, col_tengah, col_kanan = st.columns([0.5, 0.1, 1.6])
+    # Pembagian Kolom dengan rasio aman agar tidak nabrak teks kiri
+    col_kiri, col_tengah, col_kanan = st.columns([0.4, 0.1, 1.5])
     
     with col_kiri:
         st.markdown('<div style="margin-top: 5vh;"></div>', unsafe_allow_html=True)
@@ -414,7 +417,7 @@ if not st.session_state["logged_in"]:
         """, unsafe_allow_html=True)
 
     with col_kanan:
-        # Logo kini ditaruh langsung sebagai elemen pertama di dalam kolom kanan agar ikut terbungkus kaca
+        # Logo PLN di dalam kartu Form
         b64_pln = get_base64_img("Logo PLN.png")
         if b64_pln:
             st.markdown(f'<img src="data:image/png;base64,{b64_pln}" style="height:65px; margin: 0 auto; display: block;">', unsafe_allow_html=True)
