@@ -316,7 +316,7 @@ for key, default in [
         st.session_state[key] = default
 
 # ══════════════════════════════════════════════════════════════════════════════
-# HALAMAN LOGIN (FUTURISTIC GLASSMORPHISM - UPDATED)
+# HALAMAN LOGIN (FUTURISTIC GLASSMORPHISM - FINAL REVISION)
 # ══════════════════════════════════════════════════════════════════════════════
 if not st.session_state["logged_in"]:
     b64_bg = get_base64_img("bg_login.png")
@@ -324,38 +324,45 @@ if not st.session_state["logged_in"]:
     
     login_css = f"""
     <style>
-    /* Sembunyikan elemen bawaan Streamlit */
+    /* Sembunyikan elemen bawaan Streamlit yang tidak perlu */
     [data-testid="stSidebar"] {{ display: none !important; }}
     [data-testid="stHeader"] {{ display: none !important; }}
+    
+    /* Pasang gambar background murni ke seluruh halaman */
     .stApp {{ {bg_style} }}
     
-    /* Navigasi Atas Statis */
+    /* Navigasi Atas Statis (Kosmetik visual) */
     .top-nav {{ display: flex; gap: 35px; color: #ffffff; font-size: 15px; margin-top: 10px; margin-bottom: 7vh; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }}
     .top-nav span {{ cursor: default; transition: color 0.3s; font-weight: 500; }}
     
-    /* Teks Kiri (Hero) */
+    /* Teks Kiri (Hero Section) */
     .hero-title {{ color: #ffffff; font-size: 55px; font-weight: 800; line-height: 1.1; margin-bottom: 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-shadow: 0px 4px 15px rgba(0,0,0,0.5); }}
     .hero-title span {{ color: #20c997; }}
     .hero-subtitle {{ color: #cbd5e1; font-size: 17px; line-height: 1.6; max-width: 90%; margin-bottom: 40px; font-weight: 400; }}
     
-    /* Kartu Kanan (Glassmorphism) - Dipersempit 50% & Latar Agak Gelap */
-    .glass-card {{
-        background: rgba(10, 25, 47, 0.55);
-        backdrop-filter: blur(15px);
-        -webkit-backdrop-filter: blur(15px);
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        border-radius: 20px;
-        padding: 40px 30px;
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-        text-align: center;
-        max-width: 380px;
-        margin-left: 0;
+    /* TARGETING KOLOM STREAMLIT UNTUK GLASSMORPHISM */
+    /* Menyasar spesifik kolom ke-3 (kanan) tempat form bersarang */
+    [data-testid="stColumn"]:nth-child(3) {{
+        background: rgba(10, 25, 47, 0.55) !important;
+        backdrop-filter: blur(15px) !important;
+        -webkit-backdrop-filter: blur(15px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        border-radius: 20px !important;
+        padding: 40px 30px !important;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37) !important;
+        max-width: 420px !important; 
+        margin: 0 auto !important; 
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }}
-    .login-header {{ color: #ffffff; font-size: 26px; font-weight: 700; margin-bottom: 5px; margin-top: 5px; font-family: 'Segoe UI', sans-serif; }}
-    .login-subheader {{ color: #cbd5e1; font-size: 14px; margin-bottom: 30px; }}
     
-    /* Styling Form & Input Bawaan */
-    [data-testid="stForm"] {{ border: none !important; background: transparent !important; padding: 0 !important; text-align: left; }}
+    /* Teks dalam Kartu (Welcome Back) */
+    .login-header {{ color: #ffffff; font-size: 26px; font-weight: 700; margin-bottom: 5px; margin-top: 15px; font-family: 'Segoe UI', sans-serif; text-align: center; width: 100%; }}
+    .login-subheader {{ color: #cbd5e1; font-size: 14px; margin-bottom: 30px; text-align: center; width: 100%; }}
+    
+    /* Kotak Input Streamlit (Paksa agar tidak borderless penuh, melainkan kapsul padat) */
+    [data-testid="stForm"] {{ border: none !important; background: transparent !important; padding: 0 !important; width: 100%; }}
     .stTextInput label p {{ color: #cbd5e1 !important; font-size: 14px !important; }}
     .stTextInput input {{
         border-radius: 10px !important; background-color: rgba(255, 255, 255, 0.08) !important;
@@ -364,7 +371,7 @@ if not st.session_state["logged_in"]:
     }}
     .stTextInput input:focus {{ border-color: #20c997 !important; box-shadow: 0 0 0 1px #20c997 !important; background-color: rgba(255, 255, 255, 0.15) !important; }}
     
-    /* Styling Tombol Aksi */
+    /* Tombol Aksi */
     [data-testid="stFormSubmitButton"] button {{
         background: linear-gradient(90deg, #0d9488 0%, #20c997 100%) !important;
         color: #ffffff !important; border: none !important; border-radius: 10px !important;
@@ -389,8 +396,8 @@ if not st.session_state["logged_in"]:
         </div>
     """, unsafe_allow_html=True)
 
-    # Mengubah rasio agar bergeser sekitar 3cm ke kiri
-    col_kiri, col_tengah, col_kanan = st.columns([0.9, 0.1, 1.2])
+    # REVISI: Mengubah proporsi grid untuk menggeser kotak kaca lebih ke kiri (Rasio Tengah diperkecil)
+    col_kiri, col_tengah, col_kanan = st.columns([0.7, 0.1, 1.4])
     
     with col_kiri:
         st.markdown('<div style="margin-top: 5vh;"></div>', unsafe_allow_html=True)
@@ -407,13 +414,12 @@ if not st.session_state["logged_in"]:
         """, unsafe_allow_html=True)
 
     with col_kanan:
-        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-        
-        # Logo PLN di-center di paling atas kotak transparan
+        # Logo kini ditaruh langsung sebagai elemen pertama di dalam kolom kanan agar ikut terbungkus kaca
         b64_pln = get_base64_img("Logo PLN.png")
-        img_pln_html = f'<img src="data:image/png;base64,{b64_pln}" style="height:60px; margin: 0 auto 15px auto; display: block;">' if b64_pln else ""
-        
-        st.markdown(f'{img_pln_html}<div class="login-header">Welcome Back</div><div class="login-subheader">Sign in to continue to your account</div>', unsafe_allow_html=True)
+        if b64_pln:
+            st.markdown(f'<img src="data:image/png;base64,{b64_pln}" style="height:65px; margin: 0 auto; display: block;">', unsafe_allow_html=True)
+            
+        st.markdown('<div class="login-header">Welcome Back</div><div class="login-subheader">Sign in to continue to your account</div>', unsafe_allow_html=True)
         
         with st.form("form_login"):
             input_user = st.text_input("Email / Username", placeholder="Enter your email or username")
@@ -430,7 +436,6 @@ if not st.session_state["logged_in"]:
                         st.rerun()
                     else:
                         st.error("Username atau Password tidak valid!")
-        st.markdown('</div>', unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # HALAMAN UTAMA APLIKASI (JIKA BERHASIL LOGIN)
