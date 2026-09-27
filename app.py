@@ -351,7 +351,7 @@ if not st.session_state["logged_in"]:
         padding: 40px 30px !important;
         box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37) !important;
         max-width: 420px !important; 
-        margin-left: 20% !important;
+        margin-left: 5% !important;
         display: flex;
         flex-direction: column;
         align-items: center;
