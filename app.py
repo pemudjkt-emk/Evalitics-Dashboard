@@ -114,7 +114,6 @@ url = "https://docs.google.com/spreadsheets/d/" + str(sheet_id) + "/gviz/tq?tqx=
 # HELPER FUNCTIONS
 # ─────────────────────────────────────────────────────────────────────────────
 def get_base64_img(file_path):
-    """Mengubah file gambar lokal menjadi Base64 string untuk dirender di HTML/CSS"""
     if os.path.exists(file_path):
         with open(file_path, "rb") as f:
             return base64.b64encode(f.read()).decode()
@@ -316,7 +315,7 @@ for key, default in [
         st.session_state[key] = default
 
 # ══════════════════════════════════════════════════════════════════════════════
-# HALAMAN LOGIN (FUTURISTIC GLASSMORPHISM - FINAL STABLE POSITION)
+# HALAMAN LOGIN (FUTURISTIC GLASSMORPHISM - PENYESUAIAN POSISI & UI BARU)
 # ══════════════════════════════════════════════════════════════════════════════
 if not st.session_state["logged_in"]:
     b64_bg = get_base64_img("bg_login.png")
@@ -333,7 +332,6 @@ if not st.session_state["logged_in"]:
     
     /* Navigasi Atas Statis (Kosmetik visual) */
     .top-nav {{ display: flex; gap: 35px; color: #ffffff; font-size: 15px; margin-top: 10px; margin-bottom: 7vh; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }}
-    .top-nav span {{ cursor: default; transition: color 0.3s; font-weight: 500; }}
     
     /* Teks Kiri (Hero Section) */
     .hero-title {{ color: #ffffff; font-size: 55px; font-weight: 800; line-height: 1.1; margin-bottom: 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-shadow: 0px 4px 15px rgba(0,0,0,0.5); }}
@@ -350,8 +348,8 @@ if not st.session_state["logged_in"]:
         padding: 40px 30px !important;
         box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37) !important;
         max-width: 420px !important; 
-        margin-left: 0 !important; 
-        margin-right: auto !important; /* Tarikan ke kiri agar merapat dengan aman */
+        margin-left: -15% !important; /* Tarikan ke kiri agar lebih proporsional / bergeser 50% ke ruang sisa */
+        margin-right: auto !important; 
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -386,19 +384,15 @@ if not st.session_state["logged_in"]:
     """
     st.markdown(login_css, unsafe_allow_html=True)
 
-    # Navigasi Atas
+    # Navigasi Atas - Dirombak untuk menampilkan Logo Raksasa tanpa menu lainnya
     st.markdown("""
         <div class="top-nav">
-            <span style="font-weight: 800; font-size: 17px; margin-right: 30px;">⚡ UPDL Jakarta</span>
-            <span>Home</span>
-            <span>Learning</span>
-            <span>Resource</span>
-            <span>About</span>
+            <span style="font-weight: 900; font-size: 85px; line-height: 1;">⚡ UPDL Jakarta</span>
         </div>
     """, unsafe_allow_html=True)
 
-    # Rasio kolom aman untuk mendekatkan kotak ke arah kiri
-    col_kiri, col_tengah, col_kanan = st.columns([1.1, 0.1, 1.3])
+    # Rasio kolom disesuaikan agar sisi kiri mendapat porsi optimal dan margin menarik form
+    col_kiri, col_tengah, col_kanan = st.columns([1, 0.5, 1])
     
     with col_kiri:
         st.markdown('<div style="margin-top: 5vh;"></div>', unsafe_allow_html=True)
@@ -407,10 +401,10 @@ if not st.session_state["logged_in"]:
             <div class="hero-title">Grow Your Competence<br>Build a <span>Stronger Future</span></div>
             <div class="hero-subtitle">Empowering people through innovative learning and development for a more sustainable and electrifying Indonesia.</div>
             
-            <div style="display:flex; gap:35px; color:#cbd5e1; font-size:14px; font-weight:500;">
-                <div><span style="font-size:24px; color:#20c997; display:block; margin-bottom:5px;">🎓</span>Better<br>Learning</div>
-                <div><span style="font-size:24px; color:#20c997; display:block; margin-bottom:5px;">📈</span>Higher<br>Performance</div>
-                <div><span style="font-size:24px; color:#20c997; display:block; margin-bottom:5px;">🤝</span>Stronger<br>Collaboration</div>
+            <div style="display:flex; flex-direction:row; gap:40px; color:#cbd5e1; font-size:18px; font-weight:600; text-transform:uppercase;">
+                <div>Better Learning</div>
+                <div>Higher Performance</div>
+                <div>Stronger Collaboration</div>
             </div>
         """, unsafe_allow_html=True)
 
@@ -480,10 +474,16 @@ else:
     """
     st.markdown(custom_css, unsafe_allow_html=True)
 
-    bin_pln        = get_base64_img("Logo PLN.png")
-    bin_danantara  = get_base64_img("logo_danantara.png")
+    def get_base64_logo(file_path):
+        if os.path.exists(file_path):
+            with open(file_path, "rb") as f:
+                return base64.b64encode(f.read()).decode()
+        return ""
+
+    bin_pln        = get_base64_logo("Logo PLN.png")
+    bin_danantara = get_base64_logo("logo_danantara.png")
     img_pln        = f'<img src="data:image/png;base64,{bin_pln}" style="height:85px;object-fit:contain;">' if bin_pln else ""
-    img_danantara  = f'<img src="data:image/png;base64,{bin_danantara}" style="height:40px;object-fit:contain;background:white;padding:4px;border-radius:6px;">' if bin_danantara else ""
+    img_danantara = f'<img src="data:image/png;base64,{bin_danantara}" style="height:40px;object-fit:contain;background:white;padding:4px;border-radius:6px;">' if bin_danantara else ""
 
     st.markdown(f"""
     <div style="display:flex;align-items:center;justify-content:space-between;
