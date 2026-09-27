@@ -332,7 +332,7 @@ if not st.session_state["logged_in"]:
     .stApp {{ {bg_style} }}
     
     /* Navigasi Atas Statis (Kosmetik visual) */
-    .top-nav {{ display: flex; gap: 35px; color: #ffffff; font-size: 15px; margin-top: 10px; margin-bottom: 2vh; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }}
+    .top-nav {{ display: flex; gap: 35px; color: #ffffff; font-size: 15px; margin-top: 10px; margin-bottom: 0vh; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }}
     .top-nav span {{ cursor: default; transition: color 0.3s; font-weight: 500; }}
     
     /* Teks Kiri (Hero Section) */
