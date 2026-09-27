@@ -2242,8 +2242,9 @@ else:
 
                                 with st.expander("👀 Pratinjau Desain Dokumen (Live Preview)"):
                                     st.markdown(html_kelas, unsafe_allow_html=True)
-                else:
-                    st.info("⚠️ Belum ada data 'Sumber Data Implementasi' atau 'Judul Pembelajaran/ Asesmen/ Sertifikasi/ KSM' yang tersedia di Master Data Nasional.")
+                    else:
+                        st.info("⚠️ Belum ada data 'Sumber Data Implementasi' atau 'Judul Pembelajaran/ Asesmen/ Sertifikasi/ KSM' yang tersedia di Master Data Nasional.")
+                
                 except Exception as e:
                     st.error(f"Gagal memuat Master Data Laporan Nasional: {e}")
 
