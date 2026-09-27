@@ -351,7 +351,7 @@ if not st.session_state["logged_in"]:
         padding: 40px 30px !important;
         box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37) !important;
         max-width: 420px !important; 
-        margin: 0 auto !important; 
+        margin: 10% !important; 
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -397,7 +397,7 @@ if not st.session_state["logged_in"]:
     """, unsafe_allow_html=True)
 
     # REVISI: Mengubah proporsi grid untuk menggeser kotak kaca lebih ke kiri (Rasio Tengah diperkecil)
-    col_kiri, col_tengah, col_kanan = st.columns([0.45, 0.05, 1.6])
+    col_kiri, col_tengah, col_kanan = st.columns([0.8, 0.05, 1.3])
     
     with col_kiri:
         st.markdown('<div style="margin-top: 5vh;"></div>', unsafe_allow_html=True)
