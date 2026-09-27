@@ -316,10 +316,9 @@ for key, default in [
         st.session_state[key] = default
 
 # ══════════════════════════════════════════════════════════════════════════════
-# HALAMAN LOGIN (FUTURISTIC GLASSMORPHISM)
+# HALAMAN LOGIN (FUTURISTIC GLASSMORPHISM - UPDATED)
 # ══════════════════════════════════════════════════════════════════════════════
 if not st.session_state["logged_in"]:
-    # Konversi bg_login.png ke Base64 agar dapat dibaca oleh CSS
     b64_bg = get_base64_img("bg_login.png")
     bg_style = f"background-image: url('data:image/png;base64,{b64_bg}'); background-size: cover; background-position: center;" if b64_bg else "background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);"
     
@@ -339,29 +338,31 @@ if not st.session_state["logged_in"]:
     .hero-title span {{ color: #20c997; }}
     .hero-subtitle {{ color: #cbd5e1; font-size: 17px; line-height: 1.6; max-width: 90%; margin-bottom: 40px; font-weight: 400; }}
     
-    /* Kartu Kanan (Glassmorphism) */
+    /* Kartu Kanan (Glassmorphism) - Dipersempit 50% & Latar Agak Gelap */
     .glass-card {{
-        background: rgba(10, 25, 47, 0.45);
+        background: rgba(10, 25, 47, 0.55);
         backdrop-filter: blur(15px);
         -webkit-backdrop-filter: blur(15px);
         border: 1px solid rgba(255, 255, 255, 0.15);
         border-radius: 20px;
-        padding: 50px 40px;
+        padding: 40px 30px;
         box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         text-align: center;
+        max-width: 380px;
+        margin-left: 0;
     }}
-    .login-header {{ color: #ffffff; font-size: 26px; font-weight: 700; margin-bottom: 5px; margin-top: 15px; font-family: 'Segoe UI', sans-serif; }}
-    .login-subheader {{ color: #94a3b8; font-size: 14px; margin-bottom: 30px; }}
+    .login-header {{ color: #ffffff; font-size: 26px; font-weight: 700; margin-bottom: 5px; margin-top: 5px; font-family: 'Segoe UI', sans-serif; }}
+    .login-subheader {{ color: #cbd5e1; font-size: 14px; margin-bottom: 30px; }}
     
     /* Styling Form & Input Bawaan */
     [data-testid="stForm"] {{ border: none !important; background: transparent !important; padding: 0 !important; text-align: left; }}
     .stTextInput label p {{ color: #cbd5e1 !important; font-size: 14px !important; }}
     .stTextInput input {{
-        border-radius: 10px !important; background-color: rgba(255, 255, 255, 0.05) !important;
+        border-radius: 10px !important; background-color: rgba(255, 255, 255, 0.08) !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important; padding: 14px 15px !important;
-        color: #ffffff !important; font-size: 15px !important; margin-bottom: 10px !important;
+        color: #ffffff !important; font-size: 14px !important; margin-bottom: 10px !important;
     }}
-    .stTextInput input:focus {{ border-color: #20c997 !important; box-shadow: 0 0 0 1px #20c997 !important; background-color: rgba(255, 255, 255, 0.1) !important; }}
+    .stTextInput input:focus {{ border-color: #20c997 !important; box-shadow: 0 0 0 1px #20c997 !important; background-color: rgba(255, 255, 255, 0.15) !important; }}
     
     /* Styling Tombol Aksi */
     [data-testid="stFormSubmitButton"] button {{
@@ -377,7 +378,7 @@ if not st.session_state["logged_in"]:
     """
     st.markdown(login_css, unsafe_allow_html=True)
 
-    # Navigasi Atas (Kosmetik visual menyesuaikan mock-up)
+    # Navigasi Atas
     st.markdown("""
         <div class="top-nav">
             <span style="font-weight: 800; font-size: 17px; margin-right: 30px;">⚡ UPDL Jakarta</span>
@@ -388,8 +389,8 @@ if not st.session_state["logged_in"]:
         </div>
     """, unsafe_allow_html=True)
 
-    # Struktur 2 Kolom (Kiri untuk Teks, Kanan untuk Form)
-    col_kiri, col_tengah, col_kanan = st.columns([1.3, 0.2, 1])
+    # Mengubah rasio agar bergeser sekitar 3cm ke kiri
+    col_kiri, col_tengah, col_kanan = st.columns([0.9, 0.1, 1.2])
     
     with col_kiri:
         st.markdown('<div style="margin-top: 5vh;"></div>', unsafe_allow_html=True)
@@ -408,9 +409,9 @@ if not st.session_state["logged_in"]:
     with col_kanan:
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
         
-        # Logo PLN di dalam kartu Form
+        # Logo PLN di-center di paling atas kotak transparan
         b64_pln = get_base64_img("Logo PLN.png")
-        img_pln_html = f'<img src="data:image/png;base64,{b64_pln}" style="height:55px; margin-bottom: 5px;">' if b64_pln else ""
+        img_pln_html = f'<img src="data:image/png;base64,{b64_pln}" style="height:60px; margin: 0 auto 15px auto; display: block;">' if b64_pln else ""
         
         st.markdown(f'{img_pln_html}<div class="login-header">Welcome Back</div><div class="login-subheader">Sign in to continue to your account</div>', unsafe_allow_html=True)
         
@@ -1014,14 +1015,6 @@ else:
                                 url_k = f'https://docs.google.com/spreadsheets/d/{sheet_id_komentar}/gviz/tq?tqx=out:csv&sheet=Detail%20Komentar%20L1'
                                 df_k_raw = load_csv(url_k)
                                 
-                                # Penyesuaian Indeks Kolom Sesuai Format Sheet "Detail Komentar L1"
-                                # Bulan: Kolom 4 (Index 3)
-                                # Judul: Kolom 5 (Index 4)
-                                # Teks Komentar: Kolom 11 (Index 10)
-                                # Kategori (MAT): Kolom 12 (Index 11)
-                                # PIC KI: Kolom 13 (Index 12)
-                                # Sentimen: Kolom 14 (Index 13)
-                                
                                 col_bulan_k    = df_k_raw.columns[3] if len(df_k_raw.columns) > 3 else 'Bulan'
                                 col_judul_k    = df_k_raw.columns[4] if len(df_k_raw.columns) > 4 else 'Judul Diklat'
                                 col_teks_k     = df_k_raw.columns[10] if len(df_k_raw.columns) > 10 else 'Komentar'
@@ -1029,18 +1022,15 @@ else:
                                 col_pic_k      = df_k_raw.columns[12] if len(df_k_raw.columns) > 12 else 'PIC KI'
                                 col_sentimen_k = df_k_raw.columns[13] if len(df_k_raw.columns) > 13 else 'Sentimen'
 
-                                # Filter comments based on selected month in Dashboard (Case-Insensitive)
                                 bulan_terpilih = [str(b).strip().lower() for b in df_filtered_dash['Laporan Bulan'].dropna().unique()]
                                 df_k_raw[col_bulan_k] = df_k_raw[col_bulan_k].astype(str).str.strip().str.lower()
                                 df_k_bln = df_k_raw[df_k_raw[col_bulan_k].isin(bulan_terpilih)].copy()
                                 
                                 if not df_k_bln.empty:
                                     
-                                    # FITUR BARU: Hanya Mengambil Kategori Komentar Terkait "Mat" (Materi) dari Kolom 12
                                     df_k_valid = df_k_bln[df_k_bln[col_kategori_k].astype(str).str.lower().str.contains('mat', na=False)].copy()
                                     
                                     if not df_k_valid.empty:
-                                        # PERUBAHAN STRUKTUR TABEL
                                         voc_html = """
                                         <table class='tm-mat' style='width:100%;'>
                                         <tr>
@@ -1051,20 +1041,16 @@ else:
                                         </tr>
                                         """
                                         
-                                        # Standardize PIC in df_k_valid to lower for matching
                                         df_k_valid['pic_lower'] = df_k_valid[col_pic_k].astype(str).str.strip().str.lower()
                                         
-                                        # Iterate using pic_list from Dashboard to keep order
                                         for pic in pic_list:
                                             pic_lower = str(pic).strip().lower()
                                             df_pic_k = df_k_valid[df_k_valid['pic_lower'] == pic_lower]
                                             
-                                            # Jika ada judul di bawah PIC ini
                                             if not df_pic_k.empty:
                                                 judul_terkait = df_pic_k[col_judul_k].dropna().unique().tolist()
-                                                first_row_pic = True # Flag untuk rowspan PIC KI
+                                                first_row_pic = True 
                                                 
-                                                # Validasi total rowspan (Hanya hitung judul yang punya teks komentar valid)
                                                 valid_judul_count = 0
                                                 for jdl in judul_terkait:
                                                     df_jdl = df_pic_k[df_pic_k[col_judul_k] == jdl]
@@ -1076,12 +1062,10 @@ else:
                                                 for jdl in judul_terkait:
                                                     df_jdl = df_pic_k[df_pic_k[col_judul_k] == jdl]
                                                     
-                                                    # Ambil nilai sentimen dari Kolom 14, Fallback ke AI jika kosong
                                                     def get_sentiment(row):
                                                         sent_val = str(row.get(col_sentimen_k, '')).strip().lower()
                                                         if 'positif' in sent_val or 'apresiasi' in sent_val: return 'Positif'
                                                         elif 'negatif' in sent_val or 'masukan' in sent_val or 'keluhan' in sent_val: return 'Negatif'
-                                                        # Fallback to function if empty or unrecognizable
                                                         return analisis_sentimen_opensource(row.get(col_teks_k, ''))
                                                     
                                                     df_jdl['calc_sentimen'] = df_jdl.apply(get_sentiment, axis=1)
@@ -1089,7 +1073,6 @@ else:
                                                     komentar_pos = df_jdl[df_jdl['calc_sentimen'] == 'Positif'][col_teks_k].dropna().tolist()
                                                     komentar_neg = df_jdl[df_jdl['calc_sentimen'] == 'Negatif'][col_teks_k].dropna().tolist()
                                                     
-                                                    # Abaikan jika tidak ada komentar sama sekali di judul ini
                                                     if not komentar_pos and not komentar_neg:
                                                         continue
                                                         
