@@ -316,7 +316,7 @@ for key, default in [
         st.session_state[key] = default
 
 # ══════════════════════════════════════════════════════════════════════════════
-# HALAMAN LOGIN (FUTURISTIC GLASSMORPHISM - POSISI KANAN & WARNA TEKS GELAP)
+# HALAMAN LOGIN (FUTURISTIC GLASSMORPHISM - FINAL STABLE POSITION)
 # ══════════════════════════════════════════════════════════════════════════════
 if not st.session_state["logged_in"]:
     b64_bg = get_base64_img("bg_login.png")
@@ -327,9 +327,6 @@ if not st.session_state["logged_in"]:
     /* Sembunyikan elemen bawaan Streamlit yang tidak perlu */
     [data-testid="stSidebar"] {{ display: none !important; }}
     [data-testid="stHeader"] {{ display: none !important; }}
-    
-    /* Aman dari padding default untuk memaksimalkan grid pergeseran */
-    .block-container {{ max-width: 100% !important; padding-left: 2rem !important; padding-right: 2rem !important; }}
     
     /* Pasang gambar background murni ke seluruh halaman */
     .stApp {{ {bg_style} }}
@@ -344,7 +341,6 @@ if not st.session_state["logged_in"]:
     .hero-subtitle {{ color: #cbd5e1; font-size: 17px; line-height: 1.6; max-width: 90%; margin-bottom: 40px; font-weight: 400; }}
     
     /* TARGETING KOLOM STREAMLIT UNTUK GLASSMORPHISM */
-    /* Menyasar spesifik kolom ke-3 (kanan) tempat form bersarang */
     [data-testid="stColumn"]:nth-child(3) {{
         background: rgba(10, 25, 47, 0.55) !important;
         backdrop-filter: blur(15px) !important;
@@ -354,7 +350,8 @@ if not st.session_state["logged_in"]:
         padding: 40px 30px !important;
         box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37) !important;
         max-width: 420px !important; 
-        margin: 0 auto !important; /* Kembali di-center dalam kolomnya (tidak dipaksa kiri) */
+        margin-left: 0 !important; 
+        margin-right: auto !important; /* Tarikan ke kiri agar merapat dengan aman */
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -364,13 +361,13 @@ if not st.session_state["logged_in"]:
     .login-header {{ color: #ffffff; font-size: 26px; font-weight: 700; margin-bottom: 5px; margin-top: 15px; font-family: 'Segoe UI', sans-serif; text-align: center; width: 100%; }}
     .login-subheader {{ color: #cbd5e1; font-size: 14px; margin-bottom: 30px; text-align: center; width: 100%; }}
     
-    /* Kotak Input Streamlit (Paksa agar tidak borderless penuh, melainkan kapsul padat) */
+    /* Kotak Input Streamlit */
     [data-testid="stForm"] {{ border: none !important; background: transparent !important; padding: 0 !important; width: 100%; }}
     .stTextInput label p {{ color: #cbd5e1 !important; font-size: 14px !important; }}
     .stTextInput input {{
         border-radius: 10px !important; background-color: rgba(255, 255, 255, 0.9) !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important; padding: 14px 15px !important;
-        color: #111111 !important; /* WARNA TEKS SAAT DIKETIK MENJADI HITAM/GELAP */
+        color: #111111 !important; /* WARNA TEKS HITAM/GELAP */
         font-size: 14px !important; margin-bottom: 10px !important;
     }}
     .stTextInput input:focus {{ border-color: #20c997 !important; box-shadow: 0 0 0 1px #20c997 !important; background-color: #ffffff !important; }}
@@ -400,15 +397,15 @@ if not st.session_state["logged_in"]:
         </div>
     """, unsafe_allow_html=True)
 
-    # REVISI: Mengembalikan rasio agar kolom form (kolom 3) terdorong ke posisi KANAN
-    col_kiri, col_tengah, col_kanan = st.columns([1.5, 0.1, 1])
+    # Rasio kolom aman untuk mendekatkan kotak ke arah kiri
+    col_kiri, col_tengah, col_kanan = st.columns([1.1, 0.1, 1.3])
     
     with col_kiri:
         st.markdown('<div style="margin-top: 5vh;"></div>', unsafe_allow_html=True)
         st.markdown("""
             <p style="color: #cbd5e1; letter-spacing: 2px; font-size: 12px; font-weight: 600; text-transform: uppercase; margin-bottom: 5px;">Learning Today • Powering Tomorrow</p>
-            <div class="hero-title">JAKARTA INSIGHT HUB<br>Build a <span>Stronger Decision</span></div>
-            <div class="hero-subtitle">Make smarter, more precise decisions powered by your data.</div>
+            <div class="hero-title">Grow Your Competence<br>Build a <span>Stronger Future</span></div>
+            <div class="hero-subtitle">Empowering people through innovative learning and development for a more sustainable and electrifying Indonesia.</div>
             
             <div style="display:flex; gap:35px; color:#cbd5e1; font-size:14px; font-weight:500;">
                 <div><span style="font-size:24px; color:#20c997; display:block; margin-bottom:5px;">🎓</span>Better<br>Learning</div>
@@ -418,7 +415,6 @@ if not st.session_state["logged_in"]:
         """, unsafe_allow_html=True)
 
     with col_kanan:
-        # Logo PLN di dalam kartu Form
         b64_pln = get_base64_img("Logo PLN.png")
         if b64_pln:
             st.markdown(f'<img src="data:image/png;base64,{b64_pln}" style="height:65px; margin: 0 auto; display: block;">', unsafe_allow_html=True)
@@ -951,7 +947,7 @@ else:
                             mat_info = [
                                 (1, 'MAT1', 'Engagement', 'Studi kasus yang diberikan mendorong diskusi dan keterlibatan aktif peserta'),
                                 (2, 'MAT2', '', 'Materi pembelajaran memotivasi saya untuk belajar lebih lanjut'),
-                                (3, 'MAT3', 'Relevance', 'Materi pembelajaran bisa সম্মেলন aplikasikan pada pekerjaan'),
+                                (3, 'MAT3', 'Relevance', 'Materi pembelajaran bisa saya aplikasikan pada pekerjaan'),
                                 (4, 'MAT4', '', 'Materi pembelajaran mampu meningkatkan kompetensi saya'),
                                 (5, 'MAT5', 'Satisfaction', 'Materi pembelajaran disajikan secara menarik'),
                                 (6, 'MAT6', '', 'Saya bersedia merekomendasikan materi ini kepada orang lain'),
