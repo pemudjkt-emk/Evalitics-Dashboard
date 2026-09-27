@@ -332,7 +332,7 @@ if not st.session_state["logged_in"]:
     .stApp {{ {bg_style} }}
     
     /* Navigasi Atas Statis (Kosmetik visual) */
-    .top-nav {{ display: flex; gap: 35px; color: #ffffff; font-size: 15px; margin-top: 10px; margin-bottom: 7vh; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }}
+    .top-nav {{ display: flex; gap: 35px; color: #ffffff; font-size: 15px; margin-top: 10px; margin-bottom: 5vh; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }}
     .top-nav span {{ cursor: default; transition: color 0.3s; font-weight: 500; }}
     
     /* Teks Kiri (Hero Section) */
@@ -397,7 +397,7 @@ if not st.session_state["logged_in"]:
     """, unsafe_allow_html=True)
 
     # REVISI: Mengubah proporsi grid untuk menggeser kotak kaca lebih ke kiri (Rasio Tengah diperkecil)
-    col_kiri, col_tengah, col_kanan = st.columns([0.8, 0.1, 1.3])
+    col_kiri, col_tengah, col_kanan = st.columns([0.8, 0.05, 1.3])
     
     with col_kiri:
         st.markdown('<div style="margin-top: 5vh;"></div>', unsafe_allow_html=True)
