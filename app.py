@@ -397,7 +397,7 @@ if not st.session_state["logged_in"]:
     """, unsafe_allow_html=True)
 
     # REVISI: Mengubah proporsi grid untuk menggeser kotak kaca lebih ke kiri (Rasio Tengah diperkecil)
-    col_kiri, col_tengah, col_kanan = st.columns([0.55, 0.05, 1.5])
+    col_kiri, col_tengah, col_kanan = st.columns([0.45, 0.05, 1.6])
     
     with col_kiri:
         st.markdown('<div style="margin-top: 5vh;"></div>', unsafe_allow_html=True)
