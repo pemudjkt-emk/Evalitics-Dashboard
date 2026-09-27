@@ -407,8 +407,8 @@ if not st.session_state["logged_in"]:
         st.markdown('<div style="margin-top: 5vh;"></div>', unsafe_allow_html=True)
         st.markdown("""
             <p style="color: #cbd5e1; letter-spacing: 2px; font-size: 12px; font-weight: 600; text-transform: uppercase; margin-bottom: 5px;">Learning Today • Powering Tomorrow</p>
-            <div class="hero-title">Grow Your Competence<br>Build a <span>Stronger Future</span></div>
-            <div class="hero-subtitle">Empowering people through innovative learning and development for a more sustainable and electrifying Indonesia.</div>
+            <div class="hero-title">JAKARTA INSIGHT HUB<br>Build a <span>Stronger Decision</span></div>
+            <div class="hero-subtitle">Make smarter, more precise decisions powered by your data.</div>
             
             <div style="display:flex; gap:35px; color:#cbd5e1; font-size:14px; font-weight:500;">
                 <div><span style="font-size:24px; color:#20c997; display:block; margin-bottom:5px;">🎓</span>Better<br>Learning</div>
