@@ -327,8 +327,6 @@ if not st.session_state["logged_in"]:
     /* Sembunyikan elemen bawaan Streamlit yang tidak perlu */
     [data-testid="stSidebar"] {{ display: none !important; }}
     [data-testid="stHeader"] {{ display: none !important; }}
-    /* Hilangkan margin kiri-kanan bawaan layar Streamlit */
-    .block-container { padding-left: 1rem !important; padding-right: 1rem !important; max-width: 100% !important; }
     
     /* Pasang gambar background murni ke seluruh halaman */
     .stApp {{ {bg_style} }}
@@ -353,7 +351,7 @@ if not st.session_state["logged_in"]:
         padding: 40px 30px !important;
         box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37) !important;
         max-width: 420px !important; 
-        margin-left: 0% !important;
+        margin-left: 5% !important;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -399,7 +397,7 @@ if not st.session_state["logged_in"]:
     """, unsafe_allow_html=True)
 
     # REVISI: Mengubah proporsi grid untuk menggeser kotak kaca lebih ke kiri (Rasio Tengah diperkecil)
-    col_kiri, col_tengah, col_kanan = st.columns([0.3, 0.05, 1.5])
+    col_kiri, col_tengah, col_kanan = st.columns([0.5, 0.1, 1.6])
     
     with col_kiri:
         st.markdown('<div style="margin-top: 5vh;"></div>', unsafe_allow_html=True)
