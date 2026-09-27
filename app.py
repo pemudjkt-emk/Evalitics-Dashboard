@@ -332,7 +332,7 @@ if not st.session_state["logged_in"]:
     .stApp {{ {bg_style} }}
     
     /* Navigasi Atas Statis (Kosmetik visual) */
-    .top-nav {{ display: flex; gap: 35px; color: #ffffff; font-size: 15px; margin-top: 10px; margin-bottom: 0vh; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }}
+    .top-nav {{ display: flex; gap: 35px; color: #ffffff; font-size: 15px; margin-top: 10px; margin-bottom: 7vh; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }}
     .top-nav span {{ cursor: default; transition: color 0.3s; font-weight: 500; }}
     
     /* Teks Kiri (Hero Section) */
@@ -351,7 +351,7 @@ if not st.session_state["logged_in"]:
         padding: 40px 30px !important;
         box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37) !important;
         max-width: 420px !important; 
-        margin: 10% !important; 
+        margin: -6vh auto 0 auto !important;
         display: flex;
         flex-direction: column;
         align-items: center;
