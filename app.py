@@ -1017,7 +1017,7 @@ else:
                             
                             # MEMPERSEMPIT RENTANG SUMBU Y AGAR GARIS LEBIH MERENGGANG
                             fig_tren.update_layout(
-                                yaxis_range=[3.8, 4.8], # Diubah dari [3.5, 5.1] agar grafik membesar
+                                yaxis_range=[3.9, 4.6], # Diubah dari [3.5, 5.1] agar grafik membesar
                                 height=420, # Ditinggikan sedikit agar angka tidak terpotong
                                 yaxis_title="Skor Rata-rata", xaxis_title="",
                                 legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="right", x=1),
