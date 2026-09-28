@@ -856,8 +856,8 @@ else:
                 st.markdown("---")
                 if not df_filtered_dash.empty:
                     
-                    # ─── TABBED VIEW: RINGKASAN VS ASPEK MATERI ─────────
-                    tab_overview, tab_materi = st.tabs(["🌟 Ringkasan Keseluruhan", "📚 Laporan Aspek Materi"])
+                    # ─── TABBED VIEW: RINGKASAN VS ASPEK MATERI VS INSTRUKTUR ─────────
+                    tab_overview, tab_materi, tab_instruktur = st.tabs(["🌟 Ringkasan Keseluruhan", "📚 Laporan Aspek Materi", "👨‍🏫 Laporan Aspek Instruktur"])
                     
                     with tab_overview:
                         skor_evaluasi = df_filtered_dash['RATA-RATA KESELURUHAN'].mean()
@@ -916,7 +916,7 @@ else:
                         with st.expander(f"📄 Tabel Data Lengkap ({len(df_filtered_dash)} baris)", expanded=False):
                             st.dataframe(df_filtered_dash, use_container_width=True)
                             
-                    # ─── TAB ASPEK MATERI (Meniru Matriks Desain) ─────────
+                    # ─── TAB ASPEK MATERI ─────────
                     with tab_materi:
                         st.markdown("<h3 style='margin-bottom:0;'>📚 Laporan Kinerja Aspek Materi & Voice of Customer</h3>", unsafe_allow_html=True)
                         st.markdown("Pemetaan kuantitatif indikator MAT1-MAT7 serta sentimen kualitatif berdasarkan **PIC KI**.")
@@ -1017,7 +1017,7 @@ else:
                             
                             try:
                                 sheet_id_komentar = '1IDAmFwTbBQDZcKM3eiiEDcA3KwM9WKqW4zCrk__6-PU'
-                                url_k = f'https://docs.google.com/spreadsheets/d/{sheet_id_komentar}/gviz/tq?tqx=out:csv&sheet=Detail%20Komentar%20L1'
+                                url_k = "https://docs.google.com/spreadsheets/d/" + str(sheet_id_komentar) + "/gviz/tq?tqx=out:csv&sheet=Detail%20Komentar%20L1"
                                 df_k_raw = load_csv(url_k)
                                 
                                 col_bulan_k    = df_k_raw.columns[3] if len(df_k_raw.columns) > 3 else 'Bulan'
@@ -1107,9 +1107,63 @@ else:
                                 st.error(f"Gagal memuat Voice of Customer: {ek}")
                         else:
                             st.warning("⚠️ Kolom 'PIC KI' tidak ditemukan dalam data.")
+                            
+                    # ─── TAB ASPEK INSTRUKTUR (BARU) ─────────
+                    with tab_instruktur:
+                        st.markdown("<h3 style='margin-bottom:0;'>👨‍🏫 Laporan Kinerja Aspek Instruktur</h3>", unsafe_allow_html=True)
+                        st.markdown("Pemetaan kuantitatif indikator survei kinerja instruktur (INS1-INS9).")
+                        
+                        html_css_ins = """
+                        <style>
+                        .tm-ins { border-collapse: collapse; font-family: sans-serif; font-size: 13px; width: 100%; border: 1px solid #333; margin-top: 15px; margin-bottom: 25px;}
+                        .tm-ins th { background-color: #0d6373; color: white; padding: 12px 10px; border: 1px solid #111; text-align: center; font-weight: bold; }
+                        .tm-ins td { padding: 10px; border: 1px solid #555; text-align: center; color: #111; background-color: #ffffff; }
+                        .tm-ins td.text-left { text-align: left; }
+                        .tm-ins td.font-bold { font-weight: bold; }
+                        </style>
+                        """
+                        
+                        ins_html = "<div style='overflow-x: auto;'><table class='tm-ins'><tr>"
+                        ins_html += "<th style='width:5%;'>No</th><th style='width:10%;'>Indikator</th><th style='width:15%;'>Aspek</th><th style='width:55%;'>Penjelasan</th><th style='width:15%;'>Skor L1<br>Overall</th></tr>"
+                        
+                        ins_info = [
+                            (1, 'INS1', 'Engagement', 'Instruktur mendorong saya untuk berpartisipasi aktif selama pembelajaran'),
+                            (2, 'INS2', '', 'Metode mengajar instruktur membuat saya tetap terlibat dan menyelesaikan seluruh sesi pembelajaran'),
+                            (3, 'INS3', 'Relevance', 'Instruktur mampu mengaitkan materi dengan konteks pekerjaan saya sehingga terasa relevan'),
+                            (4, 'INS4', '', 'Instruktur memberikan contoh pengalaman yang relevan dengan tugas saya.'),
+                            (5, 'INS5', 'Satisfaction', 'Saya menyukai metode mengajar yang disampaikan oleh Instruktur'),
+                            (6, 'INS6', '', 'Saya menyukai cara instruktur membagikan pengalaman/studi kasus yang mendukung pemahaman materi pembelajaran'),
+                            (7, 'INS7', '', 'Instruktur memiliki manajemen waktu yang baik dalam menyampaikan materi pembelajaran'),
+                            (8, 'INS8', '', 'Instruktur memiliki penampilan yang profesional dalam menyampaikan materi pembelajaran'),
+                            (9, 'INS9', 'Rating', 'Berapa tingkat kepuasan terhadap instruktur secara keseluruhan?')
+                        ]
+                        
+                        for idx, ind, asp, pen in ins_info:
+                            # Kalkulasi rata-rata skor per indikator
+                            if ind in df_filtered_dash.columns:
+                                val = pd.to_numeric(df_filtered_dash[ind], errors='coerce').mean()
+                                val_str = f"{val:.2f}" if pd.notna(val) else "-"
+                            else:
+                                val_str = "-"
+                                
+                            ins_html += "<tr>"
+                            ins_html += f"<td style='background-color:#f5f4f0;'><b>{idx}</b></td><td style='background-color:#f5f4f0; font-weight:bold;'>{ind}</td>"
+                            
+                            # Rowspan Aspect Column Sesuai Gambar
+                            if idx == 1: ins_html += f"<td rowspan='2'>Engagement</td>"
+                            elif idx == 3: ins_html += f"<td rowspan='2'>Relevance</td>"
+                            elif idx == 5: ins_html += f"<td rowspan='4'>Satisfaction</td>"
+                            elif idx == 9: ins_html += f"<td>Rating</td>"
+                            
+                            ins_html += f"<td class='text-left'>{pen}</td><td class='font-bold' style='background-color:#f8f9fa;'>{val_str}</td></tr>"
+                            
+                        ins_html += "</table></div>"
+                        
+                        # Render HTML langsung
+                        st.markdown(html_css_ins + ins_html, unsafe_allow_html=True)
+
                 else:
                     st.warning("⚠️ Tidak ada data. Sesuaikan filter.")
-
         except Exception as e:
             st.error(f"Gagal memuat data: {e}")
 
