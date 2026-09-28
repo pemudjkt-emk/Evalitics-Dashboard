@@ -2115,6 +2115,7 @@ else:
                                 except Exception as e_ai_kelas:
                                     narasi_eksekutif_kelas = f"Dokumen ini merangkum <i>post-implementation review</i> untuk pelaksanaan program <b>{judul_pilih}</b> ({kode_pemb}), menyajikan evaluasi metrik kehadiran ({pct_hadir}), efisiensi anggaran, dan indeks kepuasan L1 ({s_tot}), guna memastikan penyelarasan operasional dengan standar mutu <i>Service Excellence</i> {updl_key}."
                                     
+                                # --- 5. PERAKITAN DOKUMEN HTML (SIAP JADI WORD) ---
                                 html_kelas = f"""
                                 <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
                                 <head>
@@ -2133,6 +2134,8 @@ else:
                                         .zebra tr:nth-child(even) td {{ background-color: #f8fafc; }}
                                         p {{ text-align: justify; margin-top: 0; line-height: 1.6; color: #334155; }}
                                         ul {{ margin-top: 0; padding-left: 20px; line-height: 1.6; color: #334155; }}
+                                        /* Trik penguncian elemen satu halaman */
+                                        .keep-together {{ page-break-inside: avoid; }}
                                     </style>
                                 </head>
                                 <body>
@@ -2158,6 +2161,14 @@ else:
                                     <!-- CONTENT PAGE -->
                                     <div style="padding: 20px 40px;">
                                         
+                                        <!-- HEADER ISI LAPORAN (SUNTIKAN LOGO) -->
+                                        <table style="width: 100%; border: none; margin-bottom: 20px; border-bottom: 2px solid #003366; padding-bottom: 10px;">
+                                            <tr>
+                                                <td style="text-align: left; border: none; width: 50%; vertical-align: middle;"><img src="data:image/png;base64,{bin_danantara}" height="35" style="background:white; padding:3px; border-radius:4px;"></td>
+                                                <td style="text-align: right; border: none; width: 50%; vertical-align: middle;"><img src="data:image/png;base64,{bin_pln}" height="50"></td>
+                                            </tr>
+                                        </table>
+
                                         <h4 style="text-align: center; color:#0055A4; border-bottom: none; margin-bottom: 5px;">EXECUTIVE SUMMARY</h4>
                                         <p style="text-align: justify; margin-top: 0;">{narasi_eksekutif_kelas}</p>
                                         
@@ -2172,12 +2183,12 @@ else:
                                         <h4>2. INFORMASI KEPESERTAAN</h4>
                                         <p>Berikut adalah rincian partisipasi dan kelulusan peserta pembelajaran:</p>
                                         <table class="zebra">
-                                            <tr><td>Rencana Jumlah Peserta</td><td style="text-align:center; font-weight:bold;">{int(rencana_peserta)}</td></tr>
-                                            <tr><td>Peserta diundang</td><td style="text-align:center; font-weight:bold;">{int(diundang)}</td></tr>
-                                            <tr><td>Peserta Hadir</td><td style="text-align:center; font-weight:bold; color: #0055A4;">{int(hadir)}</td></tr>
-                                            <tr><td>Persentase Peserta Hadir</td><td style="text-align:center; font-weight:bold;">{pct_hadir}</td></tr>
-                                            <tr><td>Peserta Lulus</td><td style="text-align:center; font-weight:bold; color: #15803d;">{int(lulus)}</td></tr>
-                                            <tr><td>Persentase Peserta Lulus</td><td style="text-align:center; font-weight:bold; color: #15803d;">{pct_lulus}</td></tr>
+                                            <tr><td style="vertical-align: middle; padding: 10px;">Rencana Jumlah Peserta</td><td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold;">{int(rencana_peserta)}</td></tr>
+                                            <tr><td style="vertical-align: middle; padding: 10px;">Peserta diundang</td><td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold;">{int(diundang)}</td></tr>
+                                            <tr><td style="vertical-align: middle; padding: 10px;">Peserta Hadir</td><td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold; color: #0055A4;">{int(hadir)}</td></tr>
+                                            <tr><td style="vertical-align: middle; padding: 10px;">Persentase Kehadiran</td><td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold;">{pct_hadir}</td></tr>
+                                            <tr><td style="vertical-align: middle; padding: 10px;">Peserta Lulus</td><td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold; color: #15803d;">{int(lulus)}</td></tr>
+                                            <tr><td style="vertical-align: middle; padding: 10px;">Persentase Kelulusan</td><td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold; color: #15803d;">{pct_lulus}</td></tr>
                                         </table>
 
                                         <h4>3. WAKTU, METODE DAN TEMPAT PEMBELAJARAN</h4>
@@ -2193,25 +2204,35 @@ else:
                                         <h4>4. BIAYA PEMBELAJARAN</h4>
                                         <p>Realisasi Biaya Penyelenggaraan Pembelajaran <b>{judul_pilih}</b> adalah sebagai berikut:</p>
                                         <table class="zebra">
-                                            <tr><th style="width: 60%; text-align:center;">Komponen Biaya</th><th style="width: 40%; text-align:center;">Nominal (Rp)</th></tr>
-                                            <tr><td>Rencana Biaya</td><td style="text-align:right;"><b>{rab}</b></td></tr>
-                                            <tr><td>Realisasi Biaya</td><td style="text-align:right; color: #003366;"><b>{realisasi}</b></td></tr>
+                                            <tr><th style="width: 60%; text-align:center; vertical-align: middle; padding: 10px;">Komponen Biaya</th><th style="width: 40%; text-align:center; vertical-align: middle; padding: 10px;">Nominal (Rp)</th></tr>
+                                            <tr><td style="vertical-align: middle; padding: 10px;">Rencana Biaya</td><td style="vertical-align: middle; padding: 10px; text-align:right;"><b>{rab}</b></td></tr>
+                                            <tr><td style="vertical-align: middle; padding: 10px;">Realisasi Biaya</td><td style="vertical-align: middle; padding: 10px; text-align:right; color: #003366;"><b>{realisasi}</b></td></tr>
                                         </table>
 
                                         <h4 style="page-break-before: always;">5. EVALUASI PEMBELAJARAN & CUSTOMER VOICE</h4>
                                         <p>Hasil rekapitulasi evaluasi kepuasan peserta terhadap penyelenggaraan pembelajaran (Level 1) adalah sebagai berikut:</p>
+                                        
+                                        <!-- TABEL EVALUASI DINAMIS (ICT/DL/BL) -->
                                         <table class="zebra">
                                             <tr>
-                                                <th style="width: 70%; text-align:center;">Pilar Evaluasi</th>
-                                                <th style="width: 30%; text-align:center;">Skor Kepuasan</th>
+                                                <th style="width: 70%; text-align:center; vertical-align: middle; padding: 10px;">Pilar Evaluasi</th>
+                                                <th style="width: 30%; text-align:center; vertical-align: middle; padding: 10px;">Skor Kepuasan</th>
                                             </tr>
-                                            <tr><td>Materi Pembelajaran</td><td style="text-align:center; font-weight:bold;">{s_mat}</td></tr>
-                                            <tr><td>Instruktur & Fasilitator</td><td style="text-align:center; font-weight:bold;">{s_ins}</td></tr>
-                                            <tr><td>Sarana Prasarana Offline</td><td style="text-align:center; font-weight:bold;">{s_sp}</td></tr>
-                                            <tr><td>Sarana Prasarana Online</td><td style="text-align:center; font-weight:bold;">{s_ds}</td></tr>
+                                            <tr><td style="vertical-align: middle; padding: 10px;">1. Materi Pembelajaran</td><td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold;">{s_mat}</td></tr>
+                                            <tr><td style="vertical-align: middle; padding: 10px;">2. Instruktur & Fasilitator</td><td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold;">{s_ins}</td></tr>
+                                            """
+                                
+                                no_urut = 3
+                                if metode_raw in ['ICT', 'BL', 'HL']:
+                                    html_kelas += f'<tr><td style="vertical-align: middle; padding: 10px;">{no_urut}. Sarana Prasarana Offline</td><td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold;">{s_sp}</td></tr>'
+                                    no_urut += 1
+                                if metode_raw in ['DL', 'SL', 'BL', 'HL']:
+                                    html_kelas += f'<tr><td style="vertical-align: middle; padding: 10px;">{no_urut}. Sarana Prasarana Online</td><td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold;">{s_ds}</td></tr>'
+                                
+                                html_kelas += f"""
                                             <tr style="background-color: #003366; color: white;">
-                                                <td style="font-weight:bold;">Rata-Rata Komposit Keseluruhan</td>
-                                                <td style="text-align:center; font-weight:bold;">{s_tot}</td>
+                                                <td style="vertical-align: middle; padding: 10px; font-weight:bold;">Rata-Rata Komposit Keseluruhan</td>
+                                                <td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold;">{s_tot}</td>
                                             </tr>
                                         </table>
                                         
@@ -2220,19 +2241,29 @@ else:
                                         
                                         <p style="margin-top:10px; margin-bottom:5px;"><b>Komentar Masukan / Evaluasi:</b></p>
                                         {html_masukan}
-
-                                        <br><br><br>
-                                        <table style="width:100%; border: none;">
+                                        
+                                        <br>
+                                        
+                                        <!-- BLOK PENGUNCI (PENUTUP + TANDA TANGAN) AGAR TIDAK TERPISAH HALAMAN -->
+                                        <table class="keep-together" style="width:100%; border: none; margin-top: 20px;">
                                             <tr>
-                                                <td style="width:50%; border: none;"></td>
-                                                <td style="width:50%; border: none; text-align:center;">
-                                                    Mengetahui,<br><b>MANAGER {nama_unit_pendek}</b><br><br><br><br><br>
-                                                    <b>{manager_name}</b>
+                                                <td style="border: none; padding: 0;">
+                                                    <p style="text-align: justify; margin-bottom: 40px; font-style: italic; color: #1e293b;">Sebagai penutup, seluruh rangkaian program pembelajaran telah berjalan dengan baik dan diharapkan mampu memberikan dampak nyata terhadap peningkatan kompetensi peserta. Berbagai hasil evaluasi serta umpan balik yang terangkum dalam laporan ini akan senantiasa kami jadikan landasan utama untuk melakukan perbaikan berkelanjutan (continuous improvement) pada penyelenggaraan pelatihan di masa mendatang. Kami menyampaikan apresiasi tertinggi atas dukungan manajemen, dedikasi instruktur, serta partisipasi aktif para peserta, dengan harapan seluruh pengetahuan dan keterampilan baru yang diperoleh dapat segera diimplementasikan guna mendukung pencapaian sasaran strategis perusahaan.</p>
+                                                    
+                                                    <table style="width:100%; text-align:center; border: none;">
+                                                        <tr>
+                                                            <td style="width:50%; border: none;"></td>
+                                                            <td style="width:50%; border: none; text-align:center;">
+                                                                Mengetahui,<br><b>MANAGER {nama_unit_pendek}</b><br><br><br><br><br>
+                                                                <b>{manager_name}</b>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
                                                 </td>
                                             </tr>
                                         </table>
 
-                                        <h3 style="page-break-before: always; color:#003366; border-bottom: 2px solid #003366; padding-bottom:5px;">6. LAMPIRAN DOKUMEN</h3>
+                                        <h4 style="page-break-before: always; color:#0055A4; border-bottom: 2px solid #cbd5e1; padding-bottom:5px;">6. LAMPIRAN DOKUMEN</h4>
                                         <p>Berikut adalah kelengkapan administrasi dan bukti pelaksanaan program:</p>
                                         <ul style="line-height:2.0; font-weight:bold; color: #0055A4;">
                                             <li>Lampiran 1: Dasar Surat Penugasan</li>
