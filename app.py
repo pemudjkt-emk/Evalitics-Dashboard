@@ -2040,10 +2040,29 @@ else:
                                 metode = dict_metode.get(metode_raw, metode_raw)
                                 
                                 def format_rp(val):
-                                    try: 
-                                        val_clean = str(val).replace(',', '.').strip()
-                                        return f"Rp {int(float(val_clean)):,}".replace(',', '.')
-                                    except: return "Rp 0"
+                                    if pd.isna(val) or str(val).strip() in ["", "-", "NaN"]: return "Rp 0"
+                                    try:
+                                        # 1. Bersihkan teks dari awalan Rp dan spasi tersembunyi
+                                        v_str = str(val).upper().replace('RP', '').replace('.', '').replace(' ', '').strip()
+                                        
+                                        # 2. Coba konversi jika terbaca sebagai angka murni/float oleh Pandas
+                                        try:
+                                            return f"Rp {int(float(v_str)):,}".replace(',', '.')
+                                        except ValueError:
+                                            pass # Lanjut ke pembersihan Regex jika masih berupa string kotor
+                                            
+                                        # 3. Pembersihan Regex (Sapu Jagat untuk membuang semua selain angka)
+                                        import re
+                                        v_clean = re.sub(r'[^\d]', '', v_str)
+                                        
+                                        # 4. Potong dua angka 0 ekstra jika format Google Sheets menggunakan desimal sen (,00)
+                                        if v_str.endswith(',00'):
+                                            v_clean = v_clean[:-2]
+                                            
+                                        if not v_clean: return "Rp 0"
+                                        return f"Rp {int(v_clean):,}".replace(',', '.')
+                                    except:
+                                        return "Rp 0"
                                         
                                 rab = format_rp(df_kelas.get('RAB Pelaksanaan', 0))
                                 realisasi = format_rp(df_kelas.get('Realisasi Biaya Pelaksanaan', 0))
