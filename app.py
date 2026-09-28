@@ -2040,26 +2040,23 @@ else:
                                 metode = dict_metode.get(metode_raw, metode_raw)
                                 
                                 def format_rp(val):
-                                    if pd.isna(val) or str(val).strip() in ["", "-", "NaN"]: return "Rp 0"
+                                    if pd.isna(val) or str(val).strip() in ["", "-", "NaN", "nan", "None"]: 
+                                        return "Rp 0"
                                     try:
-                                        # 1. Bersihkan teks dari awalan Rp dan spasi tersembunyi
-                                        v_str = str(val).upper().replace('RP', '').replace('.', '').replace(' ', '').strip()
+                                        # 1. Pastikan dalam bentuk string kapital dan buang spasi
+                                        v_str = str(val).upper().replace('RP', '').strip()
                                         
-                                        # 2. Coba konversi jika terbaca sebagai angka murni/float oleh Pandas
-                                        try:
-                                            return f"Rp {int(float(v_str)):,}".replace(',', '.')
-                                        except ValueError:
-                                            pass # Lanjut ke pembersihan Regex jika masih berupa string kotor
+                                        # 2. Potong ekor desimal (.00 atau ,00) jika ada sebelum dibersihkan
+                                        if v_str.endswith('.00') or v_str.endswith(',00'):
+                                            v_str = v_str[:-3]
                                             
-                                        # 3. Pembersihan Regex (Sapu Jagat untuk membuang semua selain angka)
+                                        # 3. Pembersihan Regex: Sapu bersih semua simbol (termasuk $, spasi, titik, dan koma)
                                         import re
                                         v_clean = re.sub(r'[^\d]', '', v_str)
                                         
-                                        # 4. Potong dua angka 0 ekstra jika format Google Sheets menggunakan desimal sen (,00)
-                                        if v_str.endswith(',00'):
-                                            v_clean = v_clean[:-2]
-                                            
-                                        if not v_clean: return "Rp 0"
+                                        # 4. Kembalikan ke format Rupiah baku
+                                        if not v_clean: 
+                                            return "Rp 0"
                                         return f"Rp {int(v_clean):,}".replace(',', '.')
                                     except:
                                         return "Rp 0"
