@@ -898,8 +898,8 @@ else:
                             justify-content: center; height: 100%; margin-bottom: 15px;
                         }
                         .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.1); }
-                        .kpi-title { color: #64748b; font-size: 9.5px; font-weight: 700; text-transform: uppercase; margin-bottom: 5px; line-height: 1.2; letter-spacing: 0px; } /* Font judul dikecilkan */
-                        .kpi-value { color: #0f172a; font-size: 18px; font-weight: 800; margin: 0; line-height: 1.1; } /* Font angka dikecilkan */
+                        .kpi-title { color: #64748b; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 5px; line-height: 1.2; letter-spacing: 0px; } /* Font judul dikecilkan */
+                        .kpi-value { color: #0f172a; font-size: 22px; font-weight: 800; margin: 0; line-height: 1.1; } /* Font angka dikecilkan */
                         .card-mat { border-left-color: #20c997; }
                         .card-inst { border-left-color: #FFC000; }
                         .card-sp { border-left-color: #ef4444; }
