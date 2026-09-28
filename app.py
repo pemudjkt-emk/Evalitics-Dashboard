@@ -13,6 +13,9 @@ import base64
 from datetime import datetime
 import urllib.request
 import io
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaIoBaseUpload
 import re
 import time
 
@@ -222,19 +225,33 @@ def format_tanggal_indo(tgl_input):
         return str(tgl_input)
 
 def upload_dokumen_ke_drive(file_bytes, file_name, folder_id):
+    """
+    Fungsi unggah otomatis menggunakan OAuth 2.0 (Akun Pribadi).
+    File akan masuk ke Google Drive Anda menggunakan kuota Anda sendiri.
+    """
     try:
-        from googleapiclient.discovery import build
-        from googleapiclient.http import MediaIoBaseUpload
+        SCOPES = ['https://www.googleapis.com/auth/drive.file']
         
-        scope = ["https://www.googleapis.com/auth/drive"]
-        creds = ServiceAccountCredentials.from_json_keyfile_dict(st.secrets["gcp_service_account"], scope)
+        # Membaca brankas rahasia dari Streamlit Secrets
+        if "gcp_oauth_token" not in st.secrets:
+            return "ERROR: Kunci gcp_oauth_token belum diatur di Streamlit Secrets."
+            
+        token_info = dict(st.secrets["gcp_oauth_token"])
+        creds = Credentials.from_authorized_user_info(token_info, SCOPES)
+        
+        # Membangun koneksi ke Google Drive
         drive_service = build('drive', 'v3', credentials=creds)
         
         file_metadata = {
             'name': file_name,
             'parents': [folder_id]
         }
-        media = MediaIoBaseUpload(io.BytesIO(file_bytes), mimetype='application/msword', resumable=True)
+        
+        media = MediaIoBaseUpload(
+            io.BytesIO(file_bytes), 
+            mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document', 
+            resumable=True
+        )
         
         uploaded_file = drive_service.files().create(
             body=file_metadata,
@@ -243,10 +260,9 @@ def upload_dokumen_ke_drive(file_bytes, file_name, folder_id):
         ).execute()
         
         return uploaded_file.get('id')
-    except ImportError:
-        return "ERROR_IMPORT"
+        
     except Exception as e:
-        return f"ERROR: {e}"
+        return f"ERROR_OAUTH: {e}"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # GEMINI & SENTIMENT ANALYSIS AI
