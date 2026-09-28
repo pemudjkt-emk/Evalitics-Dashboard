@@ -463,7 +463,7 @@ else:
     [data-testid="stSidebar"] button[kind="secondary"] p { color: white !important; }
     [data-testid="stSidebar"] button[kind="secondary"]:hover { transform: scale(1.02); box-shadow: 0px 6px 15px rgba(23, 162, 184, 0.4); border-color: transparent; color: white !important; }
     [data-testid="stSidebar"] hr { margin-top: 30px; border-top: 1px solid #cbd5e1; }
-    .stTabs [data-baseweb="tab-list"] button p { font-size: 26px !important; font-weight: 800 !important; }
+    .stTabs [data-baseweb="tab-list"] button p { font-size: 30px !important; font-weight: 800 !important; }
     .stSelectbox div[data-baseweb="select"] { font-size: 22px !important; min-height: 48px !important; }
     .stSelectbox div[data-baseweb="select"] span { font-size: 22px !important; }
     ul[data-baseweb="menu"] li { font-size: 20px !important; }
@@ -1606,7 +1606,7 @@ else:
     elif menu_selection in ["📑 REPORT & KATALOG", "📄 Laporan Pembelajaran"]:
         
         if st.session_state["role"] == "SuperAdmin":
-            sub_rep_generator, sub_lap_pembelajaran, sub_katalog = st.tabs(["📑 Report Generator", "📄 Laporan Pembelajaran", "👨‍🏫 Katalog Instruktur"])
+            sub_rep_generator, sub_lap_pembelajaran, sub_katalog = st.tabs(["📑 Laporan Evaluasi", "📄 Laporan Pembelajaran", "👨‍🏫 Katalog Instruktur"])
         else:
             sub_lap_pembelajaran = st.container()
 
