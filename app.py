@@ -860,58 +860,150 @@ else:
                     tab_overview, tab_materi, tab_instruktur = st.tabs(["🌟 Ringkasan Keseluruhan", "📚 Laporan Aspek Materi", "👨‍🏫 Laporan Aspek Instruktur"])
                     
                     with tab_overview:
+                        # 1. METRICS CARDS (HTML/CSS Custom)
                         skor_evaluasi = df_filtered_dash['RATA-RATA KESELURUHAN'].mean()
                         ind_kurang    = df_filtered_dash['Jumlah Indikator dibawah 4.5'].sum() if 'Jumlah Indikator dibawah 4.5' in df_filtered_dash.columns else 0
                         ind_lebih     = df_filtered_dash['Jumlah Indikator diatas 4.5'].sum()  if 'Jumlah Indikator diatas 4.5'  in df_filtered_dash.columns else 0
+                        
+                        # Hitung persentase validitas untuk donut chart
+                        valid_counts = df_filtered_dash['% Valid'].value_counts() if '% Valid' in df_filtered_dash.columns else pd.Series()
+
+                        st.markdown("""
+                        <style>
+                        .kpi-card {
+                            background-color: #ffffff;
+                            border-radius: 12px;
+                            padding: 20px;
+                            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+                            border-left: 6px solid #0055A4;
+                            transition: transform 0.2s ease-in-out;
+                            display: flex;
+                            flex-direction: column;
+                            justify-content: center;
+                            height: 100%;
+                        }
+                        .kpi-card:hover {
+                            transform: translateY(-5px);
+                            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+                        }
+                        .kpi-title {
+                            color: #64748b;
+                            font-size: 14px;
+                            font-weight: 600;
+                            text-transform: uppercase;
+                            margin-bottom: 8px;
+                            letter-spacing: 0.5px;
+                        }
+                        .kpi-value {
+                            color: #0f172a;
+                            font-size: 32px;
+                            font-weight: 800;
+                            margin: 0;
+                            line-height: 1.2;
+                        }
+                        .card-warning { border-left-color: #eab308; }
+                        .card-success { border-left-color: #22c55e; }
+                        </style>
+                        """, unsafe_allow_html=True)
 
                         col_kpi1, col_kpi2, col_kpi3 = st.columns(3)
-                        with col_kpi1: st.metric("🌟 Skor Evaluasi L1",  f"{skor_evaluasi:.2f}" if pd.notna(skor_evaluasi) else "N/A")
-                        with col_kpi2: st.metric("⚠️ Indikator < 4.5",  int(ind_kurang))
-                        with col_kpi3: st.metric("✅ Indikator ≥ 4.5",  int(ind_lebih))
+                        with col_kpi1:
+                            skor_str = f"{skor_evaluasi:.2f}" if pd.notna(skor_evaluasi) else "N/A"
+                            st.markdown(f"""
+                            <div class="kpi-card">
+                                <div class="kpi-title">🌟 Skor Evaluasi L1 Rata-rata</div>
+                                <div class="kpi-value" style="color: #0055A4;">{skor_str}</div>
+                            </div>
+                            """, unsafe_allow_html=True)
+                        with col_kpi2:
+                            st.markdown(f"""
+                            <div class="kpi-card card-warning">
+                                <div class="kpi-title">⚠️ Indikator < 4.5 (Perlu Perhatian)</div>
+                                <div class="kpi-value">{int(ind_kurang)}</div>
+                            </div>
+                            """, unsafe_allow_html=True)
+                        with col_kpi3:
+                            st.markdown(f"""
+                            <div class="kpi-card card-success">
+                                <div class="kpi-title">✅ Indikator ≥ 4.5 (Sangat Baik)</div>
+                                <div class="kpi-value">{int(ind_lebih)}</div>
+                            </div>
+                            """, unsafe_allow_html=True)
+                        
+                        st.markdown("<br>", unsafe_allow_html=True)
+
+                        # 2. CHARTS SECTION
+                        col_chart_top1, col_chart_top2 = st.columns([3, 2])
+                        
+                        with col_chart_top1:
+                            st.markdown("### 📈 Skor Evaluasi vs Skor Materi per Metode")
+                            # Siapkan data untuk Grouped Bar Chart
+                            if 'RATA MAT' in df_filtered_dash.columns:
+                                df_bar = df_filtered_dash.groupby('Strategi Pelaksanaan')[['RATA-RATA KESELURUHAN', 'RATA MAT']].mean().reset_index()
+                                df_bar_melted = df_bar.melt(id_vars='Strategi Pelaksanaan', value_vars=['RATA-RATA KESELURUHAN', 'RATA MAT'], var_name='Kategori', value_name='Skor')
+                                
+                                fig_bar = px.bar(
+                                    df_bar_melted, 
+                                    x='Strategi Pelaksanaan', 
+                                    y='Skor', 
+                                    color='Kategori',
+                                    barmode='group',
+                                    text='Skor',
+                                    color_discrete_map={'RATA-RATA KESELURUHAN': '#0055A4', 'RATA MAT': '#20c997'}
+                                )
+                                fig_bar.update_traces(texttemplate='%{text:.2f}', textposition='outside')
+                                fig_bar.add_hline(y=4.5, line_dash="dash", line_color="#FFC000", annotation_text="Standar 4.5", annotation_position="top left")
+                                fig_bar.update_layout(height=350, yaxis_range=[0, 5.2], legend_title_text='', margin=dict(t=30,b=0,l=0,r=0))
+                                st.plotly_chart(fig_bar, use_container_width=True)
+                            else:
+                                st.info("Data Skor Materi (RATA MAT) tidak tersedia untuk perbandingan.")
+
+                        with col_chart_top2:
+                            st.markdown("### 🍩 Proporsi Validitas Data L1")
+                            if not valid_counts.empty:
+                                df_valid_pie = valid_counts.reset_index()
+                                df_valid_pie.columns = ['Status', 'Jumlah']
+                                fig_pie_valid = px.pie(
+                                    df_valid_pie, 
+                                    values='Jumlah', 
+                                    names='Status', 
+                                    hole=0.5,
+                                    color='Status',
+                                    color_discrete_map={'VALID': '#22c55e', 'TIDAK VALID': '#ef4444'}
+                                )
+                                fig_pie_valid.update_traces(textposition='inside', textinfo='percent+label')
+                                fig_pie_valid.update_layout(height=350, showlegend=False, margin=dict(t=30,b=10,l=10,r=10))
+                                st.plotly_chart(fig_pie_valid, use_container_width=True)
+                            else:
+                                st.info("Data Validitas tidak tersedia.")
+
                         st.markdown("---")
-
-                        col_chart_l, col_chart_r = st.columns([3, 2])
-                        with col_chart_l:
-                            st.markdown("### 📈 Skor Evaluasi L1 Berdasarkan Strategi Pelaksanaan")
-                            df_grafik = df_filtered_dash.groupby('Strategi Pelaksanaan')['RATA-RATA KESELURUHAN'].mean().reset_index()
-                            fig = px.bar(
-                                df_grafik, 
-                                x='Strategi Pelaksanaan', 
-                                y='RATA-RATA KESELURUHAN', 
-                                text='RATA-RATA KESELURUHAN', 
-                                color_discrete_sequence=['#005b9f']
-                            )
-                            fig.update_traces(texttemplate='%{text:.2f}', textposition='outside')
-                            fig.add_hline(y=4.5, line_dash="dash", line_color="#FFC000", annotation_text="Standar TMP (4.5)", annotation_position="top left")
-                            fig.update_layout(height=350, bargap=0.5, yaxis_range=[0,5], yaxis_title="Rata-rata Skor", xaxis_title="", margin=dict(t=40,b=0,l=0,r=0))
-                            st.plotly_chart(fig, use_container_width=True)
-
-                        with col_chart_r:
-                            st.markdown("#### 🕸️ Radar — Rata-rata Kategori")
-                            kategori_radar = {
-                                'Eng. Instruktur':'Engagement Instruktur','Rel. Instruktur':'Relevance Instruktur',
-                                'Sat. Instruktur':'Satisfaction Instruktur','Eng. Materi':'Engagement Materi',
-                                'Rel. Materi':'Relevance Materi','Sat. Materi':'Satisfaction Materi',
-                                'Sarana Digital':'Satisfaction Sarana Digital','Sarana In-Class':'Satisfaction Sarana In Class',
-                            }
-                            labels = [k for k,v in kategori_radar.items() if v in df_filtered_dash.columns]
-                            values = [df_filtered_dash[kategori_radar[k]].mean() for k in labels]
-                            if labels:
-                                fig_radar = go.Figure(go.Scatterpolar(r=values+[values[0]], theta=labels+[labels[0]], fill='toself', fillcolor='rgba(0,85,164,0.15)', line=dict(color='#0055A4',width=2)))
-                                fig_radar.update_layout(polar=dict(radialaxis=dict(visible=True,range=[0,5])), showlegend=False, height=350, margin=dict(t=30,b=30,l=30,r=30))
-                                st.plotly_chart(fig_radar, use_container_width=True)
-
-                        st.markdown("---")
+                        
+                        st.markdown("### 📆 Tren Skor L1 Historis Berdasarkan Bulan Laporan")
                         if 'Laporan Bulan' in df_filtered_dash.columns:
-                            st.markdown("#### 📆 Tren Skor L1 per Bulan")
                             URUTAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember']
                             df_tren = df_filtered_dash.groupby('Laporan Bulan')['RATA-RATA KESELURUHAN'].mean().reset_index()
                             df_tren['sort_key'] = df_tren['Laporan Bulan'].apply(lambda x: URUTAN.index(x) if x in URUTAN else 99)
                             df_tren = df_tren.sort_values('sort_key')
-                            fig_tren = px.line(df_tren, x='Laporan Bulan', y='RATA-RATA KESELURUHAN', markers=True, color_discrete_sequence=['#0055A4'])
+                            
+                            fig_tren = px.line(
+                                df_tren, 
+                                x='Laporan Bulan', 
+                                y='RATA-RATA KESELURUHAN', 
+                                markers=True, 
+                                text='RATA-RATA KESELURUHAN'
+                            )
+                            fig_tren.update_traces(
+                                line=dict(color='#0055A4', width=3),
+                                marker=dict(size=10, color='#FFC000', line=dict(width=2, color='#0055A4')),
+                                textposition='top center',
+                                texttemplate='%{text:.2f}'
+                            )
                             fig_tren.add_hline(y=4.5, line_dash="dash", line_color="#FFC000", annotation_text="Standar 4.5", annotation_position="top left")
-                            fig_tren.update_layout(yaxis_range=[0,5], height=300, yaxis_title="Rata-rata Skor", xaxis_title="")
+                            fig_tren.update_layout(yaxis_range=[3.5, 5.1], height=350, yaxis_title="Rata-rata Skor", xaxis_title="")
                             st.plotly_chart(fig_tren, use_container_width=True)
+                        else:
+                            st.info("Kolom 'Laporan Bulan' tidak ditemukan untuk menampilkan tren.")
 
                         with st.expander(f"📄 Tabel Data Lengkap ({len(df_filtered_dash)} baris)", expanded=False):
                             st.dataframe(df_filtered_dash, use_container_width=True)
