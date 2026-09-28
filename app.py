@@ -995,20 +995,32 @@ else:
                                 y=['RATA-RATA KESELURUHAN', 'RATA MAT', 'RATA INST', 'RATA SASPRAS'], 
                                 markers=True
                             )
-                            fig_tren.update_traces(line=dict(width=3), marker=dict(size=8, line=dict(width=1, color='white')))
                             
-                            # Warna custom untuk line chart
+                            # MENGUBAH MODE UNTUK MENAMPILKAN TEKS ANGKA (1 DESIMAL)
+                            fig_tren.update_traces(
+                                mode="lines+markers+text",
+                                texttemplate="%{y:.1f}",
+                                textposition="top center",
+                                line=dict(width=3), 
+                                marker=dict(size=8, line=dict(width=1, color='white'))
+                            )
+                            
+                            # Warna custom untuk line chart & warna teks agar senada
                             color_mapping = {'RATA-RATA KESELURUHAN': '#0055A4', 'RATA MAT': '#20c997', 'RATA INST': '#FFC000', 'RATA SASPRAS': '#ef4444'}
                             for i, d in enumerate(fig_tren.data):
                                 if d.name in color_mapping:
                                     d.line.color = color_mapping[d.name]
                                     d.marker.color = color_mapping[d.name]
+                                    d.textfont.color = color_mapping[d.name] # Menyamakan warna angka dengan garis
                                     
                             fig_tren.add_hline(y=4.5, line_dash="dash", line_color="#8b5cf6", annotation_text="Standar 4.5", annotation_position="top left")
+                            
+                            # MEMPERSEMPIT RENTANG SUMBU Y AGAR GARIS LEBIH MERENGGANG
                             fig_tren.update_layout(
-                                yaxis_range=[3.5, 5.1], height=400, 
+                                yaxis_range=[3.8, 4.8], # Diubah dari [3.5, 5.1] agar grafik membesar
+                                height=420, # Ditinggikan sedikit agar angka tidak terpotong
                                 yaxis_title="Skor Rata-rata", xaxis_title="",
-                                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+                                legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="right", x=1),
                                 legend_title_text=''
                             )
                             st.plotly_chart(fig_tren, use_container_width=True)
