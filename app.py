@@ -888,18 +888,18 @@ else:
                                 if p_mean <= 1.0: p_mean *= 100
                                 pengisian_val = f"{p_mean:.1f}%"
 
-                        # --- 2. HTML/CSS KARTU KPI ---
+                        # --- 2. HTML/CSS KARTU KPI (Versi 1 Baris Kompak) ---
                         st.markdown("""
                         <style>
                         .kpi-card {
-                            background-color: #ffffff; border-radius: 12px; padding: 18px;
-                            box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-left: 6px solid #0055A4;
+                            background-color: #ffffff; border-radius: 10px; padding: 12px 8px; /* Padding dikecilkan */
+                            box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-left: 4px solid #0055A4; /* Border dipertipis */
                             transition: transform 0.2s ease-in-out; display: flex; flex-direction: column;
                             justify-content: center; height: 100%; margin-bottom: 15px;
                         }
-                        .kpi-card:hover { transform: translateY(-5px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
-                        .kpi-title { color: #64748b; font-size: 12.5px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; }
-                        .kpi-value { color: #0f172a; font-size: 28px; font-weight: 800; margin: 0; line-height: 1.2; }
+                        .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.1); }
+                        .kpi-title { color: #64748b; font-size: 9.5px; font-weight: 700; text-transform: uppercase; margin-bottom: 5px; line-height: 1.2; letter-spacing: 0px; } /* Font judul dikecilkan */
+                        .kpi-value { color: #0f172a; font-size: 18px; font-weight: 800; margin: 0; line-height: 1.1; } /* Font angka dikecilkan */
                         .card-mat { border-left-color: #20c997; }
                         .card-inst { border-left-color: #FFC000; }
                         .card-sp { border-left-color: #ef4444; }
@@ -909,25 +909,23 @@ else:
                         </style>
                         """, unsafe_allow_html=True)
 
-                        # Baris 1: 4 KPI Skor
-                        col_k1, col_k2, col_k3, col_k4 = st.columns(4)
-                        with col_k1:
-                            st.markdown(f'<div class="kpi-card"><div class="kpi-title">🌟 Skor Keseluruhan</div><div class="kpi-value" style="color:#0055A4;">{skor_evaluasi:.2f}</div></div>', unsafe_allow_html=True)
-                        with col_k2:
-                            st.markdown(f'<div class="kpi-card card-mat"><div class="kpi-title">📚 Rata-rata Materi</div><div class="kpi-value">{skor_mat:.2f}</div></div>', unsafe_allow_html=True)
-                        with col_k3:
-                            st.markdown(f'<div class="kpi-card card-inst"><div class="kpi-title">👨‍🏫 Rata-rata Instruktur</div><div class="kpi-value">{skor_inst:.2f}</div></div>', unsafe_allow_html=True)
-                        with col_k4:
-                            st.markdown(f'<div class="kpi-card card-sp"><div class="kpi-title">🏢 Rata-rata Saspras</div><div class="kpi-value">{skor_saspras:.2f}</div></div>', unsafe_allow_html=True)
-
-                        # Baris 2: 3 KPI Indikator & Pengisian
-                        col_k5, col_k6, col_k7 = st.columns(3)
-                        with col_k5:
-                            st.markdown(f'<div class="kpi-card card-warn"><div class="kpi-title">⚠️ Indikator < 4.5 (Evaluasi)</div><div class="kpi-value">{int(ind_kurang)}</div></div>', unsafe_allow_html=True)
-                        with col_k6:
-                            st.markdown(f'<div class="kpi-card card-ok"><div class="kpi-title">✅ Indikator ≥ 4.5 (Prima)</div><div class="kpi-value">{int(ind_lebih)}</div></div>', unsafe_allow_html=True)
-                        with col_k7:
-                            st.markdown(f'<div class="kpi-card card-fill"><div class="kpi-title">📊 Rata-Rata Pengisian L1</div><div class="kpi-value">{pengisian_val}</div></div>', unsafe_allow_html=True)
+                        # Menyatukan 7 KPI ke dalam 1 Baris Sejajar
+                        cols = st.columns(7)
+                        
+                        with cols[0]:
+                            st.markdown(f'<div class="kpi-card"><div class="kpi-title">🌟 Skor<br>Keseluruhan</div><div class="kpi-value" style="color:#0055A4;">{skor_evaluasi:.2f}</div></div>', unsafe_allow_html=True)
+                        with cols[1]:
+                            st.markdown(f'<div class="kpi-card card-mat"><div class="kpi-title">📚 Rata-rata<br>Materi</div><div class="kpi-value">{skor_mat:.2f}</div></div>', unsafe_allow_html=True)
+                        with cols[2]:
+                            st.markdown(f'<div class="kpi-card card-inst"><div class="kpi-title">👨‍🏫 Rata-rata<br>Instruktur</div><div class="kpi-value">{skor_inst:.2f}</div></div>', unsafe_allow_html=True)
+                        with cols[3]:
+                            st.markdown(f'<div class="kpi-card card-sp"><div class="kpi-title">🏢 Rata-rata<br>Saspras</div><div class="kpi-value">{skor_saspras:.2f}</div></div>', unsafe_allow_html=True)
+                        with cols[4]:
+                            st.markdown(f'<div class="kpi-card card-warn"><div class="kpi-title">⚠️ Indikator<br>< 4.5 (Eval)</div><div class="kpi-value">{int(ind_kurang)}</div></div>', unsafe_allow_html=True)
+                        with cols[5]:
+                            st.markdown(f'<div class="kpi-card card-ok"><div class="kpi-title">✅ Indikator<br>≥ 4.5 (Prima)</div><div class="kpi-value">{int(ind_lebih)}</div></div>', unsafe_allow_html=True)
+                        with cols[6]:
+                            st.markdown(f'<div class="kpi-card card-fill"><div class="kpi-title">📊 Rata-Rata<br>Pengisian</div><div class="kpi-value">{pengisian_val}</div></div>', unsafe_allow_html=True)
 
                         st.markdown("---")
 
