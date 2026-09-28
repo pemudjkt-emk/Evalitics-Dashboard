@@ -11,7 +11,7 @@ import math
 import os
 import base64
 from datetime import datetime
-import urllib.request
+import urllib.requestv
 import io
 import re
 import time
@@ -463,10 +463,12 @@ else:
     [data-testid="stSidebar"] button[kind="secondary"] p { color: white !important; }
     [data-testid="stSidebar"] button[kind="secondary"]:hover { transform: scale(1.02); box-shadow: 0px 6px 15px rgba(23, 162, 184, 0.4); border-color: transparent; color: white !important; }
     [data-testid="stSidebar"] hr { margin-top: 30px; border-top: 1px solid #cbd5e1; }
+    .stTabs [data-baseweb="tab-list"] button p,
+    .stTabs [data-baseweb="tab-list"] button span,
     .stTabs [data-baseweb="tab-list"] button div[data-testid="stMarkdownContainer"] p { 
-    font-size: 60px !important; 
-    font-weight: 800 !important; 
-}
+        font-size: 26px !important; 
+        font-weight: 800 !important; 
+    }
     .stSelectbox div[data-baseweb="select"] { font-size: 22px !important; min-height: 48px !important; }
     .stSelectbox div[data-baseweb="select"] span { font-size: 22px !important; }
     ul[data-baseweb="menu"] li { font-size: 20px !important; }
