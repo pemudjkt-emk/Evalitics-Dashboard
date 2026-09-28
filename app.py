@@ -2255,50 +2255,11 @@ else:
                                     <meta charset="utf-8">
                                     <style>
                                         body {{ font-family: 'Segoe UI', Arial, sans-serif; font-size: 11pt; color: #1e293b; }}
-                                        
-                                        /* Styling Halaman Cover Berbasis Flexbox */
-                                        .cover-page {{
-                                            height: 100vh;
-                                            display: flex;
-                                            flex-direction: column;
-                                            justify-content: space-between;
-                                            page-break-after: always;
-                                            box-sizing: border-box;
-                                            padding: 10px 0;
-                                            text-align: center;
-                                        }}
-                                        .cover-header {{ width: 100%; }}
-                                        .cover-body {{ margin-top: auto; margin-bottom: auto; text-align: left; }}
-                                        .cover-title {{
-                                            font-size: 24pt;
-                                            font-weight: bold;
-                                            color: #003366;
-                                            line-height: 1.2;
-                                            margin-bottom: 15px;
-                                            text-transform: uppercase;
-                                        }}
-                                        .cover-subtitle {{
-                                            font-size: 14pt;
-                                            font-weight: normal;
-                                            margin-bottom: 10px;
-                                            color: #0055A4;
-                                        }}
-                                        .cover-code {{
-                                            font-size: 12pt;
-                                            color: #64748b;
-                                            font-weight: bold;
-                                            margin-bottom: 30px;
-                                        }}
-                                        .cover-footer {{
-                                            font-size: 12pt;
-                                            font-weight: bold;
-                                            letter-spacing: 1px;
-                                            color: #003366;
-                                            text-align: center;
-                                            border-top: 2px solid #003366;
-                                            padding-top: 15px;
-                                        }}
-
+                                        .cover-page {{ background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%); color: #003366; padding: 50px 40px; text-align: center; height: 100%; }}
+                                        .cover-title {{ font-size: 26pt; font-weight: 800; letter-spacing: 2px; margin-top: 150px; margin-bottom: 20px; text-transform: uppercase; line-height: 1.3; color: #003366; }}
+                                        .cover-subtitle {{ font-size: 16pt; font-weight: normal; margin-bottom: 10px; line-height: 1.4; color: #003366; }}
+                                        .cover-code {{ font-size: 14pt; color: #0055A4; margin-bottom: 150px; }}
+                                        .cover-footer {{ font-size: 14pt; font-weight: bold; letter-spacing: 1px; bottom: 50px; width: 100%; color: #003366; }}
                                         h4 {{ color: #0055A4; border-bottom: 2px solid #cbd5e1; padding-bottom: 5px; margin-top: 25px; margin-bottom: 10px; font-size: 12pt; text-transform: uppercase; }}
                                         table.zebra {{ width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 10.5pt; }}
                                         table.zebra th {{ background-color: #003366; color: white; padding: 10px; text-align: left; vertical-align: middle; }}
@@ -2311,28 +2272,19 @@ else:
                                 <body>
                                     <!-- COVER PAGE -->
                                     <div class="cover-page">
-                                        <div class="cover-header">
-                                            <table style="width: 100%; border: none;">
-                                                <tr>
-                                                    <td style="text-align: left; border: none; width: 50%;">
-                                                        <img src="data:image/png;base64,{bin_danantara}" height="35" style="background:white; padding:4px; border-radius:4px; object-fit:contain;">
-                                                    </td>
-                                                    <td style="text-align: right; border: none; width: 50%;">
-                                                        <img src="data:image/png;base64,{bin_pln}" height="55" style="object-fit:contain;">
-                                                    </td>
-                                                </tr>
-                                            </table>
-                                        </div>
+                                        <table style="width: 100%; border: none;">
+                                            <tr>
+                                                <td style="text-align: left; border: none; width: 50%;"><img src="data:image/png;base64,{bin_danantara}" height="40" style="background:white; padding:5px; border-radius:4px;"></td>
+                                                <td style="text-align: right; border: none; width: 50%;"><img src="data:image/png;base64,{bin_pln}" height="60"></td>
+                                            </tr>
+                                        </table>
                                         
-                                        <div class="cover-body">
-                                            <div class="cover-title">LAPORAN PELAKSANAAN<br>PEMBELAJARAN PENUGASAN</div>
-                                            <div class="cover-subtitle">{str(judul_pilih).upper()}</div>
-                                            <div class="cover-code">Kode: {kode_pemb}</div>
-                                        </div>
+                                        <div class="cover-title">LAPORAN PELAKSANAAN<br>PEMBELAJARAN PENUGASAN</div>
+                                        <div class="cover-subtitle">{str(judul_pilih).upper()}</div>
+                                        <div class="cover-code">({kode_pemb})</div>
                                         
-                                        <div class="cover-footer">
-                                            PT PLN (PERSERO) {updl_key}
-                                        </div>
+                                        <br><br><br><br><br><br><br><br><br><br><br><br>
+                                        <div class="cover-footer">PT PLN (PERSERO) {updl_key}</div>
                                     </div>
                                     
                                     <br clear="all" style="page-break-before:always" />
@@ -2341,6 +2293,7 @@ else:
                                     <table style="width: 100%; border: none; border-collapse: collapse;">
                                         <thead>
                                             <tr>
+                                                <!-- INVISIBLE TH TO PREVENT BLUE BACKGROUND IN HEADER -->
                                                 <th style="background-color: transparent; border: none; padding: 0 0 10px 0; border-bottom: 2px solid #003366;">
                                                     <table style="width: 100%; border: none; margin: 0;">
                                                         <tr>
