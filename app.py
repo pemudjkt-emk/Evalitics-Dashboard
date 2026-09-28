@@ -1253,7 +1253,7 @@ else:
                                 df_mapped['Tanggal Mulai']           = df_raw.get('Tgl Mulai', df_raw.get('Tanggal Mulai'))
                                 df_mapped['Tanggal Selesai']         = df_raw.get('Tgl Selesai', df_raw.get('Tanggal Selesai'))
                                 
-                                df_mapped['Strategi Pelaksanaan']    = df_raw.get('Strategi Pelaksana')
+                                df_mapped['Strategi Pelaksanaan'] = df_raw.get('Jenis Penyelenggaraan', df_raw.get('Strategi Pelaksana'))
                                 df_mapped['Peserta Isi L1']          = df_raw.get('P.Isi')
                                 df_mapped['Peserta Hadir']           = df_raw.get('P.Hadir')
                                 df_mapped['PIC KI']                  = df_raw.get('Bidang')
@@ -1522,7 +1522,7 @@ else:
 
         with sub_panduan:
             with st.expander("📖 File L1 — Evaluasi Reaksi", expanded=True):
-                st.markdown("- Wajib ada kolom `Ins-Eng-1 of 2`\n- Kolom penting: `Kode Judul`, `Judul Pembelajaran`, `Angkatan`, `Tgl Mulai`, `Tgl Selesai`, `Strategi Pelaksana`, `P.Isi`, `P.Hadir`, `Bidang`")
+                st.markdown("- Wajib ada kolom `Ins-Eng-1 of 2`\n- Kolom penting: `Kode Judul`, `Judul Pembelajaran`, `Angkatan`, `Tgl Mulai`, `Tgl Selesai`, `Jenis Penyelenggaraan`, `P.Isi`, `P.Hadir`, `Bidang`")
             with st.expander("📖 File L2 — Evaluasi Pembelajaran (Legacy)", expanded=True):
                 st.markdown("- Wajib ada kolom `Confidence Level` (tanpa `Ins-Eng-1 of 2`)\n- Kolom penting: `Kode Judul`, `Judul`, `Angkatan`, `Tgl Mulai`, `Tgl Selesai`, `Jumlah Peserta Hadir/Lulus/Isi`, `Commitment Level`")
             with st.expander("📖 File SMILE — Laporan Pelaksanaan (Baru)", expanded=True):
