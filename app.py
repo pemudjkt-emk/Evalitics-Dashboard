@@ -2016,10 +2016,13 @@ else:
                                         else:
                                             st.success("✅ Arsip laporan berhasil diamankan ke Google Drive unit!")
 
-                                with st.expander("👀 Pratinjau Dokumen"):
-                                    st.markdown(html_kelas, unsafe_allow_html=True)
-                else:
-                    st.info("⚠️ Belum ada data pembelajaran yang tersedia di Master Data Nasional.")
+                                with st.expander("👀 Pratinjau Desain Dokumen (Live Preview)"):
+                            st.markdown(html_kelas, unsafe_allow_html=True)
+                    else:
+                        st.info("⚠️ Belum ada data pembelajaran yang tersedia di Master Data Nasional.")
+                
+                except Exception as e:
+                    st.error(f"Gagal memuat Master Data Laporan Nasional: {e}")
 
         # ─────────────────────────────────────────────────────────────────────────
         # --- SUB TAB 3: KATALOG INSTRUKTUR ---
