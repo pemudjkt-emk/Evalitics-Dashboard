@@ -2404,50 +2404,21 @@ with sub_lap_pembelajaran:
                                         use_container_width=True
                                     )
                                 else:
-                                    st.info(f"ℹ️ ID Folder Drive untuk '{updl_key}' belum terdaftar di kamus DRIVE_FOLDER_DICT.")
+                                    st.info("ℹ️ ID Folder Drive belum diatur.")
 
-# Pastikan updl_key bersih
-updl_key = str(opsi_updl).strip().upper()
-
-# Kolom Tombol Unduh & Tombol Menuju Drive Unit Secara Berdampingan
-col_dl, col_drv = st.columns(2)
-
-with col_dl:
-    st.download_button(
-        label="📥 DOWNLOAD LAPORAN KELAS (.doc)",
-        data=file_bytes,
-        file_name=file_name,
-        mime="application/msword",
-        type="primary",
-        use_container_width=True
-    )
-
-with col_drv:
-    if updl_key in DRIVE_FOLDER_DICT:
-        folder_id_unit = DRIVE_FOLDER_DICT[updl_key]
-        url_folder_drive = f"https://drive.google.com/drive/folders/{folder_id_unit}"
-        st.link_button(
-            label=f"📂 BUKA FOLDER DRIVE {updl_key}",
-            url=url_folder_drive,
-            type="primary",
-            use_container_width=True
-        )
-    else:
-        st.info(f"ℹ️ ID Folder Drive untuk '{updl_key}' belum terdaftar di kamus DRIVE_FOLDER_DICT.")
-
-# Proses Arsip Otomatis ke Google Drive
-if updl_key in DRIVE_FOLDER_DICT:
-    target_folder = DRIVE_FOLDER_DICT[updl_key]
-    with st.spinner(f"☁️ Sedang mengarsipkan otomatis ke Google Drive ({updl_key})..."):
-        res_upload = upload_dokumen_ke_drive(file_bytes, file_name, target_folder)
-        if res_upload == "ERROR_IMPORT":
-            st.warning("⚠️️ Laporan berhasil di-generate, namun gagal diarsip ke Drive. Module belum terinstall.")
-        elif str(res_upload).startswith("ERROR"):
-            st.error(f"⚠️ Gagal mengarsipkan ke Google Drive: {res_upload}")
-        else:
-            st.success(f"✅ Arsip laporan berhasil diamankan ke Google Drive {updl_key}!")
-else:
-    st.info(f"ℹ️ ID Folder Drive untuk '{updl_key}' belum diatur.")
+                            # Proses Arsip Otomatis ke Google Drive
+                            if updl_key in DRIVE_FOLDER_DICT:
+                                target_folder = DRIVE_FOLDER_DICT[updl_key]
+                                with st.spinner(f"☁️ Sedang mengarsipkan otomatis ke Google Drive ({updl_key})..."):
+                                    res_upload = upload_dokumen_ke_drive(file_bytes, file_name, target_folder)
+                                    if res_upload == "ERROR_IMPORT":
+                                        st.warning("⚠️ Laporan berhasil di-generate, namun gagal diarsip ke Drive. Module 'google-api-python-client' belum terinstall di server.")
+                                    elif str(res_upload).startswith("ERROR"):
+                                        st.error(f"⚠️ Gagal mengarsipkan ke Google Drive: {res_upload}\n\n*Pastikan folder tujuan berada di Drive Bersama (Shared Drives) dan Service Account memiliki akses Editor/Manager.*")
+                                    else:
+                                        st.success(f"✅ Arsip laporan berhasil diamankan ke Google Drive!")
+                            else:
+                                st.info("ℹ️ ID Folder Drive untuk UPDL ini belum diatur. Laporan hanya tersedia untuk diunduh lokal.")
 
                             with st.expander("👀 Pratinjau Desain Dokumen (Live Preview)"):
                                 st.markdown(html_kelas, unsafe_allow_html=True)
