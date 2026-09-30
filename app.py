@@ -23,7 +23,7 @@ import time
 # PAGE CONFIG
 # ─────────────────────────────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="Smart Evaluation Analytics Jakarta Insight Hub",
+    page_title="Jakarta Insight Hub - Smart Evaluation Analytics",
     page_icon="⚡",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -128,7 +128,7 @@ def safe_divide(numerator, denominator):
 def detect_and_show_column_mismatch(df_raw, expected_cols, file_name, section_label):
     missing = [c for c in expected_cols if c not in df_raw.columns]
     if missing:
-        st.warning(f"⚠️ **{file_name}** — Kolom {section_label} tidak ditemukan: `{'`, `'.join(missing)}`")
+        st.warning(f"⚠️ **{file_name}** — Kolom {section_label} tidak ditemukan: {', '.join(missing)}")
     return missing
 
 def build_instruktur_df(df_raw):
@@ -1685,7 +1685,7 @@ else:
     # ══════════════════════════════════════════════════════════════════════════════
     elif menu_selection in ["📑 REPORT & KATALOG", "📄 Laporan Pembelajaran"]:
         if st.session_state["role"] == "SuperAdmin":
-            sub_rep_generator, sub_lap_pembelajaran, sub_katalog = st.tabs(["📑 Report Generator", "📄 Laporan Pembelajaran", "👨‍🏫 Katalog Instruktur"])
+            sub_rep_generator, sub_lap_pembelajaran, sub_katalog = st.tabs(["📑 Report Generator", "📄 Laporan Pembelajaran", "👨‍‍🏫 Katalog Instruktur"])
         else:
             sub_lap_pembelajaran = st.container()
         
@@ -2061,7 +2061,6 @@ else:
                 if 'Sumber Data Implementasi' in df_master.columns and ('Judul Pembelajaran/ Asesmen/ Sertifikasi/ KSM' in df_master.columns or 'Judul Pembelajaran' in df_master.columns):
                     col_judul_laporan = 'Judul Pembelajaran/ Asesmen/ Sertifikasi/ KSM' if 'Judul Pembelajaran/ Asesmen/ Sertifikasi/ KSM' in df_master.columns else 'Judul Pembelajaran'
                     
-                    # LOGIKA SILUMAN FILTER: JIKA ROLE UPDL, KUNCI OTOMATIS BERDASARKAN USER_UNIT
                     if st.session_state["role"] == "UPDL":
                         unit_login = str(st.session_state.get("user_unit", "")).strip().upper()
                         df_master['UPDL_Clean'] = df_master['Sumber Data Implementasi'].astype(str).str.strip().str.upper()
@@ -2167,7 +2166,7 @@ else:
                                 def format_rp(val):
                                     try: 
                                         val_clean = str(val).replace(',', '.').strip()
-                                        return f"Rp {int(float(val_clean)):,}".replace(',', '.')
+                                        return f"Rp {int(float(val_clean)):,}".replace('.', ',')
                                     except: return "Rp 0"
                                         
                                 rab = format_rp(df_kelas.get('RAB Pelaksanaan', 0))
@@ -2378,7 +2377,6 @@ else:
                                     type="primary"
                                 )
                                 
-                                # --- TOMBOL AKSES GOOGLE DRIVE DINAMIS PER UNIT ---
                                 if updl_key in DRIVE_FOLDER_DICT:
                                     folder_id_unit = DRIVE_FOLDER_DICT[updl_key]
                                     url_folder_drive = f"https://drive.google.com/drive/folders/{folder_id_unit}"
@@ -2454,7 +2452,7 @@ else:
                             list_diklat = ["Semua Pembelajaran"]
                         selected_diklat = st.selectbox("📚 Pilih Judul Pembelajaran:", list_diklat, key="k_diklat")
                     
-                    with st.expander("⚖️️ Konfigurasi Pembobotan & Ambang Batas Rekomendasi", expanded=False):
+                    with st.expander("⚖ Konfigurasi Pembobotan & Ambang Batas Rekomendasi", expanded=False):
                         col_w1, col_w2 = st.columns([3, 2])
                         with col_w1:
                             bobot_skor = st.slider("Bobot Skor Mutu Kepuasan (%):", min_value=10, max_value=90, value=70, step=5, key="w_skor")
@@ -2564,7 +2562,7 @@ else:
     # KONTEN: ⚙️ PENGATURAN
     # ══════════════════════════════════════════════════════════════════════════════
     elif menu_selection == "⚙️ PENGATURAN" and st.session_state["role"] == "SuperAdmin":
-        st.subheader("⚙️ Pengaturan Aplikasi")
+        st.subheader("⚙️️ Pengaturan Aplikasi")
         with st.container(border=True):
             st.markdown("#### 🔗 Konfigurasi Google Sheets (Target Master Data Laporan)")
             nama_sheet = st.text_input("Nama File Google Sheets Utama", value=st.session_state["setting_sheet"])
