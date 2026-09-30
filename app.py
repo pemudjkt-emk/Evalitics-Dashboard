@@ -1695,11 +1695,11 @@ else:
         else:
             # Pengaman wajib untuk akun UPDL agar variabel penampung tidak bernilai None/NameError
             sub_lap_pembelajaran = st.container()
-        
+            
         # ─────────────────────────────────────────────────────────────────────────
         # --- SUB TAB 1: REPORT GENERATOR ---
         # ─────────────────────────────────────────────────────────────────────────
-        if st.session_state.get["role"] == "SuperAdmin":
+        if st.session_state.get["role"] == "SuperAdmin" and sub_rep_generator is not None:
             with sub_rep_generator:
                 st.markdown("### 📑 Generator Laporan Manajemen Mutu (Otomatis)")
                 st.write("Menyusun laporan evaluasi mutu L1 komprehensif, mencakup capaian kategori, analisis IPA Kuadran 1, seluruh komentar apresiasi & masukan per judul pembelajaran, PIC KI, serta narasi AI Executive Summary.")
@@ -2421,7 +2421,7 @@ else:
     # ─────────────────────────────────────────────────────────────────────────
     # --- SUB TAB 3: KATALOG INSTRUKTUR ---
     # ─────────────────────────────────────────────────────────────────────────
-    if st.session_state.get["role"] == "SuperAdmin":
+    if st.session_state.get["role"] == "SuperAdmin" and sub_katalog is not None:
         with sub_katalog:
             st.markdown("### 👨‍🏫 Katalog & Rapor Instruktur Terbobot")
             st.write("Sistem rekomendasi objektif berbasis **Composite Performance Index** yang menggabungkan kepuasan mutu (`Ins-Rat`) dan stabilitas jam terbang.")
