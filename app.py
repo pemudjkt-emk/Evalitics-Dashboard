@@ -1681,18 +1681,25 @@ else:
         except Exception as e: st.error(f"❌ Gagal memuat data dari Sheet 'Detail Komentar L1'. Detail error: {e}")
 
     # ══════════════════════════════════════════════════════════════════════════════
-    # KONTEN: 📑 REPORT & KATALOG (RBAC & SILUMAN FILTER INTEGRATED)
+    # KONTEN: 📑 REPORT & KATALOG / LAPORAN PEMBELAJARAN (RBAC INTEGRATED)
     # ══════════════════════════════════════════════════════════════════════════════
     elif menu_selection in ["📑 REPORT & KATALOG", "📄 Laporan Pembelajaran"]:
-        if st.session_state["role"] == "SuperAdmin":
-            sub_rep_generator, sub_lap_pembelajaran, sub_katalog = st.tabs(["📑 Report Generator", "📄 Laporan Pembelajaran", "👨‍‍🏫 Katalog Instruktur"])
+        
+        # Inisialisasi aman berdasarkan hak akses role yang sedang login
+        if st.session_state.get("role") == "SuperAdmin":
+            sub_rep_generator, sub_lap_pembelajaran, sub_katalog = st.tabs([
+                "📑 Report Generator", 
+                "📄 Laporan Pembelajaran", 
+                "👨‍🏫 Katalog Instruktur"
+            ])
         else:
+            # Pengaman wajib untuk akun UPDL agar variabel penampung tidak bernilai None/NameError
             sub_lap_pembelajaran = st.container()
         
         # ─────────────────────────────────────────────────────────────────────────
         # --- SUB TAB 1: REPORT GENERATOR ---
         # ─────────────────────────────────────────────────────────────────────────
-        if st.session_state["role"] == "SuperAdmin":
+        if st.session_state.gate["role"] == "SuperAdmin":
             with sub_rep_generator:
                 st.markdown("### 📑 Generator Laporan Manajemen Mutu (Otomatis)")
                 st.write("Menyusun laporan evaluasi mutu L1 komprehensif, mencakup capaian kategori, analisis IPA Kuadran 1, seluruh komentar apresiasi & masukan per judul pembelajaran, PIC KI, serta narasi AI Executive Summary.")
@@ -2414,7 +2421,7 @@ else:
     # ─────────────────────────────────────────────────────────────────────────
     # --- SUB TAB 3: KATALOG INSTRUKTUR ---
     # ─────────────────────────────────────────────────────────────────────────
-    if st.session_state["role"] == "SuperAdmin":
+    if st.session_state.get["role"] == "SuperAdmin":
         with sub_katalog:
             st.markdown("### 👨‍🏫 Katalog & Rapor Instruktur Terbobot")
             st.write("Sistem rekomendasi objektif berbasis **Composite Performance Index** yang menggabungkan kepuasan mutu (`Ins-Rat`) dan stabilitas jam terbang.")
