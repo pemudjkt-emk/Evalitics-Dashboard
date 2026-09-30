@@ -2032,12 +2032,13 @@ else:
                     st.error(f"Gagal memuat data sumber untuk laporan: {e}")
 
     # ─────────────────────────────────────────────────────────────────────────
+    # ─────────────────────────────────────────────────────────────────────────
     # --- SUB TAB 2: LAPORAN PEMBELAJARAN (PER KELAS/JUDUL) - RBAC & SILUMAN FILTER ---
     # ─────────────────────────────────────────────────────────────────────────
     with sub_lap_pembelajaran:
         with st.container(border=True):
+            unit_aktif = str(st.session_state.get("user_unit", "")).strip()
             if st.session_state["role"] == "UPDL":
-                unit_aktif = st.session_state.get("user_unit", "").strip()
                 st.markdown(f"## 📄 Generator Laporan Pembelajaran — {unit_aktif}")
                 st.write(f"Selamat datang, akun mandiri **{unit_aktif}**. Daftar kelas di bawah ini difilter otomatis khusus untuk unit Anda.")
             else:
@@ -2068,14 +2069,20 @@ else:
                 if 'Sumber Data Implementasi' in df_master.columns and ('Judul Pembelajaran/ Asesmen/ Sertifikasi/ KSM' in df_master.columns or 'Judul Pembelajaran' in df_master.columns):
                     col_judul_laporan = 'Judul Pembelajaran/ Asesmen/ Sertifikasi/ KSM' if 'Judul Pembelajaran/ Asesmen/ Sertifikasi/ KSM' in df_master.columns else 'Judul Pembelajaran'
                     
+                    # --- PERBAIKAN LOGIKA FILTER UNIT UPDL ---
                     if st.session_state["role"] == "UPDL":
-                        unit_login = str(st.session_state.get("user_unit", "")).strip().upper()
+                        unit_login_clean = unit_aktif.upper().replace("UPDL", "").strip()
                         df_master['UPDL_Clean'] = df_master['Sumber Data Implementasi'].astype(str).str.strip().str.upper()
-                        df_updl = df_master[df_master['UPDL_Clean'] == unit_login].copy()
-                        opsi_updl = st.session_state.get("user_unit", "")
+                        
+                        # Pencocokan fleksibel: mencakup nama unit yang mengandung string login (misal: "JAKARTA")
+                        df_updl = df_master[
+                            df_master['UPDL_Clean'].str.contains(unit_login_clean, na=False) | 
+                            df_master['UPDL_Clean'].str.contains(unit_aktif.upper(), na=False)
+                        ].copy()
+                        opsi_updl = unit_aktif
                         
                         if df_updl.empty:
-                            st.warning(f"⚠️ Belum ada data pembelajaran yang tercatat untuk unit **{unit_login}** pada Master Data Nasional.")
+                            st.warning(f"⚠️ Belum ada data pembelajaran yang tercatat untuk unit **{unit_aktif}** pada Master Data Nasional. (Pastikan tab 'User_Access' menuliskan nama UPDL dengan tepat seperti di Master Data).")
                     else:
                         list_updl = sorted(df_master['Sumber Data Implementasi'].dropna().unique().tolist())
                         col_u, col_j, col_btn = st.columns([1.5, 2, 1])
@@ -2092,19 +2099,12 @@ else:
                         )
                         list_opsi = df_updl['Opsi_Dropdown'].dropna().unique().tolist()
                         
-                        if st.session_state["role"] == "UPDL":
-                            col_j, col_btn = st.columns([3, 1])
-                            with col_j:
-                                opsi_pilih = st.selectbox("📚 Pilih Judul Pembelajaran Sesuai Unit Anda:", list_opsi, key="judul_report_pembelajaran_updl")
-                            with col_btn:
-                                st.markdown("<br>", unsafe_allow_html=True)
-                                btn_gen_kelas = st.button("🚀 Generate Laporan Kelas", type="primary", use_container_width=True)
-                        else:
-                            with col_j:
-                                opsi_pilih = st.selectbox("📚 Pilih Judul Pembelajaran:", list_opsi, key="judul_report_pembelajaran")
-                            with col_btn:
-                                st.markdown("<br>", unsafe_allow_html=True)
-                                btn_gen_kelas = st.button("🚀 Generate Laporan Kelas", type="primary", use_container_width=True)
+                        col_j, col_btn = st.columns([3, 1])
+                        with col_j:
+                            opsi_pilih = st.selectbox("📚 Pilih Judul Pembelajaran:", list_opsi, key="judul_report_pembelajaran_updl" if st.session_state["role"] == "UPDL" else "judul_report_pembelajaran")
+                        with col_btn:
+                            st.markdown("<br>", unsafe_allow_html=True)
+                            btn_gen_kelas = st.button("🚀 Generate Laporan Kelas", type="primary", use_container_width=True)
                         
                         if btn_gen_kelas:
                             with st.spinner("Mengekstrak data pelaksanaan kelas..."):
@@ -2412,7 +2412,7 @@ else:
                                 with st.expander("👀 Pratinjau Desain Dokumen (Live Preview)"):
                                     st.markdown(html_kelas, unsafe_allow_html=True)
                     else:
-                        st.info(f"⚠️ Tidak ada data pembelajaran yang ditemukan untuk unit **{opsi_updl}**.")
+                        st.info(f"⚠️ Tidak ada data pembelajaran yang ditemukan untuk unit **{unit_aktif}**.")
                 else:
                     st.info("⚠️ Belum ada data 'Sumber Data Implementasi' atau 'Judul Pembelajaran' yang tersedia di Master Data Nasional.")
             except Exception as e:
