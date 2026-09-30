@@ -1699,7 +1699,7 @@ else:
         # ─────────────────────────────────────────────────────────────────────────
         # --- SUB TAB 1: REPORT GENERATOR ---
         # ─────────────────────────────────────────────────────────────────────────
-        if st.session_state.gate["role"] == "SuperAdmin":
+        if st.session_state.get["role"] == "SuperAdmin":
             with sub_rep_generator:
                 st.markdown("### 📑 Generator Laporan Manajemen Mutu (Otomatis)")
                 st.write("Menyusun laporan evaluasi mutu L1 komprehensif, mencakup capaian kategori, analisis IPA Kuadran 1, seluruh komentar apresiasi & masukan per judul pembelajaran, PIC KI, serta narasi AI Executive Summary.")
