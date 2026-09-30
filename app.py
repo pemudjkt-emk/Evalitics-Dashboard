@@ -2019,10 +2019,10 @@ else:
                                 )
                                 with st.expander("👀 Pratinjau Teks Laporan (Live Preview)"):
                                     st.markdown(html_content, unsafe_allow_html=True)
-                                        else:
-                                            st.info("Belum ada data bulan yang tersedia untuk dibuatkan laporan.")
-                                except Exception as e:
-                                    st.error(f"Gagal memuat data sumber untuk laporan: {e}")
+                    else:
+                        st.info("Belum ada data bulan yang tersedia untuk dibuatkan laporan.")
+                except Exception as e:
+                    st.error(f"Gagal memuat data sumber untuk laporan: {e}")
 
     # ─────────────────────────────────────────────────────────────────────────
     # --- SUB TAB 2: LAPORAN PEMBELAJARAN (PER KELAS/JUDUL) - RBAC & SILUMAN FILTER ---
