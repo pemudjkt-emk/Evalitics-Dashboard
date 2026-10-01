@@ -2189,7 +2189,7 @@ else:
                                         @page Section2 {{
                                             mso-footer: f1;
                                             margin: 1in;
-                                        }
+                                        }}
                                         div.Section2 {{
                                             page: Section2;
                                         }}
