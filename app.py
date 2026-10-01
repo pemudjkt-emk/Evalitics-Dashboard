@@ -634,7 +634,7 @@ else:
 
                     if pd.api.types.is_numeric_dtype(df_filtered[var_x]) and pd.api.types.is_numeric_dtype(df_filtered[var_y]):
                         hapus_outlier  = st.checkbox("🧹 Buang Outlier (IQR)", key="out_ana")
-                        uji_normalitas = st.checkbox("⚖️ Uji Normalitas (Shapiro-Wilk)", key="norm_ana")
+                        uji_normalitas = st.checkbox("⚖️️ Uji Normalitas (Shapiro-Wilk)", key="norm_ana")
                         df_clean = df_filtered.copy()
 
                         if hapus_outlier:
@@ -902,7 +902,7 @@ else:
                         with cols[1]:
                             st.markdown(f'<div class="kpi-card card-mat"><div class="kpi-title">📚 Rata-rata<br>Materi</div><div class="kpi-value">{skor_mat:.2f}</div></div>', unsafe_allow_html=True)
                         with cols[2]:
-                            st.markdown(f'<div class="kpi-card card-inst"><div class="kpi-title">👨‍‍🏫 Rata-rata<br>Instruktur</div><div class="kpi-value">{skor_inst:.2f}</div></div>', unsafe_allow_html=True)
+                            st.markdown(f'<div class="kpi-card card-inst"><div class="kpi-title">👨‍🏫 Rata-rata<br>Instruktur</div><div class="kpi-value">{skor_inst:.2f}</div></div>', unsafe_allow_html=True)
                         with cols[3]:
                             st.markdown(f'<div class="kpi-card card-sp"><div class="kpi-title">🏢 Rata-rata<br>Saspras</div><div class="kpi-value">{skor_saspras:.2f}</div></div>', unsafe_allow_html=True)
                         with cols[4]:
@@ -2185,13 +2185,18 @@ else:
                                         p {{ text-align: justify; margin-top: 0; line-height: 1.6; color: #334155; }}
                                         ul {{ margin-top: 0; padding-left: 20px; line-height: 1.6; color: #334155; }}
                                         
-                                        @page {{
+                                        @page Section1 {{
+                                            mso-header: none;
+                                            mso-footer: none;
+                                            margin: 1in;
+                                        }}
+                                        @page Section2 {{
+                                            mso-header: none;
                                             mso-footer: f1;
                                             margin: 1in;
                                         }}
-                                        @page Section1 {{
-                                            mso-header: default;
-                                            mso-footer: default;
+                                        div.Section1 {{
+                                            page: Section1;
                                         }}
                                         div.Section2 {{
                                             page: Section2;
@@ -2206,8 +2211,8 @@ else:
                                     </style>
                                 </head>
                                 <body>
-                                    <!-- COVER PAGE -->
-                                    <div style="page: Section1;">
+                                    <!-- COVER PAGE (Seksi 1: Tanpa Header & Footer) -->
+                                    <div class="Section1">
                                         <div class="cover-page">
                                             <table style="width: 100%; border: none;">
                                                 <tr>
@@ -2225,9 +2230,10 @@ else:
                                         </div>
                                     </div>
                                     
-                                    <br clear="all" style="page-break-before:always" />
+                                    <!-- PEMISAH SEKSI HALAMAN WORD -->
+                                    <br clear="all" style="mso-break-type:section-break; page-break-before:always;" />
 
-                                    <!-- KONTEN UTAMA DENGAN FOOTER HANYA DI HALAMAN KONTEN -->
+                                    <!-- KONTEN UTAMA (Seksi 2: Dengan Footer Khusus) -->
                                     <div class="Section2">
                                         <div style="mso-element:footer" id="f1">
                                             <p style="text-align: center; font-size: 8.5pt; color: #64748b; margin: 0;">
@@ -2342,9 +2348,8 @@ else:
                                                             </tr>
                                                         </table>
 
-                                                        <!-- PEMISAH HALAMAN (PAGE BREAK) KUAT AGAR BAB 6 SELALU PINDAH HALAMAN BARU -->
-                                                        <div style="mso-break-type:section-break; page-break-before:always;"></div>
-                                                        <br clear="all" style="page-break-before:always;" />
+                                                        <!-- PEMISAH HALAMAN MUTLAK (PAGE BREAK + SECTION BREAK) SEBELUM BAB 6 -->
+                                                        <br clear="all" style="mso-break-type:section-break; page-break-before:always;" />
 
                                                         <h4 style="color:#0055A4; border-bottom: 2px solid #cbd5e1; padding-bottom:5px;">6. LAMPIRAN DOKUMEN</h4>
                                                         <p>Berikut adalah kelengkapan administrasi dan bukti pelaksanaan program:</p>
@@ -2389,7 +2394,7 @@ else:
                                         else:
                                             st.success(f"✅ Arsip laporan berhasil diamankan ke Google Drive!")
                                 else:
-                                    st.info("ℹ️️ ID Folder Drive untuk UPDL ini belum diatur. Laporan hanya tersedia untuk diunduh lokal.")
+                                    st.info("ℹ️ ID Folder Drive untuk UPDL ini belum diatur. Laporan hanya tersedia untuk diunduh lokal.")
 
                                 with st.expander("👀 Pratinjau Desain Dokumen (Live Preview)"):
                                     st.markdown(html_kelas, unsafe_allow_html=True)
@@ -2541,14 +2546,14 @@ else:
                         else:
                             st.info("⚠️ Data instruktur tidak ditemukan untuk kriteria pencarian ini.")
                     else:
-                        st.warning("⚠️ Database Instruktur kosong atau belum ditarik dari Google Sheets.")
+                        st.warning("⚠️️ Database Instruktur kosong atau belum ditarik dari Google Sheets.")
                 except Exception as e:
                     st.error(f"Gagal memuat data Katalog Instruktur: {e}")
 
     # ══════════════════════════════════════════════════════════════════════════════
     # KONTEN: ⚙️ PENGATURAN
     # ══════════════════════════════════════════════════════════════════════════════
-    elif menu_selection == "⚙️️ PENGATURAN" and st.session_state["role"] == "SuperAdmin":
+    elif menu_selection == "⚙️ PENGATURAN" and st.session_state["role"] == "SuperAdmin":
         st.subheader("⚙️ Pengaturan Aplikasi")
         with st.container(border=True):
             st.markdown("#### 🔗 Konfigurasi Google Sheets (Target Master Data Laporan)")
