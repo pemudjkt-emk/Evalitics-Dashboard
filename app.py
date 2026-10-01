@@ -302,8 +302,8 @@ def analisis_sentimen_opensource(teks):
         kata = kata_kata[i]
         if kata in kata_negasi and i + 1 < len(kata_kata):
             kata_berikutnya = kata_kata[i+1]
-            if kata_berikutnya in kamus_positif: skor -= 1  
-            elif kata_berikutnya in kamus_negatif: skor += 1  
+            if kata_berikutnya in kamus_positif: skor -= 1 
+            elif kata_berikutnya in kamus_negatif: skor += 1 
             i += 2; continue
         if kata in kamus_positif: skor += 1
         elif kata in kamus_negatif: skor -= 1
@@ -500,9 +500,9 @@ else:
         return ""
 
     bin_pln        = get_base64_logo("Logo PLN.png")
-    bin_danantara = get_base64_logo("logo_danantara.png")
+    bin_danantara  = get_base64_logo("logo_danantara.png")
     img_pln        = f'<img src="data:image/png;base64,{bin_pln}" style="height:85px;object-fit:contain;">' if bin_pln else ""
-    img_danantara = f'<img src="data:image/png;base64,{bin_danantara}" style="height:40px;object-fit:contain;background:white;padding:4px;border-radius:6px;">' if bin_danantara else ""
+    img_danantara  = f'<img src="data:image/png;base64,{bin_danantara}" style="height:40px;object-fit:contain;background:white;padding:4px;border-radius:6px;">' if bin_danantara else ""
 
     st.markdown(f"""
     <div style="display:flex;align-items:center;justify-content:space-between;
@@ -522,7 +522,7 @@ else:
     """, unsafe_allow_html=True)
 
     # ─────────────────────────────────────────────────────────────────────────
-    # MENU NAVIGASI (SIDEBAR) & RBAC LOGIC
+    # MENU NAVIGASI (SIDEBAR) & RBAC LOGIC (AI ASSISTANT DIHAPUS)
     # ─────────────────────────────────────────────────────────────────────────
     with st.sidebar:
         st.markdown("### 🧭 JAKARTA INSIGHT HUB")
@@ -533,7 +533,6 @@ else:
                 "📈 ANALYTICS",
                 "📊 DASHBOARD",
                 "📑 REPORT & KATALOG",
-                "🤖 AI ASSISTANT",
                 "🚨 EARLY WARNING",
                 "⚙️ PENGATURAN"
             ]
@@ -613,7 +612,7 @@ else:
                 return df_f
 
             # ---------------------------------------------------------
-            # KONTEN: 📈 ANALYTICS
+            # KONTEN: 📈 ANALYTICS (ANALISIS KOMPARATIF DIHAPUS)
             # ---------------------------------------------------------
             if menu_selection == "📈 ANALYTICS":
                 df_filtered = build_filters("analytics")
@@ -831,39 +830,6 @@ else:
                             st.warning("⚠️ Data terlalu sedikit untuk memproses Analisis Kuadran (IPA).")
                     except Exception as e:
                         st.error(f"Gagal memuat visualisasi IPA: {e}")
-
-                    # Analisis Komparatif
-                    st.markdown("---")
-                    st.markdown("### ⚖️ Analisis Komparatif")
-                    opsi_skor_final = [c for c in ['RATA-RATA KESELURUHAN','Engagement Instruktur','INS1','INS2',
-                        'Relevance Instruktur','INS3','INS4','Satisfaction Instruktur','INS5','INS6','INS7','INS8',
-                        'Engagement Materi','MAT1','MAT2','Relevance Materi','MAT3','MAT4',
-                        'Satisfaction Materi','MAT5','MAT6','Satisfaction Sarana Digital','RATA DS',
-                        'Satisfaction Sarana In Class','RATA SP'] if c in df_filtered.columns]
-                    col_c1, col_c2 = st.columns(2)
-                    with col_c1: var_grup = st.selectbox("Kategori Pembanding (X):", ['Strategi Pelaksanaan','Laporan Bulan'], key="grup_ana")
-                    with col_c2: var_skor = st.selectbox("Skor yang Dinilai (Y):", opsi_skor_final, key="skor_ana")
-
-                    df_comp = df_filtered.dropna(subset=[var_grup, var_skor])
-                    if len(df_comp) > 0:
-                        grup_unik = df_comp[var_grup].unique()
-                        data_grup = [df_comp[df_comp[var_grup]==g][var_skor] for g in grup_unik]
-                        fig_box = px.box(df_comp, x=var_grup, y=var_skor, color=var_grup, points="all", title=f"Distribusi {var_skor} berdasarkan {var_grup}")
-                        fig_box.update_layout(height=400, showlegend=False, xaxis_title="", yaxis_title="Skor")
-                        if len(grup_unik) < 2:
-                            st.warning("Hanya 1 kelompok — tidak bisa uji komparasi.")
-                            st.plotly_chart(fig_box, use_container_width=True)
-                        else:
-                            if len(grup_unik) == 2:
-                                stat_val, p_value = stats.ttest_ind(data_grup[0], data_grup[1], nan_policy='omit')
-                                jenis_uji = "Independent T-Test"
-                            else:
-                                stat_val, p_value = stats.f_oneway(*data_grup)
-                                jenis_uji = "One-Way ANOVA"
-                            st.plotly_chart(fig_box, use_container_width=True)
-                            st.write(f"**Hasil Uji ({jenis_uji}):** P-Value = {p_value:.4f}")
-                            if p_value < 0.05: st.success(f"Terdapat **PERBEDAAN SIGNIFIKAN** pada {var_skor} antar kelompok.")
-                            else: st.info(f"**TIDAK ADA PERBEDAAN SIGNIFIKAN** pada {var_skor} antar kelompok.")
                 else:
                     st.warning("⚠️ Tidak ada data. Sesuaikan filter.")
 
@@ -1013,7 +979,6 @@ else:
                                 markers=True
                             )
                             
-                            # MENGUBAH MODE UNTUK MENAMPILKAN TEKS ANGKA (1 DESIMAL)
                             fig_tren.update_traces(
                                 mode="lines+markers+text",
                                 texttemplate="%{y:.1f}",
@@ -1022,20 +987,18 @@ else:
                                 marker=dict(size=8, line=dict(width=1, color='white'))
                             )
                             
-                            # Warna custom untuk line chart & warna teks agar senada
                             color_mapping = {'RATA-RATA KESELURUHAN': '#0055A4', 'RATA MAT': '#20c997', 'RATA INST': '#FFC000', 'RATA SASPRAS': '#ef4444'}
                             for i, d in enumerate(fig_tren.data):
                                 if d.name in color_mapping:
                                     d.line.color = color_mapping[d.name]
                                     d.marker.color = color_mapping[d.name]
-                                    d.textfont.color = color_mapping[d.name] # Menyamakan warna angka dengan garis
+                                    d.textfont.color = color_mapping[d.name]
                                     
                             fig_tren.add_hline(y=4.5, line_dash="dash", line_color="#8b5cf6", annotation_text="Standar 4.5", annotation_position="top left")
                             
-                            # MEMPERSEMPIT RENTANG SUMBU Y AGAR GARIS LEBIH MERENGGANG
                             fig_tren.update_layout(
-                                yaxis_range=[3.9, 4.6], # Diubah dari [3.5, 5.1] agar grafik membesar
-                                height=420, # Ditinggikan sedikit agar angka tidak terpotong
+                                yaxis_range=[3.9, 4.6],
+                                height=420,
                                 yaxis_title="Skor Rata-rata", xaxis_title="",
                                 legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="right", x=1),
                                 legend_title_text=''
@@ -1052,29 +1015,23 @@ else:
                         st.markdown("<h3 style='margin-bottom:0;'>📚 Laporan Kinerja Aspek Materi & Voice of Customer</h3>", unsafe_allow_html=True)
                         st.markdown("Pemetaan kuantitatif indikator MAT1-MAT7 serta sentimen kualitatif berdasarkan **PIC KI**.")
                         
-                        # Data Prep Kuantitatif
                         if 'PIC KI' in df_filtered_dash.columns:
                             pic_list = df_filtered_dash['PIC KI'].dropna().value_counts().index.tolist()
                             pic_list = [p for p in pic_list if str(p).strip() != ""]
                             
-                            # Hitung Jumlah Judul per PIC
                             jml_judul = df_filtered_dash.groupby('PIC KI')['Kode Unik'].nunique().to_dict()
                             
-                            # Pastikan format numerik MAT1-MAT7
                             for i in range(1, 8):
                                 if f'MAT{i}' in df_filtered_dash.columns:
                                     df_filtered_dash[f'MAT{i}'] = pd.to_numeric(df_filtered_dash[f'MAT{i}'], errors='coerce')
                             
-                            # Hitung Skor Overall (Bulan)
                             skor_overall = {i: df_filtered_dash.get(f'MAT{i}', pd.Series(dtype=float)).mean() for i in range(1,8)}
                             
-                            # Hitung Skor per PIC
                             skor_pic = {}
                             for pic in pic_list:
                                 df_p = df_filtered_dash[df_filtered_dash['PIC KI'] == pic]
                                 skor_pic[pic] = {i: df_p.get(f'MAT{i}', pd.Series(dtype=float)).mean() for i in range(1,8)}
                                 
-                            # Info Indikator Aspek Materi
                             mat_info = [
                                 (1, 'MAT1', 'Engagement', 'Studi kasus yang diberikan mendorong diskusi dan keterlibatan aktif peserta'),
                                 (2, 'MAT2', '', 'Materi pembelajaran memotivasi saya untuk belajar lebih lanjut'),
@@ -1085,7 +1042,6 @@ else:
                                 (7, 'MAT7', 'Rating', 'Berapa tingkat kepuasan terhadap materi secara keseluruhan?')
                             ]
 
-                            # Styling HTML - DENGAN PENYELARASAN WARNA (#0d6373)
                             html_css = """
                             <style>
                             .tm-wrap { display: flex; gap: 10px; align-items: stretch; margin-top: 15px; margin-bottom: 25px; }
@@ -1100,20 +1056,17 @@ else:
                             </style>
                             """
                             
-                            # Header Tabel Kiri (Summary)
                             sum_html = "<div style='flex: 1;'><table class='tm-sum'><tr><th>PIC KI</th><th>Jumlah<br>Judul</th></tr>"
                             for pic in pic_list:
                                 sum_html += f"<tr><td>{pic}</td><td>{jml_judul.get(pic, 0)}</td></tr>"
                             sum_html += "</table></div>"
                             
-                            # Header Tabel Kanan (Matriks)
                             mat_html = "<div style='flex: 6.5; overflow-x: auto;'><table class='tm-mat'><tr>"
                             mat_html += "<th>No</th><th>Indikator</th><th>Aspek</th><th style='width:35%;'>Penjelasan</th><th>Skor L1<br>Overall</th>"
                             for pic in pic_list:
                                 mat_html += f"<th>{pic}</th>"
                             mat_html += "</tr>"
                             
-                            # Baris Tabel Kanan
                             for idx, ind, asp, pen in mat_info:
                                 o_skor = skor_overall.get(idx, np.nan)
                                 o_str = f"{o_skor:.2f}" if pd.notna(o_skor) else "-"
@@ -1121,29 +1074,24 @@ else:
                                 mat_html += "<tr>"
                                 mat_html += f"<td><b>{idx}</b></td><td>{ind}</td>"
                                 
-                                # Rowspan handling for Aspek
                                 if idx in [1, 3, 5]:
                                     mat_html += f"<td rowspan='2'>{asp}</td>"
                                 elif idx == 7:
                                     mat_html += f"<td>{asp}</td>"
-                                    
+                                
                                 mat_html += f"<td class='text-left'>{pen}</td><td class='font-bold'>{o_str}</td>"
                                 
                                 for pic in pic_list:
                                     p_skor = skor_pic[pic].get(idx, np.nan)
                                     p_str = f"{p_skor:.2f}" if pd.notna(p_skor) else "-"
                                     mat_html += f"<td>{p_str}</td>"
-                                    
+                                
                                 mat_html += "</tr>"
                             
                             mat_html += "</table></div>"
                             
-                            # Render Kuantitatif
                             st.markdown(html_css + f"<div class='tm-wrap'>{sum_html}{mat_html}</div>", unsafe_allow_html=True)
                             
-                            # ─────────────────────────────────────────────────────────────────
-                            # TABEL KUALITATIF (VOC KOMENTAR) - SUMBER: DETAIL KOMENTAR L1
-                            # ─────────────────────────────────────────────────────────────────
                             st.markdown("<br><h4>💬 Voice of Customer (Komentar Berdasarkan PIC KI)</h4>", unsafe_allow_html=True)
                             
                             try:
@@ -1163,7 +1111,6 @@ else:
                                 df_k_bln = df_k_raw[df_k_raw[col_bulan_k].isin(bulan_terpilih)].copy()
                                 
                                 if not df_k_bln.empty:
-                                    
                                     df_k_valid = df_k_bln[df_k_bln[col_kategori_k].astype(str).str.lower().str.contains('mat', na=False)].copy()
                                     
                                     if not df_k_valid.empty:
@@ -1227,7 +1174,7 @@ else:
                                                     voc_html += f"<td style='vertical-align:top; text-align:left;'>{pos_block}</td>"
                                                     voc_html += f"<td style='vertical-align:top; text-align:left;'>{neg_block}</td>"
                                                     voc_html += "</tr>"
-                                        
+                                                
                                         voc_html += "</table>"
                                         st.markdown(voc_html, unsafe_allow_html=True)
                                     else:
@@ -1239,7 +1186,7 @@ else:
                         else:
                             st.warning("⚠️ Kolom 'PIC KI' tidak ditemukan dalam data.")
                             
-                    # ─── TAB ASPEK INSTRUKTUR (BARU) ─────────
+                    # ─── TAB ASPEK INSTRUKTUR ─────────
                     with tab_instruktur:
                         st.markdown("<h3 style='margin-bottom:0;'>👨‍🏫 Laporan Kinerja Aspek Instruktur</h3>", unsafe_allow_html=True)
                         st.markdown("Pemetaan kuantitatif indikator survei kinerja instruktur (INS1-INS9).")
@@ -1270,7 +1217,6 @@ else:
                         ]
                         
                         for idx, ind, asp, pen in ins_info:
-                            # Kalkulasi rata-rata skor per indikator
                             if ind in df_filtered_dash.columns:
                                 val = pd.to_numeric(df_filtered_dash[ind], errors='coerce').mean()
                                 val_str = f"{val:.2f}" if pd.notna(val) else "-"
@@ -1280,7 +1226,6 @@ else:
                             ins_html += "<tr>"
                             ins_html += f"<td style='background-color:#f5f4f0;'><b>{idx}</b></td><td style='background-color:#f5f4f0; font-weight:bold;'>{ind}</td>"
                             
-                            # Rowspan Aspect Column Sesuai Gambar
                             if idx == 1: ins_html += f"<td rowspan='2'>Engagement</td>"
                             elif idx == 3: ins_html += f"<td rowspan='2'>Relevance</td>"
                             elif idx == 5: ins_html += f"<td rowspan='4'>Satisfaction</td>"
@@ -1289,44 +1234,11 @@ else:
                             ins_html += f"<td class='text-left'>{pen}</td><td class='font-bold' style='background-color:#f8f9fa;'>{val_str}</td></tr>"
                             
                         ins_html += "</table></div>"
-                        
-                        # Render HTML langsung
                         st.markdown(html_css_ins + ins_html, unsafe_allow_html=True)
-
                 else:
                     st.warning("⚠️ Tidak ada data. Sesuaikan filter.")
         except Exception as e:
             st.error(f"Gagal memuat data: {e}")
-
-    # ══════════════════════════════════════════════════════════════════════════════
-    # KONTEN: 🤖 AI ASSISTANT
-    # ══════════════════════════════════════════════════════════════════════════════
-    elif menu_selection == "🤖 AI ASSISTANT":
-        st.subheader("🤖 Tanya Asisten EVALYTICS")
-        st.write("Gunakan AI untuk menganalisis tren atau meminta saran perbaikan berdasarkan data yang sedang difilter.")
-
-        if "chat_history" not in st.session_state: st.session_state.chat_history = []
-        for chat in st.session_state.chat_history:
-            with st.chat_message(chat["role"]): st.markdown(chat["content"])
-
-        user_question = st.chat_input("Tanya sesuatu tentang data evaluasi Anda...")
-        if user_question:
-            st.session_state.chat_history.append({"role": "user", "content": user_question})
-            with st.chat_message("user"): st.markdown(user_question)
-            with st.chat_message("assistant"):
-                with st.spinner("Gemini sedang berpikir..."):
-                    try:
-                        df_ctx = pd.read_csv(url)
-                        context = f"Data evaluasi UPDL Jakarta. Total: {len(df_ctx)} baris. Ringkasan: {df_ctx.describe().to_string()}"
-                        full_prompt = f"Konteks:\n{context}\n\nPertanyaan: {user_question}\n\nJawab ringkas, profesional, Bahasa Indonesia."
-                        if model:
-                            response = model.generate_content(full_prompt)
-                            st.markdown(response.text)
-                            st.session_state.chat_history.append({"role": "assistant", "content": response.text})
-                        else:
-                            st.error("API Key Gemini belum diatur.")
-                    except Exception as ai_err:
-                        st.error(f"Gagal AI: {ai_err}")
 
     # ══════════════════════════════════════════════════════════════════════════════
     # KONTEN: 📤 DATA ENTRY
@@ -1380,7 +1292,7 @@ else:
                                 
                                 df_mapped['Kode Pembelajaran']       = df_raw.get('Kode Judul', df_raw.get('Kode Pembelajaran'))
                                 df_mapped['Judul Pembelajaran/Kegiatan'] = df_raw.get('Judul Pembelajaran', df_raw.get('Judul'))
-                                df_mapped['Batch']                   = df_raw.get('Angkatan', df_raw.get('Batch'))
+                                df_mapped['Batch']                 = df_raw.get('Angkatan', df_raw.get('Batch'))
                                 df_mapped['Tanggal Mulai']           = df_raw.get('Tgl Mulai', df_raw.get('Tanggal Mulai'))
                                 df_mapped['Tanggal Selesai']         = df_raw.get('Tgl Selesai', df_raw.get('Tanggal Selesai'))
                                 
@@ -1422,7 +1334,7 @@ else:
                                 df_mapped = pd.DataFrame(index=df_raw.index, columns=TARGET_COLUMNS)
                                 df_mapped['Kode Pembelajaran']       = df_raw.get('Kode Judul', df_raw.get('Kode Pembelajaran'))
                                 df_mapped['Judul Pembelajaran/Kegiatan'] = df_raw.get('Judul', df_raw.get('Judul Pembelajaran'))
-                                df_mapped['Batch']                   = df_raw.get('Angkatan', df_raw.get('Batch'))
+                                df_mapped['Batch']                 = df_raw.get('Angkatan', df_raw.get('Batch'))
                                 df_mapped['Tanggal Mulai']           = df_raw.get('Tgl Mulai', df_raw.get('Tanggal Mulai'))
                                 df_mapped['Tanggal Selesai']         = df_raw.get('Tgl Selesai', df_raw.get('Tanggal Selesai'))
                                 
@@ -1741,9 +1653,9 @@ else:
         else:
             sub_lap_pembelajaran = st.container()
 
-        # ─────────────────────────────────────────────────────────────────────────
+        # -------------------------------------------------------------------------
         # --- SUB TAB 1: REPORT GENERATOR MUTU (EKSEKUTIF) ---
-        # ─────────────────────────────────────────────────────────────────────────
+        # -------------------------------------------------------------------------
         if st.session_state["role"] == "SuperAdmin":
             with sub_rep_generator:
                 st.markdown("### 📑 Generator Laporan Manajemen Mutu (Otomatis)")
@@ -2053,9 +1965,9 @@ else:
                 except Exception as e:
                     st.error(f"Gagal memuat data sumber untuk laporan: {e}")
 
-        # ─────────────────────────────────────────────────────────────────────────
+        # -------------------------------------------------------------------------
         # --- SUB TAB 2: LAPORAN PEMBELAJARAN (PER KELAS/JUDUL) ---
-        # ─────────────────────────────────────────────────────────────────────────
+        # -------------------------------------------------------------------------
         with sub_lap_pembelajaran:
             if st.session_state["role"] == "UPDL":
                 st.markdown("## 📄 Generator Laporan Pembelajaran (Akses Terbatas)")
@@ -2206,7 +2118,6 @@ else:
                                     if teks in ['nan', 'None', '', '-']: return "<div style='text-align:center;'><i>Tidak ada data.</i></div>"
                                     items = [t.strip() for t in re.split(r'\n+', teks) if t.strip()]
                                     if not items: return "<div style='text-align:center;'><i>Tidak ada data.</i></div>"
-                                    # Regex cleanser: membuang karakter bullet bawaan (-, *, angka dot) sebelum dibungkus ke dalam <li>
                                     html_list = "".join([f"<li style='margin-bottom:4px;'>{re.sub(r'^[\-\*\d\.]+\s*', '', i)}</li>" for i in items])
                                     return f"<ul style='margin-top:0; padding-left:20px;'>{html_list}</ul>"
 
@@ -2239,7 +2150,6 @@ else:
                                 except Exception as e_ai_kelas:
                                     narasi_eksekutif_kelas = f"Dokumen ini merangkum <i>post-implementation review</i> untuk pelaksanaan program <b>{judul_pilih}</b> ({kode_pemb}), menyajikan evaluasi metrik kehadiran ({pct_hadir}), efisiensi anggaran, dan pencapaian indeks kepuasan mutu L1 secara keseluruhan sebesar <b>{s_tot}</b>, guna memastikan penyelarasan operasional dengan standar mutu <i>Service Excellence</i> {updl_key}."
                                 
-                                # Logika dinamis baris tabel Sarana Prasarana berdasarkan Strategi Pelaksanaan
                                 no_urut = 3
                                 sarpras_html = ""
                                 if metode_raw in ['ICT', 'BL', 'HL']:
@@ -2248,7 +2158,6 @@ else:
                                 if metode_raw in ['DL', 'SL', 'BL', 'HL']:
                                     sarpras_html += f'<tr><td style="vertical-align: middle; padding: 10px;">{no_urut}. Sarana Digital</td><td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold;">{s_ds}</td></tr>'
 
-                                # --- 5. PERAKITAN DOKUMEN HTML (SIAP JADI WORD) ---
                                 html_kelas = f"""
                                 <html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
                                 <head>
@@ -2270,7 +2179,6 @@ else:
                                     </style>
                                 </head>
                                 <body>
-                                    <!-- COVER PAGE -->
                                     <div class="cover-page">
                                         <table style="width: 100%; border: none;">
                                             <tr>
@@ -2289,11 +2197,9 @@ else:
                                     
                                     <br clear="all" style="page-break-before:always" />
                                     
-                                    <!-- CONTENT PAGE WRAPPER (WITH REPEATING MS WORD HEADER TRICK) -->
                                     <table style="width: 100%; border: none; border-collapse: collapse;">
                                         <thead>
                                             <tr>
-                                                <!-- INVISIBLE TH TO PREVENT BLUE BACKGROUND IN HEADER -->
                                                 <th style="background-color: transparent; border: none; padding: 0 0 10px 0; border-bottom: 2px solid #003366;">
                                                     <table style="width: 100%; border: none; margin: 0;">
                                                         <tr>
@@ -2308,7 +2214,6 @@ else:
                                             <tr>
                                                 <td style="border: none; padding: 20px 10px 10px 10px; background-color: transparent;">
                                                     
-                                                    <!-- EXECUTIVE SUMMARY (CENTERED TITLE) -->
                                                     <h4 style="text-align: center; color:#0055A4; border-bottom: none; margin-bottom: 10px; font-size: 13pt;">EXECUTIVE SUMMARY</h4>
                                                     <p style="text-align: justify; margin-top: 0;">{narasi_eksekutif_kelas}</p>
                                                     
@@ -2352,7 +2257,6 @@ else:
                                                     <h4 style="page-break-before: always;">5. EVALUASI PEMBELAJARAN & CUSTOMER VOICE</h4>
                                                     <p>Hasil rekapitulasi evaluasi kepuasan peserta terhadap penyelenggaraan pembelajaran (Level 1) adalah sebagai berikut:</p>
                                                     
-                                                    <!-- TABEL EVALUASI DINAMIS BERDASARKAN METODE ICT/DL/BL -->
                                                     <table class="zebra">
                                                         <tr>
                                                             <th style="width: 70%; text-align:center; vertical-align: middle; padding: 10px;">Pilar Evaluasi</th>
@@ -2375,7 +2279,6 @@ else:
                                                     
                                                     <br>
                                                     
-                                                    <!-- BLOK PENGUNCI (PENUTUP + TANDA TANGAN) AGAR TIDAK TERPISAH HALAMAN -->
                                                     <table style="page-break-inside: avoid; width:100%; border: none; margin-top: 20px;">
                                                         <tr>
                                                             <td style="border: none; padding: 0;">
@@ -2428,7 +2331,6 @@ else:
                                     type="primary"
                                 )
                                 
-                                # --- PROSES UPLOAD OTOMATIS KE GOOGLE DRIVE ---
                                 if updl_key in DRIVE_FOLDER_DICT:
                                     target_folder = DRIVE_FOLDER_DICT[updl_key]
                                     with st.spinner(f"☁️ Sedang mengarsipkan otomatis ke Google Drive ({updl_key})..."):
@@ -2449,9 +2351,9 @@ else:
             except Exception as e:
                 st.error(f"Gagal memuat Master Data Laporan Nasional: {e}")
 
-        # ─────────────────────────────────────────────────────────────────────────
+        # -------------------------------------------------------------------------
         # --- SUB TAB 3: KATALOG INSTRUKTUR ---
-        # ─────────────────────────────────────────────────────────────────────────
+        # -------------------------------------------------------------------------
         if st.session_state["role"] == "SuperAdmin":
             with sub_katalog:
                 st.markdown("### 👨‍🏫 Katalog & Rapor Instruktur Terbobot")
