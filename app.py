@@ -902,7 +902,7 @@ else:
                         with cols[1]:
                             st.markdown(f'<div class="kpi-card card-mat"><div class="kpi-title">📚 Rata-rata<br>Materi</div><div class="kpi-value">{skor_mat:.2f}</div></div>', unsafe_allow_html=True)
                         with cols[2]:
-                            st.markdown(f'<div class="kpi-card card-inst"><div class="kpi-title">👨‍🏫 Rata-rata<br>Instruktur</div><div class="kpi-value">{skor_inst:.2f}</div></div>', unsafe_allow_html=True)
+                            st.markdown(f'<div class="kpi-card card-inst"><div class="kpi-title">👨‍‍🏫 Rata-rata<br>Instruktur</div><div class="kpi-value">{skor_inst:.2f}</div></div>', unsafe_allow_html=True)
                         with cols[3]:
                             st.markdown(f'<div class="kpi-card card-sp"><div class="kpi-title">🏢 Rata-rata<br>Saspras</div><div class="kpi-value">{skor_saspras:.2f}</div></div>', unsafe_allow_html=True)
                         with cols[4]:
@@ -2185,9 +2185,13 @@ else:
                                         p {{ text-align: justify; margin-top: 0; line-height: 1.6; color: #334155; }}
                                         ul {{ margin-top: 0; padding-left: 20px; line-height: 1.6; color: #334155; }}
                                         
-                                        @page Section2 {{
+                                        @page {{
                                             mso-footer: f1;
                                             margin: 1in;
+                                        }}
+                                        @page Section1 {{
+                                            mso-header: default;
+                                            mso-footer: default;
                                         }}
                                         div.Section2 {{
                                             page: Section2;
@@ -2203,20 +2207,22 @@ else:
                                 </head>
                                 <body>
                                     <!-- COVER PAGE -->
-                                    <div class="cover-page">
-                                        <table style="width: 100%; border: none;">
-                                            <tr>
-                                                <td style="text-align: left; border: none; width: 50%;"><img src="data:image/png;base64,{bin_danantara}" height="40" style="background:white; padding:5px; border-radius:4px;"></td>
-                                                <td style="text-align: right; border: none; width: 50%;"><img src="data:image/png;base64,{bin_pln}" height="60"></td>
-                                            </tr>
-                                        </table>
-                                        
-                                        <div class="cover-title">LAPORAN PELAKSANAAN<br>PEMBELAJARAN</div>
-                                        <div class="cover-subtitle">{str(judul_pilih).upper()}</div>
-                                        <div class="cover-code">({kode_pemb})</div>
-                                        
-                                        <br><br><br><br><br><br><br><br><br><br><br><br>
-                                        <div class="cover-footer">PT PLN (PERSERO) {updl_key}</div>
+                                    <div style="page: Section1;">
+                                        <div class="cover-page">
+                                            <table style="width: 100%; border: none;">
+                                                <tr>
+                                                    <td style="text-align: left; border: none; width: 50%;"><img src="data:image/png;base64,{bin_danantara}" height="40" style="background:white; padding:5px; border-radius:4px;"></td>
+                                                    <td style="text-align: right; border: none; width: 50%;"><img src="data:image/png;base64,{bin_pln}" height="60"></td>
+                                                </tr>
+                                            </table>
+                                            
+                                            <div class="cover-title">LAPORAN PELAKSANAAN<br>PEMBELAJARAN</div>
+                                            <div class="cover-subtitle">{str(judul_pilih).upper()}</div>
+                                            <div class="cover-code">({kode_pemb})</div>
+                                            
+                                            <br><br><br><br><br><br><br><br><br><br><br><br>
+                                            <div class="cover-footer">PT PLN (PERSERO) {updl_key}</div>
+                                        </div>
                                     </div>
                                     
                                     <br clear="all" style="page-break-before:always" />
@@ -2336,7 +2342,8 @@ else:
                                                             </tr>
                                                         </table>
 
-                                                        <!-- PEMISAH HALAMAN (PAGE BREAK) BERSIH SEBELUM POIN 6 -->
+                                                        <!-- PEMISAH HALAMAN (PAGE BREAK) KUAT AGAR BAB 6 SELALU PINDAH HALAMAN BARU -->
+                                                        <div style="mso-break-type:section-break; page-break-before:always;"></div>
                                                         <br clear="all" style="page-break-before:always;" />
 
                                                         <h4 style="color:#0055A4; border-bottom: 2px solid #cbd5e1; padding-bottom:5px;">6. LAMPIRAN DOKUMEN</h4>
@@ -2382,7 +2389,7 @@ else:
                                         else:
                                             st.success(f"✅ Arsip laporan berhasil diamankan ke Google Drive!")
                                 else:
-                                    st.info("ℹ️ ID Folder Drive untuk UPDL ini belum diatur. Laporan hanya tersedia untuk diunduh lokal.")
+                                    st.info("ℹ️️ ID Folder Drive untuk UPDL ini belum diatur. Laporan hanya tersedia untuk diunduh lokal.")
 
                                 with st.expander("👀 Pratinjau Desain Dokumen (Live Preview)"):
                                     st.markdown(html_kelas, unsafe_allow_html=True)
@@ -2541,7 +2548,7 @@ else:
     # ══════════════════════════════════════════════════════════════════════════════
     # KONTEN: ⚙️ PENGATURAN
     # ══════════════════════════════════════════════════════════════════════════════
-    elif menu_selection == "⚙️ PENGATURAN" and st.session_state["role"] == "SuperAdmin":
+    elif menu_selection == "⚙️️ PENGATURAN" and st.session_state["role"] == "SuperAdmin":
         st.subheader("⚙️ Pengaturan Aplikasi")
         with st.container(border=True):
             st.markdown("#### 🔗 Konfigurasi Google Sheets (Target Master Data Laporan)")
