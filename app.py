@@ -2126,6 +2126,10 @@ else:
 
                                 manager_name = MANAGER_DICT.get(updl_key, "[ NAMA MANAGER BELUM DIATUR ]")
                                 nama_unit_pendek = updl_key.replace("UPDL ", "")
+                                
+                                # Logika Penentuan Kota/Lokasi TTD berdasarkan UPDL
+                                lokasi_ttd = nama_unit_pendek.title() # Contoh: "Jakarta", "Semarang", "Surabaya", dll.
+                                tanggal_generate_str = format_tanggal_indo(datetime.now())
 
                                 narasi_eksekutif_kelas = ""
                                 try:
@@ -2176,9 +2180,28 @@ else:
                                         table.zebra tr:nth-child(even) td {{ background-color: #f8fafc; }}
                                         p {{ text-align: justify; margin-top: 0; line-height: 1.6; color: #334155; }}
                                         ul {{ margin-top: 0; padding-left: 20px; line-height: 1.6; color: #334155; }}
+                                        /* Footer kecil di setiap halaman dokumen Word */
+                                        @page {{
+                                            mso-footer: f1;
+                                        }}
+                                        div.f1 {{
+                                            mso-element: footer;
+                                            text-align: center;
+                                            font-size: 8.5pt;
+                                            color: #64748b;
+                                            font-family: 'Segoe UI', Arial, sans-serif;
+                                        }}
                                     </style>
                                 </head>
                                 <body>
+                                    <!-- FOOTER DEFINITION FOR MS WORD -->
+                                    <div style="mso-element:footer" id="f1">
+                                        <p style="text-align: center; font-size: 8.5pt; color: #64748b; margin: 0;">
+                                            Dokumen ini digenerate secara otomatis oleh sistem Jakarta Insight Hub
+                                        </p>
+                                    </div>
+
+                                    <!-- COVER PAGE (Poin 1: Diubah dari LAPORAN PELAKSANAAN PEMBELAJARAN PENUGASAN menjadi LAPORAN PELAKSANAAN PEMBELAJARAN) -->
                                     <div class="cover-page">
                                         <table style="width: 100%; border: none;">
                                             <tr>
@@ -2187,7 +2210,7 @@ else:
                                             </tr>
                                         </table>
                                         
-                                        <div class="cover-title">LAPORAN PELAKSANAAN<br>PEMBELAJARAN PENUGASAN</div>
+                                        <div class="cover-title">LAPORAN PELAKSANAAN<br>PEMBELAJARAN</div>
                                         <div class="cover-subtitle">{str(judul_pilih).upper()}</div>
                                         <div class="cover-code">({kode_pemb})</div>
                                         
@@ -2279,6 +2302,7 @@ else:
                                                     
                                                     <br>
                                                     
+                                                    <!-- BLOK PENGUNCI TTD MANAGER (Poin 3: Lokasi menyesuaikan UPDL, Tanggal generate, dan kata-kata APPROVED di tengah) -->
                                                     <table style="page-break-inside: avoid; width:100%; border: none; margin-top: 20px;">
                                                         <tr>
                                                             <td style="border: none; padding: 0;">
@@ -2291,7 +2315,10 @@ else:
                                                                     <tr>
                                                                         <td style="width:50%; border: none;"></td>
                                                                         <td style="width:50%; border: none; text-align:center;">
-                                                                            Mengetahui,<br><b>MANAGER {nama_unit_pendek}</b><br><br><br><br><br>
+                                                                            {lokasi_ttd}, {tanggal_generate_str}<br>
+                                                                            Mengetahui,<br>
+                                                                            <b>MANAGER {nama_unit_pendek}</b><br><br>
+                                                                            <div style="font-size: 14pt; font-weight: 900; color: #15803d; letter-spacing: 2px; margin: 10px 0;">[ APPROVED ]</div><br>
                                                                             <b>{manager_name}</b>
                                                                         </td>
                                                                     </tr>
