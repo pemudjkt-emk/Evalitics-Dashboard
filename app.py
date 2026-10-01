@@ -1257,7 +1257,7 @@ else:
         with st.expander("📖 Panduan Cepat (3 Jalur Data)", expanded=True):
             col_g1, col_g2, col_g3 = st.columns(3)
             with col_g1: st.markdown("🔵 **L1 + L2 (Lama)** ➡️ Sheet **L1 Tertutup**\nGabungan Evaluasi Reaksi & L2 HXMS")
-            with col_g2: st.markdown("🟣 **L1 + SMILE** ➡️️ Sheet **Master Data Laporan**\nData terpadu 2 Kunci Pas untuk Dashboard")
+            with col_g2: st.markdown("🟣 **L1 + SMILE** ➡️ Sheet **Master Data Laporan**\nData terpadu 2 Kunci Pas untuk Dashboard")
             with col_g3: st.markdown("🟠 **Instruktur** ➡️ Sheet **Detail Instruktur**\nData Penilaian & Jam Terbang Pengajar")
 
         sub_upload, sub_riwayat, sub_panduan = st.tabs(["📤 Upload & Kirim", "🕒 Riwayat", "📄 Panduan Format"])
@@ -2185,7 +2185,6 @@ else:
                                         p {{ text-align: justify; margin-top: 0; line-height: 1.6; color: #334155; }}
                                         ul {{ margin-top: 0; padding-left: 20px; line-height: 1.6; color: #334155; }}
                                         
-                                        /* Pengaturan Footer Standar MS Word agar muncul di setiap halaman setelah cover */
                                         @page Section2 {{
                                             mso-footer: f1;
                                             margin: 1in;
@@ -2222,7 +2221,7 @@ else:
                                     
                                     <br clear="all" style="page-break-before:always" />
 
-                                    <!-- KONTEN UTAMA DENGAN FOOTER DISETIAP HALAMAN -->
+                                    <!-- KONTEN UTAMA DENGAN FOOTER HANYA DI HALAMAN KONTEN -->
                                     <div class="Section2">
                                         <div style="mso-element:footer" id="f1">
                                             <p style="text-align: center; font-size: 8.5pt; color: #64748b; margin: 0;">
@@ -2312,7 +2311,7 @@ else:
                                                         
                                                         <br>
                                                         
-                                                        <!-- BLOK PENGUNCI TTD MANAGER (Poin 2: MANAGER UPDL, Poin 3: APPROVED warna hitam) -->
+                                                        <!-- BLOK TANDA TANGAN MANAGER -->
                                                         <table style="page-break-inside: avoid; width:100%; border: none; margin-top: 20px;">
                                                             <tr>
                                                                 <td style="border: none; padding: 0;">
@@ -2337,8 +2336,8 @@ else:
                                                             </tr>
                                                         </table>
 
-                                                        <!-- Poin 4: Memastikan Poin 6 wajib berada di halaman selanjutnya setelah halaman ttd -->
-                                                        <div style="page-break-before: always;"></div>
+                                                        <!-- PEMISAH HALAMAN (PAGE BREAK) BERSIH SEBELUM POIN 6 -->
+                                                        <br clear="all" style="page-break-before:always;" />
 
                                                         <h4 style="color:#0055A4; border-bottom: 2px solid #cbd5e1; padding-bottom:5px;">6. LAMPIRAN DOKUMEN</h4>
                                                         <p>Berikut adalah kelengkapan administrasi dan bukti pelaksanaan program:</p>
@@ -2383,7 +2382,7 @@ else:
                                         else:
                                             st.success(f"✅ Arsip laporan berhasil diamankan ke Google Drive!")
                                 else:
-                                    st.info("ℹ️️ ID Folder Drive untuk UPDL ini belum diatur. Laporan hanya tersedia untuk diunduh lokal.")
+                                    st.info("ℹ️ ID Folder Drive untuk UPDL ini belum diatur. Laporan hanya tersedia untuk diunduh lokal.")
 
                                 with st.expander("👀 Pratinjau Desain Dokumen (Live Preview)"):
                                     st.markdown(html_kelas, unsafe_allow_html=True)
