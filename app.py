@@ -197,13 +197,15 @@ def check_credentials(username, password):
         records = sheet.get_all_records()
         for row in records:
             if str(row.get('Username', '')).strip() == username and str(row.get('Password', '')).strip() == password:
+                # Mengambil data dari kolom 'UPDL (Sumber Data Implementasi)' secara persis
+                updl_unit = row.get('UPDL (Sumber Data Implementasi)', row.get('Identitas_UPDL', ''))
                 return {
                     "role": str(row.get('Role', '')).strip(),
-                    "updl": str(row.get('Identitas_UPDL', '')).strip().upper() # Tambahan identitas unit
+                    "updl": str(updl_unit).strip() 
                 }
         return None
     except Exception as e:
-        st.error(f"Gagal memverifikasi kredensial. Pastikan tab 'User_Access' sudah dibuat dan memiliki kolom Identitas_UPDL. Error: {e}")
+        st.error(f"Gagal memverifikasi kredensial. Pastikan tab 'User_Access' memiliki kolom 'UPDL (Sumber Data Implementasi)'. Error: {e}")
         return None
 
 def get_sheet_max_no(sheet):
@@ -447,7 +449,7 @@ if not st.session_state["logged_in"]:
                         st.session_state["logged_in"] = True
                         st.session_state["username"] = input_user
                         st.session_state["role"] = user_data["role"]
-                        st.session_state["user_updl"] = user_data["updl"] # Simpan identitas UPDL
+                        st.session_state["user_updl"] = user_data["updl"] # Menyimpan identitas UPDL dengan presisi
                         st.rerun()
                     else:
                         st.error("Username atau Password tidak valid!")
@@ -549,7 +551,10 @@ else:
         menu_selection = st.radio("Pilih Modul Aplikasi:", menu_options)
         
         st.markdown("---")
+        # Handle string kosong jika admin lupa mengisi unit
         updl_text = st.session_state.get('user_updl', '-')
+        if not updl_text: updl_text = '-'
+        
         st.markdown(f"<div style='text-align:center; padding:10px; background:#e2e8f0; border-radius:10px;'>👤 <b>{st.session_state['username']}</b><br><span style='font-size:12px;'>Role: {st.session_state['role']} | Unit: {updl_text}</span></div>", unsafe_allow_html=True)
         
         if st.button("🔄 Sinkron Data Terkini", use_container_width=True):
@@ -574,7 +579,7 @@ else:
                 return pd.read_csv(url)
 
             df = load_csv(url)
-            st.markdown("### 🎛️️ Filter Data")
+            st.markdown("### 🎛 Filter Data")
 
             def build_filters(suffix):
                 opsi_bulan    = list(df['Laporan Bulan'].dropna().unique())
@@ -619,7 +624,7 @@ else:
                 return df_f
 
             # ---------------------------------------------------------
-            # KONTEN: 📈 ANALYTICS (ANALISIS KOMPARATIF DIHAPUS)
+            # KONTEN: 📈 ANALYTICS
             # ---------------------------------------------------------
             if menu_selection == "📈 ANALYTICS":
                 df_filtered = build_filters("analytics")
@@ -830,7 +835,7 @@ else:
                                     col_t2.metric(f"Skor Akhir ({b_akhir})", f"{k_akhir:.2f}", delta=f"{selisih:+.2f}")
                                     col_t3.metric("Kesimpulan Dampak", "Efektif" if selisih > 0 else "Evaluasi Ulang", delta=status_efektivitas, delta_color="normal" if selisih > 0 else "inverse")
                                 else:
-                                    st.info("ℹ️ Data histori bulanan belum mencukupi.")
+                                    st.info("ℹ️️ Data histori bulanan belum mencukupi.")
                             except Exception as e:
                                 st.error(f"Gagal memuat visualisasi histori: {e}")
                         else:
@@ -853,7 +858,6 @@ else:
                     
                     with tab_overview:
                         # --- 1. PREP DATA KHUSUS RINGKASAN ---
-                        # Kalkulasi Rata-rata Gabungan Saspras (Offline + Online)
                         if 'RATA SP' in df_filtered_dash.columns and 'RATA DS' in df_filtered_dash.columns:
                             df_filtered_dash['RATA SASPRAS'] = df_filtered_dash[['RATA SP', 'RATA DS']].mean(axis=1)
                         elif 'RATA SP' in df_filtered_dash.columns:
@@ -863,7 +867,6 @@ else:
                         else:
                             df_filtered_dash['RATA SASPRAS'] = np.nan
 
-                        # Kalkulasi 7 Metrik Utama
                         skor_evaluasi = df_filtered_dash['RATA-RATA KESELURUHAN'].mean()
                         skor_mat      = df_filtered_dash['RATA MAT'].mean() if 'RATA MAT' in df_filtered_dash.columns else np.nan
                         skor_inst     = df_filtered_dash['RATA INST'].mean() if 'RATA INST' in df_filtered_dash.columns else np.nan
@@ -880,18 +883,18 @@ else:
                                 if p_mean <= 1.0: p_mean *= 100
                                 pengisian_val = f"{p_mean:.1f}%"
 
-                        # --- 2. HTML/CSS KARTU KPI (Versi 1 Baris Kompak) ---
+                        # --- 2. HTML/CSS KARTU KPI ---
                         st.markdown("""
                         <style>
                         .kpi-card {
-                            background-color: #ffffff; border-radius: 10px; padding: 12px 8px; /* Padding dikecilkan */
-                            box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-left: 4px solid #0055A4; /* Border dipertipis */
+                            background-color: #ffffff; border-radius: 10px; padding: 12px 8px; 
+                            box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-left: 4px solid #0055A4; 
                             transition: transform 0.2s ease-in-out; display: flex; flex-direction: column;
                             justify-content: center; height: 100%; margin-bottom: 15px;
                         }
                         .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.1); }
-                        .kpi-title { color: #64748b; font-size: 20px; font-weight: 700; text-transform: uppercase; margin-bottom: 5px; line-height: 1.2; letter-spacing: 0px; } /* Font judul dikecilkan */
-                        .kpi-value { color: #0f172a; font-size: 30px; font-weight: 800; margin: 0; line-height: 1.1; } /* Font angka dikecilkan */
+                        .kpi-title { color: #64748b; font-size: 20px; font-weight: 700; text-transform: uppercase; margin-bottom: 5px; line-height: 1.2; letter-spacing: 0px; } 
+                        .kpi-value { color: #0f172a; font-size: 30px; font-weight: 800; margin: 0; line-height: 1.1; } 
                         .card-mat { border-left-color: #20c997; }
                         .card-inst { border-left-color: #FFC000; }
                         .card-sp { border-left-color: #ef4444; }
@@ -901,7 +904,6 @@ else:
                         </style>
                         """, unsafe_allow_html=True)
 
-                        # Menyatukan 7 KPI ke dalam 1 Baris Sejajar
                         cols = st.columns(7)
                         
                         with cols[0]:
@@ -921,7 +923,6 @@ else:
 
                         st.markdown("---")
 
-                        # --- 3. CHARTS SECTION ---
                         col_chart_top1, col_chart_top2 = st.columns([3, 2])
                         
                         with col_chart_top1:
@@ -1265,7 +1266,7 @@ else:
             col_g1, col_g2, col_g3 = st.columns(3)
             with col_g1: st.markdown("🔵 **L1 + L2 (Lama)** ➡️ Sheet **L1 Tertutup**\nGabungan Evaluasi Reaksi & L2 HXMS")
             with col_g2: st.markdown("🟣 **L1 + SMILE** ➡️ Sheet **Master Data Laporan**\nData terpadu 2 Kunci Pas untuk Dashboard")
-            with col_g3: st.markdown("🟠 **Instruktur** ➡️ Sheet **Detail Instruktur**\nData Penilaian & Jam Terbang Pengajar")
+            with col_g3: st.markdown("🟠 **Instruktur** ➡️️ Sheet **Detail Instruktur**\nData Penilaian & Jam Terbang Pengajar")
 
         sub_upload, sub_riwayat, sub_panduan = st.tabs(["📤 Upload & Kirim", "🕒 Riwayat", "📄 Panduan Format"])
 
@@ -1645,7 +1646,7 @@ else:
                             col_pie1, col_pie2 = st.columns([1, 1])
                             with col_pie1: st.plotly_chart(fig_pie, use_container_width=True)
                             with col_pie2: st.markdown("<br><br>", unsafe_allow_html=True); st.write("Donut Chart di samping menampilkan rangkuman sentimen dari bulan yang Anda centang pada filter di atas.")
-                        else: st.warning("⚠️ Tidak ada data komentar pada bulan yang dipilih.")
+                        else: st.warning("⚠️️ Tidak ada data komentar pada bulan yang dipilih.")
                 else: st.warning("💡 Silakan pilih minimal satu bulan pada filter di atas untuk memulai analisis.")
             else: st.warning("⚠️ Sheet 'Detail Komentar L1' berhasil diakses, namun datanya kosong.")
         except Exception as e: st.error(f"❌ Gagal memuat data dari Sheet 'Detail Komentar L1'. Detail error: {e}")
@@ -2013,10 +2014,12 @@ else:
                             with col_u:
                                 opsi_updl = st.selectbox("🏢 Pilih UPDL:", list_updl, key="updl_report")
                         else:
-                            # Jika UPDL, kunci unit sesuai session state
-                            opsi_updl = st.session_state.get('user_updl', list_updl[0]) 
+                            # Jika UPDL, cari unit yang paling cocok mengabaikan besar/kecil huruf
+                            user_updl_raw = st.session_state.get('user_updl', '')
+                            matched_updl = next((u for u in list_updl if str(u).strip().lower() == str(user_updl_raw).strip().lower()), user_updl_raw)
+                            
                             with col_u:
-                                st.selectbox("🏢 Pilih UPDL:", [opsi_updl], disabled=True, key="updl_report_disabled")
+                                opsi_updl = st.selectbox("🏢 Pilih UPDL:", [matched_updl], disabled=True, key="updl_report_disabled")
                         
                         # Filter dataframe sesuai UPDL yang terpilih/terkunci
                         df_updl = df_master[df_master['Sumber Data Implementasi'] == opsi_updl].copy()
@@ -2412,7 +2415,7 @@ else:
                                             
                                         with col_dl2:
                                             if res_upload == "ERROR_IMPORT":
-                                                st.warning("⚠️️ Module 'google-api-python-client' belum terinstall.")
+                                                st.warning("⚠ Module 'google-api-python-client' belum terinstall.")
                                             elif str(res_upload).startswith("ERROR"):
                                                 st.error(f"⚠️ Gagal arsip: {res_upload}")
                                             else:
@@ -2432,7 +2435,7 @@ else:
                                     with st.expander("👀 Pratinjau Desain Dokumen (Live Preview)"):
                                         st.markdown(html_kelas, unsafe_allow_html=True)
                         else:
-                            st.info("⚠️️ Tidak ada kelas/judul pembelajaran yang sesuai untuk UPDL ini pada Master Data Nasional.")
+                            st.info("⚠ Tidak ada kelas/judul pembelajaran yang sesuai untuk UPDL ini pada Master Data Nasional.")
                 else:
                     st.info("⚠️ Belum ada data 'Sumber Data Implementasi' atau 'Judul Pembelajaran' yang tersedia di Master Data Nasional.")
             except Exception as e:
