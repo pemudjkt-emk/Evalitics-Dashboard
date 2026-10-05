@@ -1993,7 +1993,7 @@ else:
                                 opsi_pilih = st.selectbox("📚 Pilih Judul Pembelajaran:", list_opsi, key="judul_report_pembelajaran")
                             with col_btn:
                                 st.markdown("<br>", unsafe_allow_html=True)
-                                btn_gen_kelas = st.button("🚀 Generate Laporan Kelas", type="primary", use_container_width=True)
+                                btn_gen_kelas = st.button("🚀 GENERATE LAPORAN KELAS", type="primary", use_container_width=True)
                             
                             if btn_gen_kelas:
                                 with st.spinner("Mengekstrak data pelaksanaan kelas..."):
