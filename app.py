@@ -2383,7 +2383,7 @@ else:
                                     
                                     with col_dl1:
                                         st.download_button(
-                                            label="📥 DOWNLOAD LAPORAN KELAS (.doc)",
+                                            label="📥 DOWNLOAD LAPORAN PEMBELAJARAN (.doc)",
                                             data=file_bytes,
                                             file_name=file_name,
                                             mime="application/msword",
@@ -2406,7 +2406,7 @@ else:
                                                 # Jika berhasil, buat tautan ke Google Drive FOLDER (Bukan file)
                                                 drive_link = f"https://drive.google.com/drive/folders/{target_folder}"
                                                 st.link_button(
-                                                    "☁️ BUKA ARSIP DI GOOGLE DRIVE", 
+                                                    "☁️ BUKA FILE DI GOOGLE DRIVE", 
                                                     drive_link, 
                                                     type="primary", 
                                                     use_container_width=True
