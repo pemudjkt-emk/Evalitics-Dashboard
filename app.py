@@ -197,10 +197,13 @@ def check_credentials(username, password):
         records = sheet.get_all_records()
         for row in records:
             if str(row.get('Username', '')).strip() == username and str(row.get('Password', '')).strip() == password:
-                return str(row.get('Role', '')).strip()
+                return {
+                    "role": str(row.get('Role', '')).strip(),
+                    "updl": str(row.get('Identitas_UPDL', '')).strip().upper() # Tambahan identitas unit
+                }
         return None
     except Exception as e:
-        st.error(f"Gagal memverifikasi kredensial. Pastikan tab 'User_Access' sudah dibuat. Error: {e}")
+        st.error(f"Gagal memverifikasi kredensial. Pastikan tab 'User_Access' sudah dibuat dan memiliki kolom Identitas_UPDL. Error: {e}")
         return None
 
 def get_sheet_max_no(sheet):
@@ -326,6 +329,7 @@ for key, default in [
     ("logged_in",             False),
     ("username",              None),
     ("role",                  None),
+    ("user_updl",             None)
 ]:
     if key not in st.session_state:
         st.session_state[key] = default
@@ -438,11 +442,12 @@ if not st.session_state["logged_in"]:
             
             if btn_login:
                 with st.spinner("Memverifikasi kredensial..."):
-                    role_user = check_credentials(input_user, input_pass)
-                    if role_user:
+                    user_data = check_credentials(input_user, input_pass)
+                    if user_data:
                         st.session_state["logged_in"] = True
                         st.session_state["username"] = input_user
-                        st.session_state["role"] = role_user
+                        st.session_state["role"] = user_data["role"]
+                        st.session_state["user_updl"] = user_data["updl"] # Simpan identitas UPDL
                         st.rerun()
                     else:
                         st.error("Username atau Password tidak valid!")
@@ -544,7 +549,8 @@ else:
         menu_selection = st.radio("Pilih Modul Aplikasi:", menu_options)
         
         st.markdown("---")
-        st.markdown(f"<div style='text-align:center; padding:10px; background:#e2e8f0; border-radius:10px;'>👤 <b>{st.session_state['username']}</b><br><span style='font-size:12px;'>Role: {st.session_state['role']}</span></div>", unsafe_allow_html=True)
+        updl_text = st.session_state.get('user_updl', '-')
+        st.markdown(f"<div style='text-align:center; padding:10px; background:#e2e8f0; border-radius:10px;'>👤 <b>{st.session_state['username']}</b><br><span style='font-size:12px;'>Role: {st.session_state['role']} | Unit: {updl_text}</span></div>", unsafe_allow_html=True)
         
         if st.button("🔄 Sinkron Data Terkini", use_container_width=True):
             st.cache_data.clear()
@@ -554,6 +560,7 @@ else:
             st.session_state["logged_in"] = False
             st.session_state["username"] = None
             st.session_state["role"] = None
+            st.session_state["user_updl"] = None
             st.rerun()
 
     # ══════════════════════════════════════════════════════════════════════════════
@@ -567,7 +574,7 @@ else:
                 return pd.read_csv(url)
 
             df = load_csv(url)
-            st.markdown("### 🎛️ Filter Data")
+            st.markdown("### 🎛️️ Filter Data")
 
             def build_filters(suffix):
                 opsi_bulan    = list(df['Laporan Bulan'].dropna().unique())
@@ -634,7 +641,7 @@ else:
 
                     if pd.api.types.is_numeric_dtype(df_filtered[var_x]) and pd.api.types.is_numeric_dtype(df_filtered[var_y]):
                         hapus_outlier  = st.checkbox("🧹 Buang Outlier (IQR)", key="out_ana")
-                        uji_normalitas = st.checkbox("⚖️️ Uji Normalitas (Shapiro-Wilk)", key="norm_ana")
+                        uji_normalitas = st.checkbox("⚖ Uji Normalitas (Shapiro-Wilk)", key="norm_ana")
                         df_clean = df_filtered.copy()
 
                         if hapus_outlier:
@@ -2000,404 +2007,432 @@ else:
                     
                     with st.container(border=True):
                         col_u, col_j, col_btn = st.columns([1.5, 2, 1])
-                        with col_u:
-                            opsi_updl = st.selectbox("🏢 Pilih UPDL:", list_updl, key="updl_report")
                         
+                        # --- LOGIKA FILTER BERDASARKAN ROLE ---
+                        if st.session_state["role"] == "SuperAdmin":
+                            with col_u:
+                                opsi_updl = st.selectbox("🏢 Pilih UPDL:", list_updl, key="updl_report")
+                        else:
+                            # Jika UPDL, kunci unit sesuai session state
+                            opsi_updl = st.session_state.get('user_updl', list_updl[0]) 
+                            with col_u:
+                                st.selectbox("🏢 Pilih UPDL:", [opsi_updl], disabled=True, key="updl_report_disabled")
+                        
+                        # Filter dataframe sesuai UPDL yang terpilih/terkunci
                         df_updl = df_master[df_master['Sumber Data Implementasi'] == opsi_updl].copy()
                         
-                        df_updl['Opsi_Dropdown'] = df_updl.apply(
-                            lambda x: f"{str(x.get('Judul Pembelajaran/ Asesmen/ Sertifikasi/ KSM', '-')).strip()} ({format_tanggal_indo(x.get('Tanggal Mulai'))} s.d {format_tanggal_indo(x.get('Tgl Akhir', x.get('Tanggal Selesai')))})", 
-                            axis=1
-                        )
-                        list_opsi = df_updl['Opsi_Dropdown'].dropna().unique().tolist()
-                        
-                        with col_j:
-                            opsi_pilih = st.selectbox("📚 Pilih Judul Pembelajaran:", list_opsi, key="judul_report_pembelajaran")
-                        with col_btn:
-                            st.markdown("<br>", unsafe_allow_html=True)
-                            btn_gen_kelas = st.button("🚀 Generate Laporan Kelas", type="primary", use_container_width=True)
-                        
-                        if btn_gen_kelas:
-                            with st.spinner("Mengekstrak data pelaksanaan kelas..."):
-                                df_kelas = df_updl[df_updl['Opsi_Dropdown'] == opsi_pilih].iloc[0]
-                                judul_pilih = df_kelas.get('Judul Pembelajaran/ Asesmen/ Sertifikasi/ KSM', '-')
-                                
-                                kode_pemb = df_kelas.get('Kode Pembelajaran', '-')
-                                no_surat = df_kelas.get('No Surat Penugasan ke UP', '-')
-                                no_surat_panggil = df_kelas.get('Nomor Surat Pemanggilan Peserta', '-')
-                                if pd.isna(no_surat_panggil) or str(no_surat_panggil).strip() == "": no_surat_panggil = "-"
+                        if not df_updl.empty:
+                            df_updl['Opsi_Dropdown'] = df_updl.apply(
+                                lambda x: f"{str(x.get('Judul Pembelajaran/ Asesmen/ Sertifikasi/ KSM', '-')).strip()} ({format_tanggal_indo(x.get('Tanggal Mulai'))} s.d {format_tanggal_indo(x.get('Tgl Akhir', x.get('Tanggal Selesai')))})", 
+                                axis=1
+                            )
+                            list_opsi = df_updl['Opsi_Dropdown'].dropna().unique().tolist()
+                            
+                            with col_j:
+                                opsi_pilih = st.selectbox("📚 Pilih Judul Pembelajaran:", list_opsi, key="judul_report_pembelajaran")
+                            with col_btn:
+                                st.markdown("<br>", unsafe_allow_html=True)
+                                btn_gen_kelas = st.button("🚀 Generate Laporan Kelas", type="primary", use_container_width=True)
+                            
+                            if btn_gen_kelas:
+                                with st.spinner("Mengekstrak data pelaksanaan kelas..."):
+                                    df_kelas = df_updl[df_updl['Opsi_Dropdown'] == opsi_pilih].iloc[0]
+                                    judul_pilih = df_kelas.get('Judul Pembelajaran/ Asesmen/ Sertifikasi/ KSM', '-')
+                                    
+                                    kode_pemb = df_kelas.get('Kode Pembelajaran', '-')
+                                    no_surat = df_kelas.get('No Surat Penugasan ke UP', '-')
+                                    no_surat_panggil = df_kelas.get('Nomor Surat Pemanggilan Peserta', '-')
+                                    if pd.isna(no_surat_panggil) or str(no_surat_panggil).strip() == "": no_surat_panggil = "-"
 
-                                tgl_surat_format = format_tanggal_indo(df_kelas.get('Tanggal Surat Penugasan ke UP'))
-                                tgl_mulai_format = format_tanggal_indo(df_kelas.get('Tanggal Mulai'))
-                                tgl_selesai_format = format_tanggal_indo(df_kelas.get('Tgl Akhir', df_kelas.get('Tanggal Selesai')))
+                                    tgl_surat_format = format_tanggal_indo(df_kelas.get('Tanggal Surat Penugasan ke UP'))
+                                    tgl_mulai_format = format_tanggal_indo(df_kelas.get('Tanggal Mulai'))
+                                    tgl_selesai_format = format_tanggal_indo(df_kelas.get('Tgl Akhir', df_kelas.get('Tanggal Selesai')))
 
-                                kode_sr_raw = df_kelas.get('Kode Service Request', '')
-                                jenis_prog = df_kelas.get('Jenis Program', '')
-                                kode_sr_raw = "" if pd.isna(kode_sr_raw) else str(kode_sr_raw).strip()
-                                jenis_prog = "" if pd.isna(jenis_prog) else str(jenis_prog).strip()
-                                
-                                if jenis_prog and kode_sr_raw:
-                                    dasar_pelaksanaan_teks = f"{jenis_prog} - {kode_sr_raw}"
-                                elif jenis_prog:
-                                    dasar_pelaksanaan_teks = jenis_prog
-                                elif kode_sr_raw:
-                                    dasar_pelaksanaan_teks = kode_sr_raw
-                                else:
-                                    dasar_pelaksanaan_teks = "-"
-                                
-                                rencana_peserta = df_kelas.get('Rencana Jumlah Peserta', 0)
-                                diundang = df_kelas.get('Peserta Diundang', 0)
-                                hadir = df_kelas.get('Peserta Hadir', 0)
-                                lulus = df_kelas.get('Peserta Lulus', 0)
-                                
-                                def f_pct_str(v):
-                                    v_str = str(v).replace(',', '.').strip()
-                                    if v_str in ['nan', 'None', '', '-']: return "-"
-                                    if '%' in v_str: return v_str
-                                    try:
-                                        val = float(v_str)
-                                        if val <= 1.0 and val > 0: return f"{val*100:.1f}%"
-                                        return f"{val:.1f}%"
-                                    except:
-                                        return v_str
-                                        
-                                pct_hadir = f_pct_str(df_kelas.get('% Kehadiran', '-'))
-                                pct_lulus = f_pct_str(df_kelas.get('% Kelulusan', '-'))
-                                
-                                instruktur = df_kelas.get('Instruktur/ Fasilitator', '-')
-                                if pd.isna(instruktur) or str(instruktur).strip() == "": instruktur = "[ Ketik Nama Instruktur Disini ]"
-                                
-                                tempat = df_kelas.get('Tempat Pelaksanaan', '-')
-                                updl_key = str(opsi_updl).strip().upper()
-                                if pd.isna(tempat) or str(tempat).strip() == "": tempat = f"PT PLN (Persero) {updl_key}"
-                                
-                                dict_metode = {
-                                    "ICT": "In Class Training (ICT)",
-                                    "DL": "Distance Learning (DL)",
-                                    "SL": "Self Learning (SL)",
-                                    "BL": "Blended Learning (BL)",
-                                    "HL": "Hybrid Learning (HL)"
-                                }
-                                metode_raw = str(df_kelas.get('Strategi Pelaksanaan', '-')).strip().upper()
-                                metode = dict_metode.get(metode_raw, metode_raw)
-                                
-                                def format_rp(val):
-                                    if pd.isna(val) or str(val).strip() in ["", "-", "NaN", "nan", "None"]: 
-                                        return "Rp 0"
-                                    try:
-                                        v_str = str(val).upper().replace('RP', '').strip()
-                                        if v_str.endswith('.00') or v_str.endswith(',00'):
-                                            v_str = v_str[:-3]
-                                        import re
-                                        v_clean = re.sub(r'[^\d]', '', v_str)
-                                        if not v_clean: 
+                                    kode_sr_raw = df_kelas.get('Kode Service Request', '')
+                                    jenis_prog = df_kelas.get('Jenis Program', '')
+                                    kode_sr_raw = "" if pd.isna(kode_sr_raw) else str(kode_sr_raw).strip()
+                                    jenis_prog = "" if pd.isna(jenis_prog) else str(jenis_prog).strip()
+                                    
+                                    if jenis_prog and kode_sr_raw:
+                                        dasar_pelaksanaan_teks = f"{jenis_prog} - {kode_sr_raw}"
+                                    elif jenis_prog:
+                                        dasar_pelaksanaan_teks = jenis_prog
+                                    elif kode_sr_raw:
+                                        dasar_pelaksanaan_teks = kode_sr_raw
+                                    else:
+                                        dasar_pelaksanaan_teks = "-"
+                                    
+                                    rencana_peserta = df_kelas.get('Rencana Jumlah Peserta', 0)
+                                    diundang = df_kelas.get('Peserta Diundang', 0)
+                                    hadir = df_kelas.get('Peserta Hadir', 0)
+                                    lulus = df_kelas.get('Peserta Lulus', 0)
+                                    
+                                    def f_pct_str(v):
+                                        v_str = str(v).replace(',', '.').strip()
+                                        if v_str in ['nan', 'None', '', '-']: return "-"
+                                        if '%' in v_str: return v_str
+                                        try:
+                                            val = float(v_str)
+                                            if val <= 1.0 and val > 0: return f"{val*100:.1f}%"
+                                            return f"{val:.1f}%"
+                                        except:
+                                            return v_str
+                                            
+                                    pct_hadir = f_pct_str(df_kelas.get('% Kehadiran', '-'))
+                                    pct_lulus = f_pct_str(df_kelas.get('% Kelulusan', '-'))
+                                    
+                                    instruktur = df_kelas.get('Instruktur/ Fasilitator', '-')
+                                    if pd.isna(instruktur) or str(instruktur).strip() == "": instruktur = "[ Ketik Nama Instruktur Disini ]"
+                                    
+                                    tempat = df_kelas.get('Tempat Pelaksanaan', '-')
+                                    updl_key = str(opsi_updl).strip().upper()
+                                    if pd.isna(tempat) or str(tempat).strip() == "": tempat = f"PT PLN (Persero) {updl_key}"
+                                    
+                                    dict_metode = {
+                                        "ICT": "In Class Training (ICT)",
+                                        "DL": "Distance Learning (DL)",
+                                        "SL": "Self Learning (SL)",
+                                        "BL": "Blended Learning (BL)",
+                                        "HL": "Hybrid Learning (HL)"
+                                    }
+                                    metode_raw = str(df_kelas.get('Strategi Pelaksanaan', '-')).strip().upper()
+                                    metode = dict_metode.get(metode_raw, metode_raw)
+                                    
+                                    def format_rp(val):
+                                        if pd.isna(val) or str(val).strip() in ["", "-", "NaN", "nan", "None"]: 
                                             return "Rp 0"
-                                        return f"Rp {int(v_clean):,}".replace(',', '.')
-                                    except:
-                                        return "Rp 0"
+                                        try:
+                                            v_str = str(val).upper().replace('RP', '').strip()
+                                            if v_str.endswith('.00') or v_str.endswith(',00'):
+                                                v_str = v_str[:-3]
+                                            import re
+                                            v_clean = re.sub(r'[^\d]', '', v_str)
+                                            if not v_clean: 
+                                                return "Rp 0"
+                                            return f"Rp {int(v_clean):,}".replace(',', '.')
+                                        except:
+                                            return "Rp 0"
+                                            
+                                    rab = format_rp(df_kelas.get('RAB Pelaksanaan', 0))
+                                    realisasi = format_rp(df_kelas.get('Realisasi Biaya Pelaksanaan', 0))
+                                    
+                                    def f_skor(val):
+                                        try:
+                                            val_clean = str(val).replace(',', '.').strip()
+                                            return f"{float(val_clean):.2f}"
+                                        except: return "-"
                                         
-                                rab = format_rp(df_kelas.get('RAB Pelaksanaan', 0))
-                                realisasi = format_rp(df_kelas.get('Realisasi Biaya Pelaksanaan', 0))
-                                
-                                def f_skor(val):
+                                    s_mat = f_skor(df_kelas.get('RATA MAT', '-'))
+                                    s_ins = f_skor(df_kelas.get('RATA INST', '-'))
+                                    s_sp = f_skor(df_kelas.get('RATA SP', '-'))
+                                    s_ds = f_skor(df_kelas.get('RATA DS', '-'))
+                                    s_tot = f_skor(df_kelas.get('RATA-RATA KESELURUHAN', '-'))
+
+                                    kom_apresiasi_raw = str(df_kelas.get('KOMENTAR APRESIASI', '')).strip()
+                                    kom_masukan_raw = str(df_kelas.get('KOMENTAR MASUKAN', '')).strip()
+                                    
+                                    def parse_komentar(teks):
+                                        if teks in ['nan', 'None', '', '-']: return "<div style='text-align:center;'><i>Tidak ada data.</i></div>"
+                                        items = [t.strip() for t in re.split(r'\n+', teks) if t.strip()]
+                                        if not items: return "<div style='text-align:center;'><i>Tidak ada data.</i></div>"
+                                        html_list = "".join([f"<li style='margin-bottom:4px;'>{re.sub(r'^[\-\*\d\.]+\s*', '', i)}</li>" for i in items])
+                                        return f"<ul style='margin-top:0; padding-left:20px;'>{html_list}</ul>"
+
+                                    html_apresiasi = parse_komentar(kom_apresiasi_raw)
+                                    html_masukan = parse_komentar(kom_masukan_raw)
+
+                                    manager_name = MANAGER_DICT.get(updl_key, "[ NAMA MANAGER BELUM DIATUR ]")
+                                    
+                                    # Logika Penentuan Lokasi dan Tanggal Generate
+                                    nama_unit_bersih = updl_key.replace("UPDL ", "").title()
+                                    if nama_unit_bersih == "Jakarta":
+                                        lokasi_ttd = "Jakarta"
+                                    else:
+                                        lokasi_ttd = nama_unit_bersih
+                                    
+                                    tanggal_generate_str = format_tanggal_indo(datetime.now())
+
+                                    narasi_eksekutif_kelas = ""
                                     try:
-                                        val_clean = str(val).replace(',', '.').strip()
-                                        return f"{float(val_clean):.2f}"
-                                    except: return "-"
-                                    
-                                s_mat = f_skor(df_kelas.get('RATA MAT', '-'))
-                                s_ins = f_skor(df_kelas.get('RATA INST', '-'))
-                                s_sp = f_skor(df_kelas.get('RATA SP', '-'))
-                                s_ds = f_skor(df_kelas.get('RATA DS', '-'))
-                                s_tot = f_skor(df_kelas.get('RATA-RATA KESELURUHAN', '-'))
-
-                                kom_apresiasi_raw = str(df_kelas.get('KOMENTAR APRESIASI', '')).strip()
-                                kom_masukan_raw = str(df_kelas.get('KOMENTAR MASUKAN', '')).strip()
-                                
-                                def parse_komentar(teks):
-                                    if teks in ['nan', 'None', '', '-']: return "<div style='text-align:center;'><i>Tidak ada data.</i></div>"
-                                    items = [t.strip() for t in re.split(r'\n+', teks) if t.strip()]
-                                    if not items: return "<div style='text-align:center;'><i>Tidak ada data.</i></div>"
-                                    html_list = "".join([f"<li style='margin-bottom:4px;'>{re.sub(r'^[\-\*\d\.]+\s*', '', i)}</li>" for i in items])
-                                    return f"<ul style='margin-top:0; padding-left:20px;'>{html_list}</ul>"
-
-                                html_apresiasi = parse_komentar(kom_apresiasi_raw)
-                                html_masukan = parse_komentar(kom_masukan_raw)
-
-                                manager_name = MANAGER_DICT.get(updl_key, "[ NAMA MANAGER BELUM DIATUR ]")
-                                
-                                # Logika Penentuan Lokasi dan Tanggal Generate
-                                nama_unit_bersih = updl_key.replace("UPDL ", "").title()
-                                if nama_unit_bersih == "Jakarta":
-                                    lokasi_ttd = "Jakarta"
-                                else:
-                                    lokasi_ttd = nama_unit_bersih
-                                
-                                tanggal_generate_str = format_tanggal_indo(datetime.now())
-
-                                narasi_eksekutif_kelas = ""
-                                try:
-                                    prompt_kelas = f"""
-                                    Bertindaklah sebagai Quality Management Specialist di PLN {updl_key}.
-                                    Buatkan Ringkasan Eksekutif (maksimal 2 paragraf) untuk Laporan Pelaksanaan Pembelajaran kelas "{judul_pilih}" (Kode: {kode_pemb}).
-                                    
-                                    Fakta Pelaksanaan:
-                                    - Kehadiran: {pct_hadir} ({hadir} dari {diundang} diundang)
-                                    - Kelulusan: {pct_lulus} ({lulus} lulus)
-                                    - Realisasi Biaya: {realisasi} (RAB: {rab})
-                                    - Skor Evaluasi L1 Keseluruhan: {s_tot}
-                                    - Rangkuman Komentar Masukan Pelanggan: {kom_masukan_raw}
-                                    
-                                    Tugas:
-                                    1. Wajib sebutkan secara eksplisit Skor Kepuasan Keseluruhan sebesar {s_tot} di dalam ringkasan.
-                                    2. Berikan analisis naratif yang tajam mengenai efektivitas pelaksanaan kelas, termasuk sorotan penting dari Voice of Customer (komentar masukan pelanggan) sebagai bahan evaluasi.
-                                    3. Gunakan bahasa korporat baku PLN, lugas, preskriptif, dan tanpa format markdown tebal (* atau **) yang berlebihan.
-                                    """
-                                    ai_resp_kelas = model.generate_content(prompt_kelas)
-                                    narasi_eksekutif_kelas = ai_resp_kelas.text.strip().replace('\n', '<br>')
-                                except Exception as e_ai_kelas:
-                                    narasi_eksekutif_kelas = f"Dokumen ini merangkum <i>post-implementation review</i> untuk pelaksanaan program <b>{judul_pilih}</b> ({kode_pemb}), menyajikan evaluasi metrik kehadiran ({pct_hadir}), efisiensi anggaran, dan pencapaian indeks kepuasan mutu L1 secara keseluruhan sebesar <b>{s_tot}</b>, guna memastikan penyelarasan operasional dengan standar mutu <i>Service Excellence</i> {updl_key}."
-                                
-                                no_urut = 3
-                                sarpras_html = ""
-                                if metode_raw in ['ICT', 'BL', 'HL']:
-                                    sarpras_html += f'<tr><td style="vertical-align: middle; padding: 10px;">{no_urut}. Sarana Prasarana Offline</td><td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold;">{s_sp}</td></tr>'
-                                    no_urut += 1
-                                if metode_raw in ['DL', 'SL', 'BL', 'HL']:
-                                    sarpras_html += f'<tr><td style="vertical-align: middle; padding: 10px;">{no_urut}. Sarana Digital</td><td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold;">{s_ds}</td></tr>'
-
-                                html_kelas = f"""
-                                <html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
-                                <head>
-                                    <meta charset="utf-8">
-                                    <style>
-                                        body {{ font-family: 'Segoe UI', Arial, sans-serif; font-size: 11pt; color: #1e293b; }}
-                                        .cover-page {{ background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%); color: #003366; padding: 50px 40px; text-align: center; height: 100%; }}
-                                        .cover-title {{ font-size: 26pt; font-weight: 800; letter-spacing: 2px; margin-top: 150px; margin-bottom: 20px; text-transform: uppercase; line-height: 1.3; color: #003366; }}
-                                        .cover-subtitle {{ font-size: 16pt; font-weight: normal; margin-bottom: 10px; line-height: 1.4; color: #003366; }}
-                                        .cover-code {{ font-size: 14pt; color: #0055A4; margin-bottom: 150px; }}
-                                        .cover-footer {{ font-size: 14pt; font-weight: bold; letter-spacing: 1px; bottom: 50px; width: 100%; color: #003366; }}
-                                        h4 {{ color: #0055A4; border-bottom: 2px solid #cbd5e1; padding-bottom: 5px; margin-top: 25px; margin-bottom: 10px; font-size: 12pt; text-transform: uppercase; }}
-                                        table.zebra {{ width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 10.5pt; }}
-                                        table.zebra th {{ background-color: #003366; color: white; padding: 10px; text-align: left; vertical-align: middle; }}
-                                        table.zebra td {{ border: 1px solid #cbd5e1; padding: 10px; vertical-align: middle; }}
-                                        table.zebra tr:nth-child(even) td {{ background-color: #f8fafc; }}
-                                        p {{ text-align: justify; margin-top: 0; line-height: 1.6; color: #334155; }}
-                                        ul {{ margin-top: 0; padding-left: 20px; line-height: 1.6; color: #334155; }}
+                                        prompt_kelas = f"""
+                                        Bertindaklah sebagai Quality Management Specialist di PLN {updl_key}.
+                                        Buatkan Ringkasan Eksekutif (maksimal 2 paragraf) untuk Laporan Pelaksanaan Pembelajaran kelas "{judul_pilih}" (Kode: {kode_pemb}).
                                         
-                                        @page Section1 {{
-                                            mso-header: none;
-                                            mso-footer: none;
-                                            margin: 1in;
-                                        }}
-                                        @page Section2 {{
-                                            mso-header: none;
-                                            mso-footer: f1;
-                                            margin: 1in;
-                                        }}
-                                        div.Section1 {{
-                                            page: Section1;
-                                        }}
-                                        div.Section2 {{
-                                            page: Section2;
-                                        }}
-                                        div.f1 {{
-                                            mso-element: footer;
-                                            text-align: center;
-                                            font-size: 8.5pt;
-                                            color: #64748b;
-                                            font-family: 'Segoe UI', Arial, sans-serif;
-                                        }}
-                                    </style>
-                                </head>
-                                <body>
-                                    <!-- COVER PAGE (Seksi 1: Tanpa Header & Footer) -->
-                                    <div class="Section1">
-                                        <div class="cover-page">
-                                            <table style="width: 100%; border: none;">
-                                                <tr>
-                                                    <td style="text-align: left; border: none; width: 50%;"><img src="data:image/png;base64,{bin_danantara}" height="40" style="background:white; padding:5px; border-radius:4px;"></td>
-                                                    <td style="text-align: right; border: none; width: 50%;"><img src="data:image/png;base64,{bin_pln}" height="60"></td>
-                                                </tr>
-                                            </table>
-                                            
-                                            <div class="cover-title">LAPORAN PELAKSANAAN<br>PEMBELAJARAN</div>
-                                            <div class="cover-subtitle">{str(judul_pilih).upper()}</div>
-                                            <div class="cover-code">({kode_pemb})</div>
-                                            
-                                            <br><br><br><br><br><br><br><br><br><br><br><br>
-                                            <div class="cover-footer">PT PLN (PERSERO) {updl_key}</div>
-                                        </div>
-                                    </div>
+                                        Fakta Pelaksanaan:
+                                        - Kehadiran: {pct_hadir} ({hadir} dari {diundang} diundang)
+                                        - Kelulusan: {pct_lulus} ({lulus} lulus)
+                                        - Realisasi Biaya: {realisasi} (RAB: {rab})
+                                        - Skor Evaluasi L1 Keseluruhan: {s_tot}
+                                        - Rangkuman Komentar Masukan Pelanggan: {kom_masukan_raw}
+                                        
+                                        Tugas:
+                                        1. Wajib sebutkan secara eksplisit Skor Kepuasan Keseluruhan sebesar {s_tot} di dalam ringkasan.
+                                        2. Berikan analisis naratif yang tajam mengenai efektivitas pelaksanaan kelas, termasuk sorotan penting dari Voice of Customer (komentar masukan pelanggan) sebagai bahan evaluasi.
+                                        3. Gunakan bahasa korporat baku PLN, lugas, preskriptif, dan tanpa format markdown tebal (* atau **) yang berlebihan.
+                                        """
+                                        ai_resp_kelas = model.generate_content(prompt_kelas)
+                                        narasi_eksekutif_kelas = ai_resp_kelas.text.strip().replace('\n', '<br>')
+                                    except Exception as e_ai_kelas:
+                                        narasi_eksekutif_kelas = f"Dokumen ini merangkum <i>post-implementation review</i> untuk pelaksanaan program <b>{judul_pilih}</b> ({kode_pemb}), menyajikan evaluasi metrik kehadiran ({pct_hadir}), efisiensi anggaran, dan pencapaian indeks kepuasan mutu L1 secara keseluruhan sebesar <b>{s_tot}</b>, guna memastikan penyelarasan operasional dengan standar mutu <i>Service Excellence</i> {updl_key}."
                                     
-                                    <!-- PEMISAH SEKSI HALAMAN WORD -->
-                                    <br clear="all" style="mso-break-type:section-break; page-break-before:always;" />
+                                    no_urut = 3
+                                    sarpras_html = ""
+                                    if metode_raw in ['ICT', 'BL', 'HL']:
+                                        sarpras_html += f'<tr><td style="vertical-align: middle; padding: 10px;">{no_urut}. Sarana Prasarana Offline</td><td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold;">{s_sp}</td></tr>'
+                                        no_urut += 1
+                                    if metode_raw in ['DL', 'SL', 'BL', 'HL']:
+                                        sarpras_html += f'<tr><td style="vertical-align: middle; padding: 10px;">{no_urut}. Sarana Digital</td><td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold;">{s_ds}</td></tr>'
 
-                                    <!-- KONTEN UTAMA (Seksi 2: Dengan Footer Khusus) -->
-                                    <div class="Section2">
-                                        <div style="mso-element:footer" id="f1">
-                                            <p style="text-align: center; font-size: 8.5pt; color: #64748b; margin: 0;">
-                                                Dokumen ini digenerate secara otomatis oleh sistem Jakarta Insight Hub
-                                            </p>
+                                    html_kelas = f"""
+                                    <html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+                                    <head>
+                                        <meta charset="utf-8">
+                                        <style>
+                                            body {{ font-family: 'Segoe UI', Arial, sans-serif; font-size: 11pt; color: #1e293b; }}
+                                            .cover-page {{ background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%); color: #003366; padding: 50px 40px; text-align: center; height: 100%; }}
+                                            .cover-title {{ font-size: 26pt; font-weight: 800; letter-spacing: 2px; margin-top: 150px; margin-bottom: 20px; text-transform: uppercase; line-height: 1.3; color: #003366; }}
+                                            .cover-subtitle {{ font-size: 16pt; font-weight: normal; margin-bottom: 10px; line-height: 1.4; color: #003366; }}
+                                            .cover-code {{ font-size: 14pt; color: #0055A4; margin-bottom: 150px; }}
+                                            .cover-footer {{ font-size: 14pt; font-weight: bold; letter-spacing: 1px; bottom: 50px; width: 100%; color: #003366; }}
+                                            h4 {{ color: #0055A4; border-bottom: 2px solid #cbd5e1; padding-bottom: 5px; margin-top: 25px; margin-bottom: 10px; font-size: 12pt; text-transform: uppercase; }}
+                                            table.zebra {{ width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 10.5pt; }}
+                                            table.zebra th {{ background-color: #003366; color: white; padding: 10px; text-align: left; vertical-align: middle; }}
+                                            table.zebra td {{ border: 1px solid #cbd5e1; padding: 10px; vertical-align: middle; }}
+                                            table.zebra tr:nth-child(even) td {{ background-color: #f8fafc; }}
+                                            p {{ text-align: justify; margin-top: 0; line-height: 1.6; color: #334155; }}
+                                            ul {{ margin-top: 0; padding-left: 20px; line-height: 1.6; color: #334155; }}
+                                            
+                                            @page Section1 {{
+                                                mso-header: none;
+                                                mso-footer: none;
+                                                margin: 1in;
+                                            }}
+                                            @page Section2 {{
+                                                mso-header: none;
+                                                mso-footer: f1;
+                                                margin: 1in;
+                                            }}
+                                            div.Section1 {{
+                                                page: Section1;
+                                            }}
+                                            div.Section2 {{
+                                                page: Section2;
+                                            }}
+                                            div.f1 {{
+                                                mso-element: footer;
+                                                text-align: center;
+                                                font-size: 8.5pt;
+                                                color: #64748b;
+                                                font-family: 'Segoe UI', Arial, sans-serif;
+                                            }}
+                                        </style>
+                                    </head>
+                                    <body>
+                                        <!-- COVER PAGE (Seksi 1: Tanpa Header & Footer) -->
+                                        <div class="Section1">
+                                            <div class="cover-page">
+                                                <table style="width: 100%; border: none;">
+                                                    <tr>
+                                                        <td style="text-align: left; border: none; width: 50%;"><img src="data:image/png;base64,{bin_danantara}" height="40" style="background:white; padding:5px; border-radius:4px;"></td>
+                                                        <td style="text-align: right; border: none; width: 50%;"><img src="data:image/png;base64,{bin_pln}" height="60"></td>
+                                                    </tr>
+                                                </table>
+                                                
+                                                <div class="cover-title">LAPORAN PELAKSANAAN<br>PEMBELAJARAN</div>
+                                                <div class="cover-subtitle">{str(judul_pilih).upper()}</div>
+                                                <div class="cover-code">({kode_pemb})</div>
+                                                
+                                                <br><br><br><br><br><br><br><br><br><br><br><br>
+                                                <div class="cover-footer">PT PLN (PERSERO) {updl_key}</div>
+                                            </div>
                                         </div>
+                                        
+                                        <!-- PEMISAH SEKSI HALAMAN WORD -->
+                                        <br clear="all" style="mso-break-type:section-break; page-break-before:always;" />
 
-                                        <table style="width: 100%; border: none; border-collapse: collapse;">
-                                            <thead>
-                                                <tr>
-                                                    <th style="background-color: transparent; border: none; padding: 0 0 10px 0; border-bottom: 2px solid #003366;">
-                                                        <table style="width: 100%; border: none; margin: 0;">
-                                                            <tr>
-                                                                <td style="text-align: left; border: none; width: 50%; padding: 0; vertical-align: middle;"><img src="data:image/png;base64,{bin_danantara}" height="35" style="background:white; padding:3px; border-radius:4px;"></td>
-                                                                <td style="text-align: right; border: none; width: 50%; padding: 0; vertical-align: middle;"><img src="data:image/png;base64,{bin_pln}" height="50"></td>
-                                                            </tr>
-                                                        </table>
-                                                    </th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr>
-                                                    <td style="border: none; padding: 20px 10px 10px 10px; background-color: transparent;">
-                                                        
-                                                        <h4 style="text-align: center; color:#0055A4; border-bottom: none; margin-bottom: 10px; font-size: 13pt;">EXECUTIVE SUMMARY</h4>
-                                                        <p style="text-align: justify; margin-top: 0;">{narasi_eksekutif_kelas}</p>
-                                                        
-                                                        <h4>1. DASAR PELAKSANAAN</h4>
-                                                        <p>Pembelajaran ini dilaksanakan berdasarkan penugasan Pusdiklat melalui :</p>
-                                                        <ul>
-                                                            <li>Surat Penugasan No. <b>{no_surat}</b> pada tanggal <b>{tgl_surat_format}</b></li>
-                                                            <li>Dasar Penugasan: <b>{dasar_pelaksanaan_teks}</b></li>
-                                                            <li>Nomor Surat Pemanggilan Peserta: <b>{no_surat_panggil}</b></li>
-                                                        </ul>
-                                                        
-                                                        <h4>2. INFORMASI KEPESERTAAN</h4>
-                                                        <p>Berikut adalah rincian partisipasi dan kelulusan peserta pembelajaran:</p>
-                                                        <table class="zebra">
-                                                            <tr><td style="vertical-align: middle; padding: 10px;">Rencana Jumlah Peserta</td><td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold;">{int(rencana_peserta)}</td></tr>
-                                                            <tr><td style="vertical-align: middle; padding: 10px;">Peserta diundang</td><td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold;">{int(diundang)}</td></tr>
-                                                            <tr><td style="vertical-align: middle; padding: 10px;">Peserta Hadir</td><td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold; color: #0055A4;">{int(hadir)}</td></tr>
-                                                            <tr><td style="vertical-align: middle; padding: 10px;">Persentase Kehadiran</td><td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold;">{pct_hadir}</td></tr>
-                                                            <tr><td style="vertical-align: middle; padding: 10px;">Peserta Lulus</td><td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold; color: #15803d;">{int(lulus)}</td></tr>
-                                                            <tr><td style="vertical-align: middle; padding: 10px;">Persentase Kelulusan</td><td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold; color: #15803d;">{pct_lulus}</td></tr>
-                                                        </table>
+                                        <!-- KONTEN UTAMA (Seksi 2: Dengan Footer Khusus) -->
+                                        <div class="Section2">
+                                            <div style="mso-element:footer" id="f1">
+                                                <p style="text-align: center; font-size: 8.5pt; color: #64748b; margin: 0;">
+                                                    Dokumen ini digenerate secara otomatis oleh sistem Jakarta Insight Hub
+                                                </p>
+                                            </div>
 
-                                                        <h4>3. WAKTU, METODE DAN TEMPAT PEMBELAJARAN</h4>
-                                                        <p>Adapun pembelajaran <b>{judul_pilih}</b> dilaksanakan dengan rincian:</p>
-                                                        <ul>
-                                                            <li><b>Tanggal:</b> {tgl_mulai_format} s.d {tgl_selesai_format}</li>
-                                                            <li><b>Waktu:</b> 08.00 - 16.00 WIB</li>
-                                                            <li><b>Metode:</b> {metode}</li>
-                                                            <li><b>Tempat:</b> {tempat}</li>
-                                                            <li><b>Narasumber / Instruktur:</b> {instruktur}</li>
-                                                        </ul>
+                                            <table style="width: 100%; border: none; border-collapse: collapse;">
+                                                <thead>
+                                                    <tr>
+                                                        <th style="background-color: transparent; border: none; padding: 0 0 10px 0; border-bottom: 2px solid #003366;">
+                                                            <table style="width: 100%; border: none; margin: 0;">
+                                                                <tr>
+                                                                    <td style="text-align: left; border: none; width: 50%; padding: 0; vertical-align: middle;"><img src="data:image/png;base64,{bin_danantara}" height="35" style="background:white; padding:3px; border-radius:4px;"></td>
+                                                                    <td style="text-align: right; border: none; width: 50%; padding: 0; vertical-align: middle;"><img src="data:image/png;base64,{bin_pln}" height="50"></td>
+                                                                </tr>
+                                                            </table>
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td style="border: none; padding: 20px 10px 10px 10px; background-color: transparent;">
+                                                            
+                                                            <h4 style="text-align: center; color:#0055A4; border-bottom: none; margin-bottom: 10px; font-size: 13pt;">EXECUTIVE SUMMARY</h4>
+                                                            <p style="text-align: justify; margin-top: 0;">{narasi_eksekutif_kelas}</p>
+                                                            
+                                                            <h4>1. DASAR PELAKSANAAN</h4>
+                                                            <p>Pembelajaran ini dilaksanakan berdasarkan penugasan Pusdiklat melalui :</p>
+                                                            <ul>
+                                                                <li>Surat Penugasan No. <b>{no_surat}</b> pada tanggal <b>{tgl_surat_format}</b></li>
+                                                                <li>Dasar Penugasan: <b>{dasar_pelaksanaan_teks}</b></li>
+                                                                <li>Nomor Surat Pemanggilan Peserta: <b>{no_surat_panggil}</b></li>
+                                                            </ul>
+                                                            
+                                                            <h4>2. INFORMASI KEPESERTAAN</h4>
+                                                            <p>Berikut adalah rincian partisipasi dan kelulusan peserta pembelajaran:</p>
+                                                            <table class="zebra">
+                                                                <tr><td style="vertical-align: middle; padding: 10px;">Rencana Jumlah Peserta</td><td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold;">{int(rencana_peserta)}</td></tr>
+                                                                <tr><td style="vertical-align: middle; padding: 10px;">Peserta diundang</td><td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold;">{int(diundang)}</td></tr>
+                                                                <tr><td style="vertical-align: middle; padding: 10px;">Peserta Hadir</td><td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold; color: #0055A4;">{int(hadir)}</td></tr>
+                                                                <tr><td style="vertical-align: middle; padding: 10px;">Persentase Kehadiran</td><td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold;">{pct_hadir}</td></tr>
+                                                                <tr><td style="vertical-align: middle; padding: 10px;">Peserta Lulus</td><td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold; color: #15803d;">{int(lulus)}</td></tr>
+                                                                <tr><td style="vertical-align: middle; padding: 10px;">Persentase Kelulusan</td><td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold; color: #15803d;">{pct_lulus}</td></tr>
+                                                            </table>
 
-                                                        <h4>4. BIAYA PEMBELAJARAN</h4>
-                                                        <p>Realisasi Biaya Penyelenggaraan Pembelajaran <b>{judul_pilih}</b> adalah sebagai berikut:</p>
-                                                        <table class="zebra">
-                                                            <tr><th style="width: 60%; text-align:center; vertical-align: middle; padding: 10px;">Komponen Biaya</th><th style="width: 40%; text-align:center; vertical-align: middle; padding: 10px;">Nominal (Rp)</th></tr>
-                                                            <tr><td style="vertical-align: middle; padding: 10px;">Rencana Biaya</td><td style="vertical-align: middle; padding: 10px; text-align:right;"><b>{rab}</b></td></tr>
-                                                            <tr><td style="vertical-align: middle; padding: 10px;">Realisasi Biaya</td><td style="vertical-align: middle; padding: 10px; text-align:right; color: #003366;"><b>{realisasi}</b></td></tr>
-                                                        </table>
+                                                            <h4>3. WAKTU, METODE DAN TEMPAT PEMBELAJARAN</h4>
+                                                            <p>Adapun pembelajaran <b>{judul_pilih}</b> dilaksanakan dengan rincian:</p>
+                                                            <ul>
+                                                                <li><b>Tanggal:</b> {tgl_mulai_format} s.d {tgl_selesai_format}</li>
+                                                                <li><b>Waktu:</b> 08.00 - 16.00 WIB</li>
+                                                                <li><b>Metode:</b> {metode}</li>
+                                                                <li><b>Tempat:</b> {tempat}</li>
+                                                                <li><b>Narasumber / Instruktur:</b> {instruktur}</li>
+                                                            </ul>
 
-                                                        <h4 style="page-break-before: always;">5. EVALUASI PEMBELAJARAN & CUSTOMER VOICE</h4>
-                                                        <p>Hasil rekapitulasi evaluasi kepuasan peserta terhadap penyelenggaraan pembelajaran (Level 1) adalah sebagai berikut:</p>
-                                                        
-                                                        <table class="zebra">
-                                                            <tr>
-                                                                <th style="width: 70%; text-align:center; vertical-align: middle; padding: 10px;">Pilar Evaluasi</th>
-                                                                <th style="width: 30%; text-align:center; vertical-align: middle; padding: 10px;">Skor Kepuasan</th>
-                                                            </tr>
-                                                            <tr><td style="vertical-align: middle; padding: 10px;">1. Materi Pembelajaran</td><td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold;">{s_mat}</td></tr>
-                                                            <tr><td style="vertical-align: middle; padding: 10px;">2. Instruktur & Fasilitator</td><td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold;">{s_ins}</td></tr>
-                                                            {sarpras_html}
-                                                            <tr style="background-color: #003366; color: white;">
-                                                                <td style="vertical-align: middle; padding: 10px; font-weight:bold;">Rata-Rata Komposit Keseluruhan</td>
-                                                                <td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold;">{s_tot}</td>
-                                                            </tr>
-                                                        </table>
-                                                        
-                                                        <p style="margin-top:15px; margin-bottom:5px;"><b>Komentar Apresiasi (Voice of Customer):</b></p>
-                                                        {html_apresiasi}
-                                                        
-                                                        <p style="margin-top:10px; margin-bottom:5px;"><b>Komentar Masukan / Evaluasi:</b></p>
-                                                        {html_masukan}
-                                                        
-                                                        <br>
-                                                        
-                                                        <!-- BLOK TANDA TANGAN MANAGER -->
-                                                        <table style="page-break-inside: avoid; width:100%; border: none; margin-top: 20px;">
-                                                            <tr>
-                                                                <td style="border: none; padding: 0;">
-                                                                    <p style="text-align: justify; margin-bottom: 40px; color: #1e293b;">Sebagai penutup, seluruh rangkaian program pembelajaran telah berjalan dengan baik dan diharapkan mampu memberikan dampak nyata terhadap peningkatan kompetensi peserta. Berbagai hasil evaluasi serta umpan balik yang terangkum dalam laporan ini akan senantiasa kami jadikan landasan utama untuk melakukan perbaikan berkelanjutan (continuous improvement) pada penyelenggaraan pelatihan di masa mendatang. Kami menyampaikan apresiasi tertinggi atas dukungan manajemen, dedikasi instruktur, serta partisipasi aktif para peserta, dengan harapan seluruh pengetahuan dan keterampilan baru yang diperoleh dapat segera diimplementasikan guna mendukung pencapaian sasaran strategis perusahaan.</p>
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td style="border: none; padding: 0;">
-                                                                    <table style="width:100%; text-align:center; border: none;">
-                                                                        <tr>
-                                                                            <td style="width:50%; border: none;"></td>
-                                                                            <td style="width:50%; border: none; text-align:center;">
-                                                                                {lokasi_ttd}, {tanggal_generate_str}<br>
-                                                                                Mengetahui,<br>
-                                                                                <b>MANAGER UPDL</b><br><br>
-                                                                                <div style="font-size: 14pt; font-weight: 900; color: #000000; letter-spacing: 2px; margin: 10px 0;">[ APPROVED ]</div><br>
-                                                                                <b>{manager_name}</b>
-                                                                            </td>
-                                                                        </tr>
-                                                                    </table>
-                                                                </td>
-                                                            </tr>
-                                                        </table>
+                                                            <h4>4. BIAYA PEMBELAJARAN</h4>
+                                                            <p>Realisasi Biaya Penyelenggaraan Pembelajaran <b>{judul_pilih}</b> adalah sebagai berikut:</p>
+                                                            <table class="zebra">
+                                                                <tr><th style="width: 60%; text-align:center; vertical-align: middle; padding: 10px;">Komponen Biaya</th><th style="width: 40%; text-align:center; vertical-align: middle; padding: 10px;">Nominal (Rp)</th></tr>
+                                                                <tr><td style="vertical-align: middle; padding: 10px;">Rencana Biaya</td><td style="vertical-align: middle; padding: 10px; text-align:right;"><b>{rab}</b></td></tr>
+                                                                <tr><td style="vertical-align: middle; padding: 10px;">Realisasi Biaya</td><td style="vertical-align: middle; padding: 10px; text-align:right; color: #003366;"><b>{realisasi}</b></td></tr>
+                                                            </table>
 
-                                                        <!-- PEMISAH HALAMAN MUTLAK (PAGE BREAK + SECTION BREAK) SEBELUM BAB 6 -->
-                                                        <br clear="all" style="mso-break-type:section-break; page-break-before:always;" />
+                                                            <h4 style="page-break-before: always;">5. EVALUASI PEMBELAJARAN & CUSTOMER VOICE</h4>
+                                                            <p>Hasil rekapitulasi evaluasi kepuasan peserta terhadap penyelenggaraan pembelajaran (Level 1) adalah sebagai berikut:</p>
+                                                            
+                                                            <table class="zebra">
+                                                                <tr>
+                                                                    <th style="width: 70%; text-align:center; vertical-align: middle; padding: 10px;">Pilar Evaluasi</th>
+                                                                    <th style="width: 30%; text-align:center; vertical-align: middle; padding: 10px;">Skor Kepuasan</th>
+                                                                </tr>
+                                                                <tr><td style="vertical-align: middle; padding: 10px;">1. Materi Pembelajaran</td><td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold;">{s_mat}</td></tr>
+                                                                <tr><td style="vertical-align: middle; padding: 10px;">2. Instruktur & Fasilitator</td><td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold;">{s_ins}</td></tr>
+                                                                {sarpras_html}
+                                                                <tr style="background-color: #003366; color: white;">
+                                                                    <td style="vertical-align: middle; padding: 10px; font-weight:bold;">Rata-Rata Komposit Keseluruhan</td>
+                                                                    <td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold;">{s_tot}</td>
+                                                                </tr>
+                                                            </table>
+                                                            
+                                                            <p style="margin-top:15px; margin-bottom:5px;"><b>Komentar Apresiasi (Voice of Customer):</b></p>
+                                                            {html_apresiasi}
+                                                            
+                                                            <p style="margin-top:10px; margin-bottom:5px;"><b>Komentar Masukan / Evaluasi:</b></p>
+                                                            {html_masukan}
+                                                            
+                                                            <br>
+                                                            
+                                                            <!-- BLOK TANDA TANGAN MANAGER -->
+                                                            <table style="page-break-inside: avoid; width:100%; border: none; margin-top: 20px;">
+                                                                <tr>
+                                                                    <td style="border: none; padding: 0;">
+                                                                        <p style="text-align: justify; margin-bottom: 40px; color: #1e293b;">Sebagai penutup, seluruh rangkaian program pembelajaran telah berjalan dengan baik dan diharapkan mampu memberikan dampak nyata terhadap peningkatan kompetensi peserta. Berbagai hasil evaluasi serta umpan balik yang terangkum dalam laporan ini akan senantiasa kami jadikan landasan utama untuk melakukan perbaikan berkelanjutan (continuous improvement) pada penyelenggaraan pelatihan di masa mendatang. Kami menyampaikan apresiasi tertinggi atas dukungan manajemen, dedikasi instruktur, serta partisipasi aktif para peserta, dengan harapan seluruh pengetahuan dan keterampilan baru yang diperoleh dapat segera diimplementasikan guna mendukung pencapaian sasaran strategis perusahaan.</p>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td style="border: none; padding: 0;">
+                                                                        <table style="width:100%; text-align:center; border: none;">
+                                                                            <tr>
+                                                                                <td style="width:50%; border: none;"></td>
+                                                                                <td style="width:50%; border: none; text-align:center;">
+                                                                                    {lokasi_ttd}, {tanggal_generate_str}<br>
+                                                                                    Mengetahui,<br>
+                                                                                    <b>MANAGER UPDL</b><br><br>
+                                                                                    <div style="font-size: 14pt; font-weight: 900; color: #000000; letter-spacing: 2px; margin: 10px 0;">[ APPROVED ]</div><br>
+                                                                                    <b>{manager_name}</b>
+                                                                                </td>
+                                                                            </tr>
+                                                                        </table>
+                                                                    </td>
+                                                                </tr>
+                                                            </table>
 
-                                                        <h4 style="color:#0055A4; border-bottom: 2px solid #cbd5e1; padding-bottom:5px;">6. LAMPIRAN DOKUMEN</h4>
-                                                        <p>Berikut adalah kelengkapan administrasi dan bukti pelaksanaan program:</p>
-                                                        <ul style="line-height:2.0; font-weight:bold; color: #0055A4;">
-                                                            <li>Lampiran 1: Dasar Surat Penugasan</li>
-                                                            <li>Lampiran 2: Surat Pemanggilan Peserta</li>
-                                                            <li>Lampiran 3: Rundown Pelaksanaan</li>
-                                                            <li>Lampiran 4: Daftar Hadir Peserta (Presensi)</li>
-                                                            <li>Lampiran 5: Dokumentasi Pelaksanaan / Foto Kegiatan <i>(Silakan paste foto langsung di bawah ini)</i></li>
-                                                        </ul>
-                                                        
-                                                    </td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </body>
-                                </html>
-                                """
-                                
-                                st.success(f"✅ Dokumen Laporan Pembelajaran {judul_pilih} berhasil disusun!")
-                                
-                                file_name = f"Laporan_Pelaksanaan_{kode_pemb.replace('.','_')}.doc"
-                                file_bytes = html_kelas.encode('utf-8')
-                                
-                                st.download_button(
-                                    label="📥 DOWNLOAD LAPORAN KELAS (.doc)",
-                                    data=file_bytes,
-                                    file_name=file_name,
-                                    mime="application/msword",
-                                    type="primary"
-                                )
-                                
-                                if updl_key in DRIVE_FOLDER_DICT:
-                                    target_folder = DRIVE_FOLDER_DICT[updl_key]
-                                    with st.spinner(f"☁️ Sedang mengarsipkan otomatis ke Google Drive ({updl_key})..."):
-                                        res_upload = upload_dokumen_ke_drive(file_bytes, file_name, target_folder)
-                                        if res_upload == "ERROR_IMPORT":
-                                            st.warning("⚠️ Laporan berhasil di-generate, namun gagal diarsip ke Drive. Module 'google-api-python-client' belum terinstall di server.")
-                                        elif str(res_upload).startswith("ERROR"):
-                                            st.error(f"⚠️ Gagal mengarsipkan ke Google Drive: {res_upload}")
-                                        else:
-                                            st.success(f"✅ Arsip laporan berhasil diamankan ke Google Drive!")
-                                else:
-                                    st.info("ℹ️ ID Folder Drive untuk UPDL ini belum diatur. Laporan hanya tersedia untuk diunduh lokal.")
+                                                            <!-- PEMISAH HALAMAN MUTLAK (PAGE BREAK + SECTION BREAK) SEBELUM BAB 6 -->
+                                                            <br clear="all" style="mso-break-type:section-break; page-break-before:always;" />
 
-                                with st.expander("👀 Pratinjau Desain Dokumen (Live Preview)"):
-                                    st.markdown(html_kelas, unsafe_allow_html=True)
+                                                            <h4 style="color:#0055A4; border-bottom: 2px solid #cbd5e1; padding-bottom:5px;">6. LAMPIRAN DOKUMEN</h4>
+                                                            <p>Berikut adalah kelengkapan administrasi dan bukti pelaksanaan program:</p>
+                                                            <ul style="line-height:2.0; font-weight:bold; color: #0055A4;">
+                                                                <li>Lampiran 1: Dasar Surat Penugasan</li>
+                                                                <li>Lampiran 2: Surat Pemanggilan Peserta</li>
+                                                                <li>Lampiran 3: Rundown Pelaksanaan</li>
+                                                                <li>Lampiran 4: Daftar Hadir Peserta (Presensi)</li>
+                                                                <li>Lampiran 5: Dokumentasi Pelaksanaan / Foto Kegiatan <i>(Silakan paste foto langsung di bawah ini)</i></li>
+                                                            </ul>
+                                                            
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </body>
+                                    </html>
+                                    """
+                                    
+                                    st.success(f"✅ Dokumen Laporan Pembelajaran {judul_pilih} berhasil disusun!")
+                                    
+                                    file_name = f"Laporan_Pelaksanaan_{kode_pemb.replace('.','_')}.doc"
+                                    file_bytes = html_kelas.encode('utf-8')
+                                    
+                                    # Mengatur tata letak tombol agar lebih rapi
+                                    col_dl1, col_dl2 = st.columns(2)
+                                    
+                                    with col_dl1:
+                                        st.download_button(
+                                            label="📥 DOWNLOAD LAPORAN KELAS (.doc)",
+                                            data=file_bytes,
+                                            file_name=file_name,
+                                            mime="application/msword",
+                                            use_container_width=True
+                                        )
+                                    
+                                    # Proses unggah ke Google Drive
+                                    if updl_key in DRIVE_FOLDER_DICT:
+                                        target_folder = DRIVE_FOLDER_DICT[updl_key]
+                                        with st.spinner(f"☁️ Sedang mengarsipkan otomatis ke Google Drive ({updl_key})..."):
+                                            res_upload = upload_dokumen_ke_drive(file_bytes, file_name, target_folder)
+                                            
+                                        with col_dl2:
+                                            if res_upload == "ERROR_IMPORT":
+                                                st.warning("⚠️️ Module 'google-api-python-client' belum terinstall.")
+                                            elif str(res_upload).startswith("ERROR"):
+                                                st.error(f"⚠️ Gagal arsip: {res_upload}")
+                                            else:
+                                                # Jika berhasil, buat tautan ke Google Drive
+                                                drive_link = f"https://drive.google.com/file/d/{res_upload}/view"
+                                                st.link_button(
+                                                    "☁️ BUKA ARSIP DI GOOGLE DRIVE", 
+                                                    drive_link, 
+                                                    type="primary", 
+                                                    use_container_width=True
+                                                )
+                                                st.success("✅ Arsip laporan berhasil diamankan ke Google Drive!")
+                                    else:
+                                        with col_dl2:
+                                            st.info("ℹ️ ID Folder Drive untuk UPDL ini belum diatur. Laporan hanya tersedia untuk diunduh lokal.")
+
+                                    with st.expander("👀 Pratinjau Desain Dokumen (Live Preview)"):
+                                        st.markdown(html_kelas, unsafe_allow_html=True)
+                        else:
+                            st.info("⚠️️ Tidak ada kelas/judul pembelajaran yang sesuai untuk UPDL ini pada Master Data Nasional.")
                 else:
                     st.info("⚠️ Belum ada data 'Sumber Data Implementasi' atau 'Judul Pembelajaran' yang tersedia di Master Data Nasional.")
             except Exception as e:
@@ -2546,7 +2581,7 @@ else:
                         else:
                             st.info("⚠️ Data instruktur tidak ditemukan untuk kriteria pencarian ini.")
                     else:
-                        st.warning("⚠️️ Database Instruktur kosong atau belum ditarik dari Google Sheets.")
+                        st.warning("⚠ Database Instruktur kosong atau belum ditarik dari Google Sheets.")
                 except Exception as e:
                     st.error(f"Gagal memuat data Katalog Instruktur: {e}")
 
