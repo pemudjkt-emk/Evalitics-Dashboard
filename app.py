@@ -1939,10 +1939,10 @@ else:
         # -------------------------------------------------------------------------
         with sub_lap_pembelajaran:
             if st.session_state["role"] == "UPDL":
-                st.markdown("## 📄 Generator Laporan Pembelajaran (Akses Terbatas)")
+                st.markdown("## 📄 Generator Laporan Pembelajaran")
             else:
                 st.markdown("### 📄 Generator Laporan Pembelajaran Per Kelas")
-            st.write("Menyusun laporan pelaksanaan spesifik per kelas dari Master Data Laporan Nasional, mencakup realisasi peserta, biaya, evaluasi, dan komentar berstandar *Consulting Style*.")
+            st.write("Menyusun laporan pelaksanaan pembelajaran per kelas dari Master Data SIMPLE, mencakup dasar penugasan, informasi kepesertaan, dan biaya sesuai standar.")
             
             try:
                 sheet_id_nasional = '1h-5D5susznSg6nDl2cqgxVu05zSVyTSW19VICYDLtuU'
