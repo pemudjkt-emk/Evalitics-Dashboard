@@ -229,21 +229,15 @@ def format_tanggal_indo(tgl_input):
         return str(tgl_input)
 
 def upload_dokumen_ke_drive(file_bytes, file_name, folder_id):
-    """
-    Fungsi unggah otomatis menggunakan OAuth 2.0 (Akun Pribadi).
-    File akan masuk ke Google Drive Anda menggunakan kuota Anda sendiri.
-    """
     try:
         SCOPES = ['https://www.googleapis.com/auth/drive.file']
         
-        # Membaca brankas rahasia dari Streamlit Secrets
         if "gcp_oauth_token" not in st.secrets:
             return "ERROR: Kunci gcp_oauth_token belum diatur di Streamlit Secrets."
             
         token_info = dict(st.secrets["gcp_oauth_token"])
         creds = Credentials.from_authorized_user_info(token_info, SCOPES)
         
-        # Membangun koneksi ke Google Drive
         drive_service = build('drive', 'v3', credentials=creds)
         
         file_metadata = {
@@ -336,7 +330,7 @@ for key, default in [
         st.session_state[key] = default
 
 # ══════════════════════════════════════════════════════════════════════════════
-# HALAMAN LOGIN (FUTURISTIC GLASSMORPHISM - PENYESUAIAN POSISI & UI BARU)
+# HALAMAN LOGIN
 # ══════════════════════════════════════════════════════════════════════════════
 if not st.session_state["logged_in"]:
     b64_bg = get_base64_img("bg_login.png")
@@ -344,22 +338,13 @@ if not st.session_state["logged_in"]:
     
     login_css = f"""
     <style>
-    /* Sembunyikan elemen bawaan Streamlit yang tidak perlu */
     [data-testid="stSidebar"] {{ display: none !important; }}
     [data-testid="stHeader"] {{ display: none !important; }}
-    
-    /* Pasang gambar background murni ke seluruh halaman */
     .stApp {{ {bg_style} }}
-    
-    /* Navigasi Atas Statis (Kosmetik visual) */
     .top-nav {{ display: flex; gap: 35px; color: #ffffff; font-size: 15px; margin-top: 10px; margin-bottom: 7vh; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }}
-    
-    /* Teks Kiri (Hero Section) */
     .hero-title {{ color: #ffffff; font-size: 55px; font-weight: 800; line-height: 1.1; margin-bottom: 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-shadow: 0px 4px 15px rgba(0,0,0,0.5); }}
     .hero-title span {{ color: #20c997; }}
     .hero-subtitle {{ color: #cbd5e1; font-size: 17px; line-height: 1.6; max-width: 90%; margin-bottom: 40px; font-weight: 400; }}
-    
-    /* TARGETING KOLOM STREAMLIT UNTUK GLASSMORPHISM */
     [data-testid="stColumn"]:nth-child(3) {{
         background: rgba(10, 25, 47, 0.55) !important;
         backdrop-filter: blur(15px) !important;
@@ -369,29 +354,23 @@ if not st.session_state["logged_in"]:
         padding: 40px 30px !important;
         box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37) !important;
         max-width: 420px !important; 
-        margin-left: -15% !important; /* Tarikan ke kiri agar lebih proporsional / bergeser 50% ke ruang sisa */
+        margin-left: -15% !important; 
         margin-right: auto !important; 
         display: flex;
         flex-direction: column;
         align-items: center;
     }}
-    
-    /* Teks dalam Kartu (Welcome Back) */
     .login-header {{ color: #ffffff; font-size: 26px; font-weight: 700; margin-bottom: 5px; margin-top: 15px; font-family: 'Segoe UI', sans-serif; text-align: center; width: 100%; }}
     .login-subheader {{ color: #cbd5e1; font-size: 14px; margin-bottom: 30px; text-align: center; width: 100%; }}
-    
-    /* Kotak Input Streamlit */
     [data-testid="stForm"] {{ border: none !important; background: transparent !important; padding: 0 !important; width: 100%; }}
     .stTextInput label p {{ color: #cbd5e1 !important; font-size: 14px !important; }}
     .stTextInput input {{
         border-radius: 10px !important; background-color: rgba(255, 255, 255, 0.9) !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important; padding: 14px 15px !important;
-        color: #111111 !important; /* WARNA TEKS HITAM/GELAP */
+        color: #111111 !important; 
         font-size: 14px !important; margin-bottom: 10px !important;
     }}
     .stTextInput input:focus {{ border-color: #20c997 !important; box-shadow: 0 0 0 1px #20c997 !important; background-color: #ffffff !important; }}
-    
-    /* Tombol Aksi */
     [data-testid="stFormSubmitButton"] button {{
         background: linear-gradient(90deg, #0d9488 0%, #20c997 100%) !important;
         color: #ffffff !important; border: none !important; border-radius: 10px !important;
@@ -405,14 +384,12 @@ if not st.session_state["logged_in"]:
     """
     st.markdown(login_css, unsafe_allow_html=True)
 
-    # Navigasi Atas - Dirombak untuk menampilkan Logo Raksasa tanpa menu lainnya
     st.markdown("""
         <div class="top-nav">
             <span style="font-weight: 900; font-size: 85px; line-height: 1;">⚡ JAKARTA INSIGHT HUB</span>
         </div>
     """, unsafe_allow_html=True)
 
-    # Rasio kolom disesuaikan agar sisi kiri mendapat porsi optimal dan margin menarik form
     col_kiri, col_tengah, col_kanan = st.columns([1, 0.5, 1])
     
     with col_kiri:
@@ -448,18 +425,15 @@ if not st.session_state["logged_in"]:
                         st.session_state["logged_in"] = True
                         st.session_state["username"] = input_user
                         st.session_state["role"] = user_data["role"]
-                        st.session_state["user_updl"] = user_data["updl"] # Menyimpan identitas UPDL dengan presisi
+                        st.session_state["user_updl"] = user_data["updl"] 
                         st.rerun()
                     else:
                         st.error("Username atau Password tidak valid!")
 
 # ══════════════════════════════════════════════════════════════════════════════
-# HALAMAN UTAMA APLIKASI (JIKA BERHASIL LOGIN)
+# HALAMAN UTAMA APLIKASI
 # ══════════════════════════════════════════════════════════════════════════════
 else:
-    # ─────────────────────────────────────────────────────────────────────────
-    # CSS UTAMA DASHBOARD
-    # ─────────────────────────────────────────────────────────────────────────
     custom_css = """
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
@@ -485,15 +459,11 @@ else:
     [data-testid="stSidebar"] button[kind="secondary"] p { color: white !important; }
     [data-testid="stSidebar"] button[kind="secondary"]:hover { transform: scale(1.02); box-shadow: 0px 6px 15px rgba(23, 162, 184, 0.4); border-color: transparent; color: white !important; }
     [data-testid="stSidebar"] hr { margin-top: 30px; border-top: 1px solid #cbd5e1; }
-    .stTabs [data-baseweb="tab-list"] button div[data-testid="stMarkdownContainer"] p { 
-    font-size: 60px !important; 
-    font-weight: 800 !important; 
-}
+    .stTabs [data-baseweb="tab-list"] button div[data-testid="stMarkdownContainer"] p { font-size: 60px !important; font-weight: 800 !important; }
     .stSelectbox div[data-baseweb="select"] { font-size: 22px !important; min-height: 48px !important; }
     .stSelectbox div[data-baseweb="select"] span { font-size: 22px !important; }
     ul[data-baseweb="menu"] li { font-size: 20px !important; }
     
-    /* MODIFIKASI: Memaksa Tombol Download dan Tombol Link Google Drive memiliki UI Gradasi Seragam */
     button[kind="primary"], [data-testid="stLinkButton"] a { 
         background: linear-gradient(90deg, #17a2b8 0%, #20c997 100%) !important; 
         color: white !important; 
@@ -548,9 +518,6 @@ else:
     </div>
     """, unsafe_allow_html=True)
 
-    # ─────────────────────────────────────────────────────────────────────────
-    # MENU NAVIGASI (SIDEBAR) & RBAC LOGIC (AI ASSISTANT DIHAPUS)
-    # ─────────────────────────────────────────────────────────────────────────
     with st.sidebar:
         st.markdown("### 🧭 JAKARTA INSIGHT HUB")
         
@@ -571,7 +538,6 @@ else:
         menu_selection = st.radio("Pilih Modul Aplikasi:", menu_options)
         
         st.markdown("---")
-        # Handle string kosong jika admin lupa mengisi unit
         updl_text = st.session_state.get('user_updl', '-')
         if not updl_text: updl_text = '-'
         
@@ -587,10 +553,6 @@ else:
             st.session_state["role"] = None
             st.session_state["user_updl"] = None
             st.rerun()
-
-    # ══════════════════════════════════════════════════════════════════════════════
-    # ROUTING KONTEN BERDASARKAN PILIHAN SIDEBAR
-    # ══════════════════════════════════════════════════════════════════════════════
 
     if menu_selection in ["📈 ANALYTICS", "📊 DASHBOARD"]:
         try:
@@ -643,9 +605,6 @@ else:
                 st.success(f"Terdapat **{len(df_f)}** baris data yang sesuai dengan filter.")
                 return df_f
 
-            # ---------------------------------------------------------
-            # KONTEN: 📈 ANALYTICS
-            # ---------------------------------------------------------
             if menu_selection == "📈 ANALYTICS":
                 df_filtered = build_filters("analytics")
                 kolom_tersedia = df_filtered.columns.tolist()
@@ -694,9 +653,8 @@ else:
                                 st.write(f"**Sebaran: {var_x} vs {var_y}**")
                                 st.scatter_chart(data=df_clean, x=var_x, y=var_y)
                     else:
-                        st.error("⚠️ Kolom yang dipilih bukan format angka.")
+                        st.error("⚠️️ Kolom yang dipilih bukan format angka.")
 
-                    # IPA
                     st.markdown("---")
                     st.markdown("### 🎯 Importance-Performance Analysis (IPA)")
                     try:
@@ -865,19 +823,13 @@ else:
                 else:
                     st.warning("⚠️ Tidak ada data. Sesuaikan filter.")
 
-            # ---------------------------------------------------------
-            # KONTEN: 📊 DASHBOARD
-            # ---------------------------------------------------------
             elif menu_selection == "📊 DASHBOARD":
                 df_filtered_dash = build_filters("dashboard")
                 st.markdown("---")
                 if not df_filtered_dash.empty:
-                    
-                    # ─── TABBED VIEW: RINGKASAN VS ASPEK MATERI VS INSTRUKTUR ─────────
                     tab_overview, tab_materi, tab_instruktur = st.tabs(["🌟 Ringkasan Keseluruhan", "📚 Laporan Aspek Materi", "👨‍🏫 Laporan Aspek Instruktur"])
                     
                     with tab_overview:
-                        # --- 1. PREP DATA KHUSUS RINGKASAN ---
                         if 'RATA SP' in df_filtered_dash.columns and 'RATA DS' in df_filtered_dash.columns:
                             df_filtered_dash['RATA SASPRAS'] = df_filtered_dash[['RATA SP', 'RATA DS']].mean(axis=1)
                         elif 'RATA SP' in df_filtered_dash.columns:
@@ -903,7 +855,6 @@ else:
                                 if p_mean <= 1.0: p_mean *= 100
                                 pengisian_val = f"{p_mean:.1f}%"
 
-                        # --- 2. HTML/CSS KARTU KPI ---
                         st.markdown("""
                         <style>
                         .kpi-card {
@@ -1038,7 +989,6 @@ else:
                         with st.expander(f"📄 Tabel Data Lengkap ({len(df_filtered_dash)} baris)", expanded=False):
                             st.dataframe(df_filtered_dash, use_container_width=True)
                             
-                    # ─── TAB ASPEK MATERI ─────────
                     with tab_materi:
                         st.markdown("<h3 style='margin-bottom:0;'>📚 Laporan Kinerja Aspek Materi & Voice of Customer</h3>", unsafe_allow_html=True)
                         st.markdown("Pemetaan kuantitatif indikator MAT1-MAT7 serta sentimen kualitatif berdasarkan **PIC KI**.")
@@ -1214,7 +1164,6 @@ else:
                         else:
                             st.warning("⚠️ Kolom 'PIC KI' tidak ditemukan dalam data.")
                             
-                    # ─── TAB ASPEK INSTRUKTUR ─────────
                     with tab_instruktur:
                         st.markdown("<h3 style='margin-bottom:0;'>👨‍🏫 Laporan Kinerja Aspek Instruktur</h3>", unsafe_allow_html=True)
                         st.markdown("Pemetaan kuantitatif indikator survei kinerja instruktur (INS1-INS9).")
@@ -1268,9 +1217,6 @@ else:
         except Exception as e:
             st.error(f"Gagal memuat data: {e}")
 
-    # ══════════════════════════════════════════════════════════════════════════════
-    # KONTEN: 📤 DATA ENTRY
-    # ══════════════════════════════════════════════════════════════════════════════
     elif menu_selection == "📤 DATA ENTRY":
         st.markdown("""
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
@@ -1601,9 +1547,6 @@ else:
             with st.expander("📖 File Instruktur — Detail Instruktur", expanded=True):
                 st.markdown("- Wajib ada kolom `Nama` **DAN** `Kode Diklat`\n- Kolom skor: `Ins-Eng-1 of 2`, `Ins-Eng-2 of 2`, `Ins-Rel-1 of 2`, `Ins-Rel-2 of 2`, `Ins-Sat-1 of 4` s.d. `Ins-Sat-4 of 4`, `Ins-Rat`")
 
-    # ══════════════════════════════════════════════════════════════════════════════
-    # KONTEN: 🚨 EARLY WARNING
-    # ══════════════════════════════════════════════════════════════════════════════
     elif menu_selection == "🚨 EARLY WARNING":
         st.markdown("### 🚨 Sentiment Analysis (Deteksi Keluhan Otomatis)")
         st.write("Sistem melihat komentar peserta secara *real-time* dari Google Sheets menggunakan **Open-Source Sentiment Lexicon**.")
@@ -1629,7 +1572,7 @@ else:
                     kolom_bulan = st.selectbox("📅 Pilih Kolom Bulan:", opsi_kolom, index=idx_bulan, key="bulan_kol_sentimen")
                 
                 opsi_bulan_tersedia = list(df_komentar[kolom_bulan].dropna().unique())
-                filter_bulan_sentimen = st.multiselect("🎛️️ Filter Berdasarkan Bulan Laporan:", options=opsi_bulan_tersedia, default=opsi_bulan_tersedia, key="filter_bulan_sentimen")
+                filter_bulan_sentimen = st.multiselect("🎛 Filter Berdasarkan Bulan Laporan:", options=opsi_bulan_tersedia, default=opsi_bulan_tersedia, key="filter_bulan_sentimen")
                 
                 if kolom_teks and filter_bulan_sentimen:
                     with st.spinner("Sistem sedang memfilter dan menganalisis sentimen komentar..."):
@@ -1671,9 +1614,6 @@ else:
             else: st.warning("⚠️ Sheet 'Detail Komentar L1' berhasil diakses, namun datanya kosong.")
         except Exception as e: st.error(f"❌ Gagal memuat data dari Sheet 'Detail Komentar L1'. Detail error: {e}")
 
-    # ══════════════════════════════════════════════════════════════════════════════
-    # KONTEN: 📑 REPORT & KATALOG (DYNAMIC TABS BERDASARKAN ROLE)
-    # ══════════════════════════════════════════════════════════════════════════════
     elif menu_selection in ["📑 REPORT & KATALOG", "📄 Laporan Pembelajaran"]:
         
         if st.session_state["role"] == "SuperAdmin":
@@ -2030,19 +1970,16 @@ else:
                     with st.container(border=True):
                         col_u, col_j, col_btn = st.columns([1.5, 2, 1])
                         
-                        # --- LOGIKA FILTER BERDASARKAN ROLE ---
                         if st.session_state["role"] == "SuperAdmin":
                             with col_u:
                                 opsi_updl = st.selectbox("🏢 Pilih UPDL:", list_updl, key="updl_report")
                         else:
-                            # Jika UPDL, cari unit yang paling cocok mengabaikan besar/kecil huruf
                             user_updl_raw = st.session_state.get('user_updl', '')
                             matched_updl = next((u for u in list_updl if str(u).strip().lower() == str(user_updl_raw).strip().lower()), user_updl_raw)
                             
                             with col_u:
                                 opsi_updl = st.selectbox("🏢 Pilih UPDL:", [matched_updl], disabled=True, key="updl_report_disabled")
                         
-                        # Filter dataframe sesuai UPDL yang terpilih/terkunci
                         df_updl = df_master[df_master['Sumber Data Implementasi'] == opsi_updl].copy()
                         
                         if not df_updl.empty:
@@ -2167,7 +2104,6 @@ else:
 
                                     manager_name = MANAGER_DICT.get(updl_key, "[ NAMA MANAGER BELUM DIATUR ]")
                                     
-                                    # Logika Penentuan Lokasi dan Tanggal Generate
                                     nama_unit_bersih = updl_key.replace("UPDL ", "").title()
                                     if nama_unit_bersih == "Jakarta":
                                         lokasi_ttd = "Jakarta"
@@ -2180,24 +2116,23 @@ else:
                                     try:
                                         prompt_kelas = f"""
                                         Bertindaklah sebagai Quality Management Specialist di PLN {updl_key}.
-                                        Buatkan Ringkasan Eksekutif (maksimal 2 paragraf) untuk Laporan Pelaksanaan Pembelajaran kelas "{judul_pilih}" (Kode: {kode_pemb}).
+                                        Buatkan Ringkasan Eksekutif formal dan padat (maksimal 2 paragraf) untuk Laporan Pelaksanaan Pembelajaran kelas "{judul_pilih}" (Kode: {kode_pemb}).
                                         
                                         Fakta Pelaksanaan:
                                         - Kehadiran: {pct_hadir} ({hadir} dari {diundang} diundang)
                                         - Kelulusan: {pct_lulus} ({lulus} lulus)
                                         - Realisasi Biaya: {realisasi} (RAB: {rab})
-                                        - Skor Evaluasi L1 Keseluruhan: {s_tot}
-                                        - Rangkuman Komentar Masukan Pelanggan: {kom_masukan_raw}
                                         
                                         Tugas:
-                                        1. Wajib sebutkan secara eksplisit Skor Kepuasan Keseluruhan sebesar {s_tot} di dalam ringkasan.
-                                        2. Berikan analisis naratif yang tajam mengenai efektivitas pelaksanaan kelas, termasuk sorotan penting dari Voice of Customer (komentar masukan pelanggan) sebagai bahan evaluasi.
-                                        3. Gunakan bahasa korporat baku PLN, lugas, preskriptif, dan tanpa format markdown tebal (* atau **) yang berlebihan.
+                                        1. Rangkum bagian kehadiran, kelulusan, dan realisasi biaya.
+                                        2. Berikan analisis naratif yang tajam mengenai efektivitas pelaksanaan kelas secara operasional.
+                                        3. JANGAN sebutkan angka evaluasi, skor kepuasan, atau komentar pelanggan sama sekali.
+                                        4. Gunakan bahasa korporat baku PLN, lugas, preskriptif, dan tanpa format markdown tebal (* atau **) yang berlebihan.
                                         """
                                         ai_resp_kelas = model.generate_content(prompt_kelas)
                                         narasi_eksekutif_kelas = ai_resp_kelas.text.strip().replace('\n', '<br>')
                                     except Exception as e_ai_kelas:
-                                        narasi_eksekutif_kelas = f"Dokumen ini merangkum <i>post-implementation review</i> untuk pelaksanaan program <b>{judul_pilih}</b> ({kode_pemb}), menyajikan evaluasi metrik kehadiran ({pct_hadir}), efisiensi anggaran, dan pencapaian indeks kepuasan mutu L1 secara keseluruhan sebesar <b>{s_tot}</b>, guna memastikan penyelarasan operasional dengan standar mutu <i>Service Excellence</i> {updl_key}."
+                                        narasi_eksekutif_kelas = f"Dokumen ini merangkum <i>post-implementation review</i> untuk pelaksanaan program <b>{judul_pilih}</b> ({kode_pemb}), menyajikan ringkasan operasional yang mencakup metrik kehadiran peserta ({pct_hadir}) serta efisiensi realisasi anggaran pelaksanaan ({realisasi}), guna memastikan penyelarasan operasional dengan standar pengelolaan program di {updl_key}."
                                     
                                     no_urut = 3
                                     sarpras_html = ""
@@ -2252,7 +2187,7 @@ else:
                                         </style>
                                     </head>
                                     <body>
-                                        <!-- COVER PAGE (Seksi 1: Tanpa Header & Footer) -->
+                                        <!-- COVER PAGE (Seksi 1: Terisolasi Tanpa Header & Footer) -->
                                         <div class="Section1">
                                             <div class="cover-page">
                                                 <table style="width: 100%; border: none;">
@@ -2271,17 +2206,11 @@ else:
                                             </div>
                                         </div>
                                         
-                                        <!-- PEMISAH SEKSI HALAMAN WORD -->
+                                        <!-- PEMISAH SEKSI HALAMAN WORD MUTLAK -->
                                         <br clear="all" style="mso-break-type:section-break; page-break-before:always;" />
 
-                                        <!-- KONTEN UTAMA (Seksi 2: Dengan Footer Khusus) -->
+                                        <!-- KONTEN UTAMA (Seksi 2: Halaman Isi dengan Footer Spesifik) -->
                                         <div class="Section2">
-                                            <div style="mso-element:footer" id="f1">
-                                                <p style="text-align: center; font-size: 8.5pt; color: #64748b; margin: 0;">
-                                                    Dokumen ini digenerate secara otomatis oleh sistem Jakarta Insight Hub
-                                                </p>
-                                            </div>
-
                                             <table style="width: 100%; border: none; border-collapse: collapse;">
                                                 <thead>
                                                     <tr>
@@ -2389,9 +2318,31 @@ else:
                                                                 </tr>
                                                             </table>
 
-                                                            <!-- PEMISAH HALAMAN MUTLAK (PAGE BREAK + SECTION BREAK) SEBELUM BAB 6 -->
-                                                            <br clear="all" style="mso-break-type:section-break; page-break-before:always;" />
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table> <!-- END OF TABEL KONTEN BAB 1 SAMPAI 5 -->
 
+                                            <!-- PEMISAH HALAMAN MUTLAK (PAGE BREAK + SECTION BREAK) SEBELUM BAB 6 (DI LUAR TABEL) -->
+                                            <br clear="all" style="page-break-before:always; mso-break-type:page-break;" />
+
+                                            <!-- TABEL BARU UNTUK LAMPIRAN AGAR HEADER REPEATING TETAP ADA -->
+                                            <table style="width: 100%; border: none; border-collapse: collapse;">
+                                                <thead>
+                                                    <tr>
+                                                        <th style="background-color: transparent; border: none; padding: 0 0 10px 0; border-bottom: 2px solid #003366;">
+                                                            <table style="width: 100%; border: none; margin: 0;">
+                                                                <tr>
+                                                                    <td style="text-align: left; border: none; width: 50%; padding: 0; vertical-align: middle;"><img src="data:image/png;base64,{bin_danantara}" height="35" style="background:white; padding:3px; border-radius:4px;"></td>
+                                                                    <td style="text-align: right; border: none; width: 50%; padding: 0; vertical-align: middle;"><img src="data:image/png;base64,{bin_pln}" height="50"></td>
+                                                                </tr>
+                                                            </table>
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td style="border: none; padding: 20px 10px 10px 10px; background-color: transparent;">
                                                             <h4 style="color:#0055A4; border-bottom: 2px solid #cbd5e1; padding-bottom:5px;">6. LAMPIRAN DOKUMEN</h4>
                                                             <p>Berikut adalah kelengkapan administrasi dan bukti pelaksanaan program:</p>
                                                             <ul style="line-height:2.0; font-weight:bold; color: #0055A4;">
@@ -2401,19 +2352,30 @@ else:
                                                                 <li>Lampiran 4: Daftar Hadir Peserta (Presensi)</li>
                                                                 <li>Lampiran 5: Dokumentasi Pelaksanaan / Foto Kegiatan <i>(Silakan paste foto langsung di bawah ini)</i></li>
                                                             </ul>
-                                                            
                                                         </td>
                                                     </tr>
                                                 </tbody>
                                             </table>
-                                        </div>
+
+                                            <!-- PENEMPATAN FOOTER BERADA DI PALING AKHIR SECTION 2 -->
+                                            <div style="mso-element:footer" id="f1">
+                                                <p style="text-align: center; font-size: 8.5pt; color: #64748b; margin: 0;">
+                                                    Dokumen ini digenerate secara otomatis oleh sistem Jakarta Insight Hub
+                                                </p>
+                                            </div>
+
+                                        </div> <!-- END OF SECTION 2 -->
                                     </body>
                                     </html>
                                     """
                                     
                                     st.success(f"✅ Dokumen Laporan Pembelajaran {judul_pilih} berhasil disusun!")
                                     
-                                    file_name = f"Laporan_Pelaksanaan_{kode_pemb.replace('.','_')}.doc"
+                                    # Membersihkan nama file dari karakter ilegal
+                                    safe_kode = re.sub(r'[\\/*?:"<>|]', "", str(kode_pemb)).strip()
+                                    safe_judul = re.sub(r'[\\/*?:"<>|]', "", str(judul_pilih)).strip()
+                                    file_name = f"{safe_kode}_{safe_judul}.doc"
+                                    
                                     file_bytes = html_kelas.encode('utf-8')
                                     
                                     # Mengatur tata letak tombol agar lebih rapi
