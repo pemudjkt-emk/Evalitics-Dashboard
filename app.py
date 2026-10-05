@@ -197,7 +197,6 @@ def check_credentials(username, password):
         records = sheet.get_all_records()
         for row in records:
             if str(row.get('Username', '')).strip() == username and str(row.get('Password', '')).strip() == password:
-                # Mengambil data dari kolom 'UPDL (Sumber Data Implementasi)' secara persis
                 updl_unit = row.get('UPDL (Sumber Data Implementasi)', row.get('Identitas_UPDL', ''))
                 return {
                     "role": str(row.get('Role', '')).strip(),
@@ -493,9 +492,30 @@ else:
     .stSelectbox div[data-baseweb="select"] { font-size: 22px !important; min-height: 48px !important; }
     .stSelectbox div[data-baseweb="select"] span { font-size: 22px !important; }
     ul[data-baseweb="menu"] li { font-size: 20px !important; }
-    button[kind="primary"] { background: linear-gradient(90deg, #17a2b8 0%, #20c997 100%) !important; color: white !important; border: none !important; border-radius: 30px !important; padding: 12px 24px !important; font-weight: bold !important; box-shadow: 0px 4px 12px rgba(23, 162, 184, 0.3) !important; transition: all 0.3s ease !important; }
-    button[kind="primary"] div, button[kind="primary"] p { color: white !important; font-size: 18px !important; }
-    button[kind="primary"]:hover { transform: scale(1.02) !important; box-shadow: 0px 6px 15px rgba(23, 162, 184, 0.4) !important; color: white !important; }
+    
+    /* MODIFIKASI: Memaksa Tombol Download dan Tombol Link Google Drive memiliki UI Gradasi Seragam */
+    button[kind="primary"], [data-testid="stLinkButton"] a { 
+        background: linear-gradient(90deg, #17a2b8 0%, #20c997 100%) !important; 
+        color: white !important; 
+        border: none !important; 
+        border-radius: 30px !important; 
+        padding: 12px 24px !important; 
+        font-weight: bold !important; 
+        box-shadow: 0px 4px 12px rgba(23, 162, 184, 0.3) !important; 
+        transition: all 0.3s ease !important; 
+        text-decoration: none !important; 
+        display: inline-flex !important; 
+        align-items: center !important; 
+        justify-content: center !important; 
+        width: 100% !important; 
+        box-sizing: border-box !important; 
+    }
+    button[kind="primary"] div, button[kind="primary"] p, [data-testid="stLinkButton"] a div, [data-testid="stLinkButton"] a p { 
+        color: white !important; font-size: 18px !important; margin: 0 !important; 
+    }
+    button[kind="primary"]:hover, [data-testid="stLinkButton"] a:hover { 
+        transform: scale(1.02) !important; box-shadow: 0px 6px 15px rgba(23, 162, 184, 0.4) !important; color: white !important; border-color: transparent !important; 
+    }
     </style>
     """
     st.markdown(custom_css, unsafe_allow_html=True)
@@ -835,7 +855,7 @@ else:
                                     col_t2.metric(f"Skor Akhir ({b_akhir})", f"{k_akhir:.2f}", delta=f"{selisih:+.2f}")
                                     col_t3.metric("Kesimpulan Dampak", "Efektif" if selisih > 0 else "Evaluasi Ulang", delta=status_efektivitas, delta_color="normal" if selisih > 0 else "inverse")
                                 else:
-                                    st.info("ℹ️️ Data histori bulanan belum mencukupi.")
+                                    st.info("ℹ Data histori bulanan belum mencukupi.")
                             except Exception as e:
                                 st.error(f"Gagal memuat visualisasi histori: {e}")
                         else:
@@ -1266,7 +1286,7 @@ else:
             col_g1, col_g2, col_g3 = st.columns(3)
             with col_g1: st.markdown("🔵 **L1 + L2 (Lama)** ➡️ Sheet **L1 Tertutup**\nGabungan Evaluasi Reaksi & L2 HXMS")
             with col_g2: st.markdown("🟣 **L1 + SMILE** ➡️ Sheet **Master Data Laporan**\nData terpadu 2 Kunci Pas untuk Dashboard")
-            with col_g3: st.markdown("🟠 **Instruktur** ➡️️ Sheet **Detail Instruktur**\nData Penilaian & Jam Terbang Pengajar")
+            with col_g3: st.markdown("🟠 **Instruktur** ➡ Sheet **Detail Instruktur**\nData Penilaian & Jam Terbang Pengajar")
 
         sub_upload, sub_riwayat, sub_panduan = st.tabs(["📤 Upload & Kirim", "🕒 Riwayat", "📄 Panduan Format"])
 
@@ -1609,7 +1629,7 @@ else:
                     kolom_bulan = st.selectbox("📅 Pilih Kolom Bulan:", opsi_kolom, index=idx_bulan, key="bulan_kol_sentimen")
                 
                 opsi_bulan_tersedia = list(df_komentar[kolom_bulan].dropna().unique())
-                filter_bulan_sentimen = st.multiselect("🎛️ Filter Berdasarkan Bulan Laporan:", options=opsi_bulan_tersedia, default=opsi_bulan_tersedia, key="filter_bulan_sentimen")
+                filter_bulan_sentimen = st.multiselect("🎛️️ Filter Berdasarkan Bulan Laporan:", options=opsi_bulan_tersedia, default=opsi_bulan_tersedia, key="filter_bulan_sentimen")
                 
                 if kolom_teks and filter_bulan_sentimen:
                     with st.spinner("Sistem sedang memfilter dan menganalisis sentimen komentar..."):
@@ -1646,7 +1666,7 @@ else:
                             col_pie1, col_pie2 = st.columns([1, 1])
                             with col_pie1: st.plotly_chart(fig_pie, use_container_width=True)
                             with col_pie2: st.markdown("<br><br>", unsafe_allow_html=True); st.write("Donut Chart di samping menampilkan rangkuman sentimen dari bulan yang Anda centang pada filter di atas.")
-                        else: st.warning("⚠️️ Tidak ada data komentar pada bulan yang dipilih.")
+                        else: st.warning("⚠ Tidak ada data komentar pada bulan yang dipilih.")
                 else: st.warning("💡 Silakan pilih minimal satu bulan pada filter di atas untuk memulai analisis.")
             else: st.warning("⚠️ Sheet 'Detail Komentar L1' berhasil diakses, namun datanya kosong.")
         except Exception as e: st.error(f"❌ Gagal memuat data dari Sheet 'Detail Komentar L1'. Detail error: {e}")
@@ -1964,7 +1984,8 @@ else:
                                         data=html_content.encode('utf-8'),
                                         file_name=f"Laporan_Mutu_EVALYTICS_{bulan_pilih}.doc",
                                         mime="application/msword",
-                                        type="primary"
+                                        type="primary",
+                                        use_container_width=True
                                     )
                                     with st.expander("👀 Pratinjau Teks Laporan (Live Preview)"):
                                         st.markdown(html_content, unsafe_allow_html=True)
@@ -2404,6 +2425,7 @@ else:
                                             data=file_bytes,
                                             file_name=file_name,
                                             mime="application/msword",
+                                            type="primary",
                                             use_container_width=True
                                         )
                                     
@@ -2419,8 +2441,8 @@ else:
                                             elif str(res_upload).startswith("ERROR"):
                                                 st.error(f"⚠️ Gagal arsip: {res_upload}")
                                             else:
-                                                # Jika berhasil, buat tautan ke Google Drive
-                                                drive_link = f"https://drive.google.com/file/d/{res_upload}/view"
+                                                # Jika berhasil, buat tautan ke Google Drive FOLDER (Bukan file)
+                                                drive_link = f"https://drive.google.com/drive/folders/{target_folder}"
                                                 st.link_button(
                                                     "☁️ BUKA ARSIP DI GOOGLE DRIVE", 
                                                     drive_link, 
