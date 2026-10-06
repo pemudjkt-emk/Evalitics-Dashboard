@@ -187,7 +187,9 @@ def clean_row_for_sheets(row):
 
 def init_gsheets_connection():
     scope = ["https://spreadsheets.google.com/feeds","https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(st.secrets["gcp_service_account"], scope)
+    # Gunakan GoogleSACredentials sebagai pengganti ServiceAccountCredentials
+    token_info = dict(st.secrets["gcp_service_account"])
+    creds = GoogleSACredentials.from_service_account_info(token_info, scopes=scope)
     return gspread.authorize(creds)
 
 def check_credentials(username, password):
