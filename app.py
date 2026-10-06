@@ -1975,7 +1975,7 @@ else:
                     list_updl = sorted(df_master['Sumber Data Implementasi'].dropna().unique().tolist())
                     
                     with st.container(border=True):
-                        col_u, col_j, col_btn = st.columns([1.5, 2, 1])
+                        col_u, col_j, col_btn = st.columns([0.5, 3, 1])
                         
                         if st.session_state["role"] == "SuperAdmin":
                             with col_u:
