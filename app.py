@@ -6,7 +6,7 @@ import google.generativeai as genai
 import plotly.express as px
 import plotly.graph_objects as go
 import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+from google.oauth2.credentials import Credentials
 import math
 import os
 import base64
@@ -230,18 +230,19 @@ def format_tanggal_indo(tgl_input):
 
 def upload_dokumen_ke_drive(file_bytes, file_name, folder_id):
     """
-    Fungsi unggah otomatis menggunakan Service Account (GCP).
-    Telah dirombak agar tidak bergantung pada OAuth personal yang cepat expired.
+    Fungsi unggah otomatis menggunakan OAuth 2.0 (Akun Pribadi yang telah In Production).
     """
     try:
-        SCOPES = ['https://www.googleapis.com/auth/drive']
+        SCOPES = ['https://www.googleapis.com/auth/drive.file']
         
-        if "gcp_service_account" not in st.secrets:
-            return "ERROR: Kunci gcp_service_account belum diatur di Streamlit Secrets."
+        # Mengambil jalur otentikasi manusia (OAuth)
+        if "gcp_oauth_token" not in st.secrets:
+            return "ERROR: Kunci gcp_oauth_token belum diatur di Streamlit Secrets."
             
-        token_info = dict(st.secrets["gcp_service_account"])
-        creds = GoogleSACredentials.from_service_account_info(token_info, scopes=SCOPES)
+        token_info = dict(st.secrets["gcp_oauth_token"])
+        creds = Credentials.from_authorized_user_info(token_info, SCOPES)
         
+        # Membangun koneksi ke Google Drive
         drive_service = build('drive', 'v3', credentials=creds)
         
         file_metadata = {
@@ -264,7 +265,7 @@ def upload_dokumen_ke_drive(file_bytes, file_name, folder_id):
         return uploaded_file.get('id')
         
     except Exception as e:
-        return f"ERROR_SERVICE_ACCOUNT: {e}"
+        return f"ERROR_OAUTH: {e}"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # GEMINI & SENTIMENT ANALYSIS AI
