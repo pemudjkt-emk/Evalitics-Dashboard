@@ -13,7 +13,7 @@ import base64
 from datetime import datetime
 import urllib.request
 import io
-from google.oauth2.credentials import Credentials
+from google.oauth2.service_account import Credentials as GoogleSACredentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseUpload
 import re
@@ -229,14 +229,18 @@ def format_tanggal_indo(tgl_input):
         return str(tgl_input)
 
 def upload_dokumen_ke_drive(file_bytes, file_name, folder_id):
+    """
+    Fungsi unggah otomatis menggunakan Service Account (GCP).
+    Telah dirombak agar tidak bergantung pada OAuth personal yang cepat expired.
+    """
     try:
-        SCOPES = ['https://www.googleapis.com/auth/drive.file']
+        SCOPES = ['https://www.googleapis.com/auth/drive']
         
-        if "gcp_oauth_token" not in st.secrets:
-            return "ERROR: Kunci gcp_oauth_token belum diatur di Streamlit Secrets."
+        if "gcp_service_account" not in st.secrets:
+            return "ERROR: Kunci gcp_service_account belum diatur di Streamlit Secrets."
             
-        token_info = dict(st.secrets["gcp_oauth_token"])
-        creds = Credentials.from_authorized_user_info(token_info, SCOPES)
+        token_info = dict(st.secrets["gcp_service_account"])
+        creds = GoogleSACredentials.from_service_account_info(token_info, scopes=SCOPES)
         
         drive_service = build('drive', 'v3', credentials=creds)
         
@@ -260,7 +264,7 @@ def upload_dokumen_ke_drive(file_bytes, file_name, folder_id):
         return uploaded_file.get('id')
         
     except Exception as e:
-        return f"ERROR_OAUTH: {e}"
+        return f"ERROR_SERVICE_ACCOUNT: {e}"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # GEMINI & SENTIMENT ANALYSIS AI
@@ -395,7 +399,7 @@ if not st.session_state["logged_in"]:
     with col_kiri:
         st.markdown('<div style="margin-top: 5vh;"></div>', unsafe_allow_html=True)
         st.markdown("""
-            <p style="color: #cbd5e1; letter-spacing: 2px; font-size: 12px; font-weight: 600; text-transform: uppercase; margin-bottom: 5px;">Learning Today • Powering Tomorrow</p>
+            <p style="color: #cbd5e1; letter-spacing: 2px; font-size: 12px; font-weight: 600; text-transform: uppercase; margin-bottom: 5px;">Keputusan cerdas berawal dari data evaluasi pembelajaran yang presisi.</p>
             <div class="hero-title">Data Driven<br>Make The <span>Right Decision</span></div>
             <div class="hero-subtitle">Make smarter, more precise decisions powered by your data.</div>
             
@@ -1939,10 +1943,10 @@ else:
         # -------------------------------------------------------------------------
         with sub_lap_pembelajaran:
             if st.session_state["role"] == "UPDL":
-                st.markdown("## 📄 Generator Laporan Pembelajaran")
+                st.markdown("## 📄 Generator Laporan Pembelajaran (Akses Terbatas)")
             else:
                 st.markdown("### 📄 Generator Laporan Pembelajaran Per Kelas")
-            st.write("Menyusun laporan pelaksanaan pembelajaran per kelas dari Master Data SIMPLE, mencakup dasar penugasan, informasi kepesertaan, dan biaya sesuai standar.")
+            st.write("Menyusun laporan pelaksanaan spesifik per kelas dari Master Data Laporan Nasional, mencakup realisasi peserta, biaya, evaluasi, dan komentar berstandar *Consulting Style*.")
             
             try:
                 sheet_id_nasional = '1h-5D5susznSg6nDl2cqgxVu05zSVyTSW19VICYDLtuU'
@@ -1993,7 +1997,7 @@ else:
                                 opsi_pilih = st.selectbox("📚 Pilih Judul Pembelajaran:", list_opsi, key="judul_report_pembelajaran")
                             with col_btn:
                                 st.markdown("<br>", unsafe_allow_html=True)
-                                btn_gen_kelas = st.button("🚀 GENERATE LAPORAN KELAS", type="primary", use_container_width=True)
+                                btn_gen_kelas = st.button("🚀 Generate Laporan Kelas", type="primary", use_container_width=True)
                             
                             if btn_gen_kelas:
                                 with st.spinner("Mengekstrak data pelaksanaan kelas..."):
@@ -2371,19 +2375,17 @@ else:
                                     
                                     st.success(f"✅ Dokumen Laporan Pembelajaran {judul_pilih} berhasil disusun!")
                                     
-                                    # Membersihkan nama file dari karakter ilegal
                                     safe_kode = re.sub(r'[\\/*?:"<>|]', "", str(kode_pemb)).strip()
                                     safe_judul = re.sub(r'[\\/*?:"<>|]', "", str(judul_pilih)).strip()
                                     file_name = f"{safe_kode}_{safe_judul}.doc"
                                     
                                     file_bytes = html_kelas.encode('utf-8')
                                     
-                                    # Mengatur tata letak tombol agar lebih rapi
                                     col_dl1, col_dl2 = st.columns(2)
                                     
                                     with col_dl1:
                                         st.download_button(
-                                            label="📥 DOWNLOAD LAPORAN PEMBELAJARAN (.doc)",
+                                            label="📥 DOWNLOAD LAPORAN KELAS (.doc)",
                                             data=file_bytes,
                                             file_name=file_name,
                                             mime="application/msword",
@@ -2391,10 +2393,9 @@ else:
                                             use_container_width=True
                                         )
                                     
-                                    # Proses unggah ke Google Drive
                                     if updl_key in DRIVE_FOLDER_DICT:
                                         target_folder = DRIVE_FOLDER_DICT[updl_key]
-                                        with st.spinner(f"☁️ Sedang mengarsipkan otomatis ke Google Drive ({updl_key})..."):
+                                        with st.spinner(f"☁ Sedang mengarsipkan otomatis ke Google Drive ({updl_key})..."):
                                             res_upload = upload_dokumen_ke_drive(file_bytes, file_name, target_folder)
                                             
                                         with col_dl2:
@@ -2403,10 +2404,9 @@ else:
                                             elif str(res_upload).startswith("ERROR"):
                                                 st.error(f"⚠️ Gagal arsip: {res_upload}")
                                             else:
-                                                # Jika berhasil, buat tautan ke Google Drive FOLDER (Bukan file)
                                                 drive_link = f"https://drive.google.com/drive/folders/{target_folder}"
                                                 st.link_button(
-                                                    "☁️ BUKA FILE DI GOOGLE DRIVE", 
+                                                    "☁️ BUKA ARSIP DI GOOGLE DRIVE", 
                                                     drive_link, 
                                                     type="primary", 
                                                     use_container_width=True
