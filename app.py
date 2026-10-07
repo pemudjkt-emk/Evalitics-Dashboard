@@ -2263,12 +2263,12 @@ else:
                                                                 <tr><td style="vertical-align: middle; padding: 10px;">Realisasi Biaya</td><td style="vertical-align: middle; padding: 10px; text-align:right; color: #003366;"><b>{realisasi}</b></td></tr>
                                                             </table>
                                                             
-                                                            <!-- BLOK TANDA TANGAN MANAGER BESERTA KATA PENUTUP -->
+                                                            <!-- BLOK TANDA TANGAN MANAGER & KATA PENUTUP TERKUNCI -->
                                                             <table style="page-break-inside: avoid; width:100%; border: none; margin-top: 30px;">
                                                                 <tr>
                                                                     <td style="border: none; padding: 0;">
-                                                                        <p style="text-align: justify; margin-bottom: 35px; color: #1e293b; line-height: 1.6; mso-pagination: widow-orphan lines-together keep-with-next;">{kata_penutup_teks}</p>
-                                                                        <table style="width:100%; text-align:center; border: none; page-break-inside: avoid;">
+                                                                        <p style="text-align: justify; margin-bottom: 35px; color: #1e293b; line-height: 1.6;">{kata_penutup_teks}</p>
+                                                                        <table style="width:100%; text-align:center; border: none;">
                                                                             <tr>
                                                                                 <td style="width:50%; border: none;"></td>
                                                                                 <td style="width:50%; border: none; text-align:center;">
@@ -2289,8 +2289,8 @@ else:
                                                 </tbody>
                                             </table>
 
-                                            <!-- PEMISAH HALAMAN MUTLAK SEBELUM LAMPIRAN DOKUMEN -->
-                                            <p style="page-break-before: always; mso-special-character: line-break; margin: 0; padding: 0;"><br clear="all" style="page-break-before:always; mso-break-type:page-break;" /></p>
+                                            <!-- PEMISAH HALAMAN TUNGGAL & MUTLAK SEBELUM LAMPIRAN DOKUMEN -->
+                                            <br clear="all" style="page-break-before:always; mso-break-type:page-break;" />
 
                                             <!-- TABEL LAMPIRAN -->
                                             <table style="width: 100%; border: none; border-collapse: collapse;">
@@ -2309,7 +2309,7 @@ else:
                                                 <tbody>
                                                     <tr>
                                                         <td style="border: none; padding: 20px 10px 10px 10px; background-color: transparent;">
-                                                            <h4 style="page-break-before: always; color:#0055A4; border-bottom: 2px solid #cbd5e1; padding-bottom:5px;">5. LAMPIRAN DOKUMEN</h4>
+                                                            <h4 style="color:#0055A4; border-bottom: 2px solid #cbd5e1; padding-bottom:5px;">5. LAMPIRAN DOKUMEN</h4>
                                                             <p>Berikut adalah kelengkapan administrasi dan bukti pelaksanaan program:</p>
                                                             <ul style="line-height:2.0; font-weight:bold; color: #0055A4;">
                                                                 <li>Lampiran 1: Dasar Surat Penugasan</li>
