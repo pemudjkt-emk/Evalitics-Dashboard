@@ -2274,16 +2274,42 @@ else:
                                                                 <tr><td style="vertical-align: middle; padding: 10px;">Rencana Biaya</td><td style="vertical-align: middle; padding: 10px; text-align:right;"><b>{rab}</b></td></tr>
                                                                 <tr><td style="vertical-align: middle; padding: 10px;">Realisasi Biaya</td><td style="vertical-align: middle; padding: 10px; text-align:right; color: #003366;"><b>{realisasi}</b></td></tr>
                                                             </table>
+
+                                                            <h4 style="page-break-before: always;">5. EVALUASI PEMBELAJARAN & CUSTOMER VOICE</h4>
+                                                            <p>Hasil rekapitulasi evaluasi kepuasan peserta terhadap penyelenggaraan pembelajaran (Level 1) adalah sebagai berikut:</p>
+                                                            
+                                                            <table class="zebra">
+                                                                <tr>
+                                                                    <th style="width: 70%; text-align:center; vertical-align: middle; padding: 10px;">Pilar Evaluasi</th>
+                                                                    <th style="width: 30%; text-align:center; vertical-align: middle; padding: 10px;">Skor Kepuasan</th>
+                                                                </tr>
+                                                                <tr><td style="vertical-align: middle; padding: 10px;">1. Materi Pembelajaran</td><td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold;">{s_mat}</td></tr>
+                                                                <tr><td style="vertical-align: middle; padding: 10px;">2. Instruktur & Fasilitator</td><td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold;">{s_ins}</td></tr>
+                                                                {sarpras_html}
+                                                                <tr style="background-color: #003366; color: white;">
+                                                                    <td style="vertical-align: middle; padding: 10px; font-weight:bold;">Rata-Rata Komposit Keseluruhan</td>
+                                                                    <td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold;">{s_tot}</td>
+                                                                </tr>
+                                                            </table>
+                                                            
+                                                            <p style="margin-top:15px; margin-bottom:5px;"><b>Komentar Apresiasi (Voice of Customer):</b></p>
+                                                            {html_apresiasi}
+                                                            
+                                                            <p style="margin-top:10px; margin-bottom:5px;"><b>Komentar Masukan / Evaluasi:</b></p>
+                                                            {html_masukan}
                                                             
                                                             <br>
                                                             
-                                                            <!-- BLOK KATA PENUTUP & TANDA TANGAN (Dikunci dalam satu sel) -->
+                                                            <!-- BLOK TANDA TANGAN MANAGER -->
                                                             <table style="page-break-inside: avoid; width:100%; border: none; margin-top: 20px;">
-                                                                <tr style="page-break-inside: avoid;">
-                                                                    <td style="border: none; padding: 0; page-break-inside: avoid;">
-                                                                        <p style="text-align: justify; margin-bottom: 40px; color: #1e293b; mso-pagination: widow-orphan lines-together keep-with-next;">Seluruh rangkaian program pembelajaran telah berjalan dengan baik dan diharapkan mampu memberikan dampak nyata terhadap peningkatan kompetensi peserta. Kami menyampaikan apresiasi tertinggi atas dukungan manajemen, dedikasi instruktur, serta partisipasi aktif para peserta, dengan harapan seluruh pengetahuan dan keterampilan baru yang diperoleh dapat segera diimplementasikan guna mendukung pencapaian sasaran strategis perusahaan.</p>
-                                                                        
-                                                                        <table style="page-break-inside: avoid; width:100%; text-align:center; border: none;">
+                                                                <tr>
+                                                                    <td style="border: none; padding: 0;">
+                                                                        <p style="text-align: justify; margin-bottom: 40px; color: #1e293b;">Seluruh rangkaian program pembelajaran telah berjalan dengan baik dan diharapkan mampu memberikan dampak nyata terhadap peningkatan kompetensi peserta.  Kami menyampaikan apresiasi tertinggi atas dukungan manajemen, dedikasi instruktur, serta partisipasi aktif para peserta, dengan harapan seluruh pengetahuan dan keterampilan baru yang diperoleh dapat segera diimplementasikan guna mendukung pencapaian sasaran strategis perusahaan.</p>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td style="border: none; padding: 0;">
+                                                                        <table style="width:100%; text-align:center; border: none;">
                                                                             <tr>
                                                                                 <td style="width:50%; border: none;"></td>
                                                                                 <td style="width:50%; border: none; text-align:center;">
@@ -2302,9 +2328,9 @@ else:
                                                         </td>
                                                     </tr>
                                                 </tbody>
-                                            </table> <!-- END OF TABEL KONTEN BAB 1 SAMPAI 4 -->
+                                            </table> <!-- END OF TABEL KONTEN BAB 1 SAMPAI 5 -->
 
-                                            <!-- PEMISAH HALAMAN MUTLAK (PAGE BREAK + SECTION BREAK) SEBELUM BAB 5 (DI LUAR TABEL) -->
+                                            <!-- PEMISAH HALAMAN MUTLAK (PAGE BREAK + SECTION BREAK) SEBELUM BAB 6 (DI LUAR TABEL) -->
                                             <br clear="all" style="page-break-before:always; mso-break-type:page-break;" />
 
                                             <!-- TABEL BARU UNTUK LAMPIRAN AGAR HEADER REPEATING TETAP ADA -->
@@ -2324,7 +2350,7 @@ else:
                                                 <tbody>
                                                     <tr>
                                                         <td style="border: none; padding: 20px 10px 10px 10px; background-color: transparent;">
-                                                            <h4 style="color:#0055A4; border-bottom: 2px solid #cbd5e1; padding-bottom:5px;">5. LAMPIRAN DOKUMEN</h4>
+                                                            <h4 style="color:#0055A4; border-bottom: 2px solid #cbd5e1; padding-bottom:5px;">6. LAMPIRAN DOKUMEN</h4>
                                                             <p>Berikut adalah kelengkapan administrasi dan bukti pelaksanaan program:</p>
                                                             <ul style="line-height:2.0; font-weight:bold; color: #0055A4;">
                                                                 <li>Lampiran 1: Dasar Surat Penugasan</li>
