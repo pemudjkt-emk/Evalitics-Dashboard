@@ -1941,7 +1941,7 @@ else:
                 except Exception as e:
                     st.error(f"Gagal memuat data sumber untuk laporan: {e}")
 
-         # -------------------------------------------------------------------------
+        # -------------------------------------------------------------------------
         # --- SUB TAB 2: LAPORAN PEMBELAJARAN (PER KELAS/JUDUL) ---
         # -------------------------------------------------------------------------
         with sub_lap_pembelajaran:
@@ -2034,9 +2034,7 @@ else:
                                     hadir = df_kelas.get('Peserta Hadir', 0)
                                     lulus = df_kelas.get('Peserta Lulus', 0)
                                     
-                                    # ─────────────────────────────────────────────────────────────
                                     # LOGIKA: FORMAT PERSENTASE BULAT TANPA KOMA (CONTOH: 96%)
-                                    # ─────────────────────────────────────────────────────────────
                                     def f_pct_clean_int(v, alt_num=0, alt_denom=0):
                                         try:
                                             v_str = str(v).replace(',', '.').replace('%', '').strip()
@@ -2092,9 +2090,7 @@ else:
                                     rab = format_rp_from_num(rab_num)
                                     realisasi = format_rp_from_num(realisasi_num)
 
-                                    # ─────────────────────────────────────────────────────────────
                                     # LOGIKA: EFISIENSI REALISASI ANGGARAN (RENCANA / REALISASI)
-                                    # ─────────────────────────────────────────────────────────────
                                     if realisasi_num > 0 and rab_num > 0:
                                         efisiensi_rasio = (rab_num / realisasi_num) * 100.0
                                         pct_efisiensi = f"{int(round(efisiensi_rasio))}%"
@@ -2138,9 +2134,7 @@ else:
                                             f"menunjukkan akuntabilitas dan efektivitas pengelolaan operasional program di lingkungan {updl_key}."
                                         )
 
-                                    # ─────────────────────────────────────────────────────────────
                                     # KATA PENUTUP BARU RESMI
-                                    # ─────────────────────────────────────────────────────────────
                                     kata_penutup_teks = (
                                         "Seluruh rangkaian program pembelajaran telah berjalan dengan baik dan diharapkan mampu memberikan "
                                         "dampak nyata terhadap peningkatan kompetensi peserta. Kami menyampaikan apresiasi tertinggi atas "
@@ -2269,16 +2263,12 @@ else:
                                                                 <tr><td style="vertical-align: middle; padding: 10px;">Realisasi Biaya</td><td style="vertical-align: middle; padding: 10px; text-align:right; color: #003366;"><b>{realisasi}</b></td></tr>
                                                             </table>
                                                             
-                                                            <!-- BLOK TANDA TANGAN MANAGER -->
+                                                            <!-- BLOK TANDA TANGAN MANAGER BESERTA KATA PENUTUP -->
                                                             <table style="page-break-inside: avoid; width:100%; border: none; margin-top: 30px;">
                                                                 <tr>
                                                                     <td style="border: none; padding: 0;">
-                                                                        <p style="text-align: justify; margin-bottom: 35px; color: #1e293b; line-height: 1.6;">{kata_penutup_teks}</p>
-                                                                    </td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td style="border: none; padding: 0;">
-                                                                        <table style="width:100%; text-align:center; border: none;">
+                                                                        <p style="text-align: justify; margin-bottom: 35px; color: #1e293b; line-height: 1.6; mso-pagination: widow-orphan lines-together keep-with-next;">{kata_penutup_teks}</p>
+                                                                        <table style="width:100%; text-align:center; border: none; page-break-inside: avoid;">
                                                                             <tr>
                                                                                 <td style="width:50%; border: none;"></td>
                                                                                 <td style="width:50%; border: none; text-align:center;">
@@ -2299,8 +2289,8 @@ else:
                                                 </tbody>
                                             </table>
 
-                                            <!-- PEMISAH HALAMAN SEBELUM LAMPIRAN DOKUMEN -->
-                                            <br clear="all" style="page-break-before:always; mso-break-type:page-break;" />
+                                            <!-- PEMISAH HALAMAN MUTLAK SEBELUM LAMPIRAN DOKUMEN -->
+                                            <p style="page-break-before: always; mso-special-character: line-break; margin: 0; padding: 0;"><br clear="all" style="page-break-before:always; mso-break-type:page-break;" /></p>
 
                                             <!-- TABEL LAMPIRAN -->
                                             <table style="width: 100%; border: none; border-collapse: collapse;">
@@ -2319,7 +2309,7 @@ else:
                                                 <tbody>
                                                     <tr>
                                                         <td style="border: none; padding: 20px 10px 10px 10px; background-color: transparent;">
-                                                            <h4 style="color:#0055A4; border-bottom: 2px solid #cbd5e1; padding-bottom:5px;">5. LAMPIRAN DOKUMEN</h4>
+                                                            <h4 style="page-break-before: always; color:#0055A4; border-bottom: 2px solid #cbd5e1; padding-bottom:5px;">5. LAMPIRAN DOKUMEN</h4>
                                                             <p>Berikut adalah kelengkapan administrasi dan bukti pelaksanaan program:</p>
                                                             <ul style="line-height:2.0; font-weight:bold; color: #0055A4;">
                                                                 <li>Lampiran 1: Dasar Surat Penugasan</li>
@@ -2392,7 +2382,6 @@ else:
                     st.info("⚠️ Belum ada data 'Sumber Data Implementasi' atau 'Judul Pembelajaran' yang tersedia di Master Data Nasional.")
             except Exception as e:
                 st.error(f"Gagal memuat Master Data Laporan Nasional: {e}")
-
         # -------------------------------------------------------------------------
         # --- SUB TAB 3: KATALOG INSTRUKTUR ---
         # -------------------------------------------------------------------------
