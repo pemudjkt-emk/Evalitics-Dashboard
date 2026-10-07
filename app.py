@@ -2277,16 +2277,13 @@ else:
                                                             
                                                             <br>
                                                             
-                                                            <!-- BLOK TANDA TANGAN MANAGER -->
+                                                            <!-- BLOK KATA PENUTUP & TANDA TANGAN (Dikunci dalam satu sel) -->
                                                             <table style="page-break-inside: avoid; width:100%; border: none; margin-top: 20px;">
-                                                                <tr>
-                                                                    <td style="border: none; padding: 0;">
-                                                                        <p style="text-align: justify; margin-bottom: 40px; color: #1e293b;">Seluruh rangkaian program pembelajaran telah berjalan dengan baik dan diharapkan mampu memberikan dampak nyata terhadap peningkatan kompetensi peserta.  Kami menyampaikan apresiasi tertinggi atas dukungan manajemen, dedikasi instruktur, serta partisipasi aktif para peserta, dengan harapan seluruh pengetahuan dan keterampilan baru yang diperoleh dapat segera diimplementasikan guna mendukung pencapaian sasaran strategis perusahaan.</p>
-                                                                    </td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td style="border: none; padding: 0;">
-                                                                        <table style="width:100%; text-align:center; border: none;">
+                                                                <tr style="page-break-inside: avoid;">
+                                                                    <td style="border: none; padding: 0; page-break-inside: avoid;">
+                                                                        <p style="text-align: justify; margin-bottom: 40px; color: #1e293b; mso-pagination: widow-orphan lines-together keep-with-next;">Seluruh rangkaian program pembelajaran telah berjalan dengan baik dan diharapkan mampu memberikan dampak nyata terhadap peningkatan kompetensi peserta. Kami menyampaikan apresiasi tertinggi atas dukungan manajemen, dedikasi instruktur, serta partisipasi aktif para peserta, dengan harapan seluruh pengetahuan dan keterampilan baru yang diperoleh dapat segera diimplementasikan guna mendukung pencapaian sasaran strategis perusahaan.</p>
+                                                                        
+                                                                        <table style="page-break-inside: avoid; width:100%; text-align:center; border: none;">
                                                                             <tr>
                                                                                 <td style="width:50%; border: none;"></td>
                                                                                 <td style="width:50%; border: none; text-align:center;">
