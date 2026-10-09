@@ -2365,7 +2365,7 @@ else:
                                             <!-- PENEMPATAN FOOTER BERADA DI PALING AKHIR SECTION 2 -->
                                             <div style="mso-element:footer" id="f1">
                                                 <p style="text-align: center; font-size: 8.5pt; color: #64748b; margin: 0;">
-                                                    Dokumen ini digenerate secara otomatis oleh sistem Jakarta Insight Hub
+                                                    Dokumen ini digenerate secara otomatis oleh sistem PLN Corporate University
                                                 </p>
                                             </div>
 
