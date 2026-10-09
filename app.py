@@ -1941,15 +1941,15 @@ else:
                 except Exception as e:
                     st.error(f"Gagal memuat data sumber untuk laporan: {e}")
 
-# ─────────────────────────────────────────────────────────────────────────
+# -------------------------------------------------------------------------
         # --- SUB TAB 2: LAPORAN PEMBELAJARAN (PER KELAS/JUDUL) ---
-        # ─────────────────────────────────────────────────────────────────────────
+        # -------------------------------------------------------------------------
         with sub_lap_pembelajaran:
             if st.session_state["role"] == "UPDL":
-                st.markdown("## 📄 Generator Laporan Pembelajaran (Akses Terbatas)")
+                st.markdown("## 📄 Generator Laporan Pelaksanaan Pembelajaran")
             else:
-                st.markdown("### 📄 Generator Laporan Pembelajaran Per Kelas")
-            st.write("Menyusun laporan pelaksanaan spesifik per kelas dari Master Data Laporan Nasional, mencakup realisasi peserta, biaya, evaluasi, dan komentar berstandar  *Consulting Style* .")
+                st.markdown("### 📄  Generator Laporan Pelaksanaan Pembelajaran")
+            st.write("Menyusun laporan pelaksanaan spesifik per pelaksanaan menggunakan Data SIMPLE, mencakup dasar penugasan,informasi kepesertaan dan biaya sesuai standar perusahaan")
             
             try:
                 sheet_id_nasional = '1h-5D5susznSg6nDl2cqgxVu05zSVyTSW19VICYDLtuU'
@@ -1975,7 +1975,7 @@ else:
                     list_updl = sorted(df_master['Sumber Data Implementasi'].dropna().unique().tolist())
                     
                     with st.container(border=True):
-                        col_u, col_j, col_btn = st.columns([1.5, 2, 1])
+                        col_u, col_j, col_btn = st.columns([0.5, 3, 1])
                         
                         if st.session_state["role"] == "SuperAdmin":
                             with col_u:
@@ -1983,13 +1983,13 @@ else:
                         else:
                             user_updl_raw = st.session_state.get('user_updl', '')
                             matched_updl = next((u for u in list_updl if str(u).strip().lower() == str(user_updl_raw).strip().lower()), user_updl_raw)
+                            
                             with col_u:
                                 opsi_updl = st.selectbox("🏢 Pilih UPDL:", [matched_updl], disabled=True, key="updl_report_disabled")
                         
                         df_updl = df_master[df_master['Sumber Data Implementasi'] == opsi_updl].copy()
                         
                         if not df_updl.empty:
-                            # --- POIN 1: MODIFIKASI FORMAT DROPDOWN (No + Judul + Tanggal) ---
                             col_a_name = df_updl.columns[0]
                             def buat_label_dropdown(row, idx):
                                 val_no = row.get(col_a_name)
@@ -2015,14 +2015,13 @@ else:
                                 st.markdown("<br>", unsafe_allow_html=True)
                                 btn_gen_kelas = st.button("🚀 Generate Laporan Kelas", type="primary", use_container_width=True)
                             
-                            # --- POIN 2: INISIALISASI & RESET STATE DOKUMEN ---
                             if "generated_lap_kelas" not in st.session_state:
                                 st.session_state["generated_lap_kelas"] = None
 
                             if st.session_state["generated_lap_kelas"] is not None:
                                 if st.session_state["generated_lap_kelas"].get("selected_option") != opsi_pilih:
                                     st.session_state["generated_lap_kelas"] = None
-                            
+
                             if btn_gen_kelas:
                                 with st.spinner("Mengekstrak data pelaksanaan kelas..."):
                                     df_kelas = df_updl[df_updl['Opsi_Dropdown'] == opsi_pilih].iloc[0]
@@ -2161,14 +2160,6 @@ else:
                                         narasi_eksekutif_kelas = ai_resp_kelas.text.strip().replace('\n', '<br>')
                                     except Exception as e_ai_kelas:
                                         narasi_eksekutif_kelas = f"Dokumen ini merangkum <i>post-implementation review</i> untuk pelaksanaan program <b>{judul_pilih}</b> ({kode_pemb}), menyajikan ringkasan operasional yang mencakup metrik kehadiran peserta ({pct_hadir}) serta efisiensi realisasi anggaran pelaksanaan ({realisasi}), guna memastikan penyelarasan operasional dengan standar pengelolaan program di {updl_key}."
-                                    
-                                    no_urut = 3
-                                    sarpras_html = ""
-                                    if metode_raw in ['ICT', 'BL', 'HL']:
-                                        sarpras_html += f'<tr><td style="vertical-align: middle; padding: 10px;">{no_urut}. Sarana Prasarana Offline</td><td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold;">{s_sp}</td></tr>'
-                                        no_urut += 1
-                                    if metode_raw in ['DL', 'SL', 'BL', 'HL']:
-                                        sarpras_html += f'<tr><td style="vertical-align: middle; padding: 10px;">{no_urut}. Sarana Digital</td><td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold;">{s_ds}</td></tr>'
 
                                     html_kelas = f"""
                                     <html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
@@ -2298,19 +2289,16 @@ else:
                                                             
                                                             <br>
                                                             
-                                                            <!-- BLOK TANDA TANGAN MANAGER -->
+                                                            <!-- POIN 1: BLOK KATA PENUTUP & TANDA TANGAN (Dikunci mutlak dalam satu sel dan baris) -->
                                                             <table style="page-break-inside: avoid; width:100%; border: none; margin-top: 20px;">
-                                                                <tr>
-                                                                    <td style="border: none; padding: 0;">
-                                                                        <p style="text-align: justify; margin-bottom: 40px; color: #1e293b;">Seluruh rangkaian program pembelajaran telah berjalan dengan baik dan diharapkan mampu memberikan dampak nyata terhadap peningkatan kompetensi peserta.  Kami menyampaikan apresiasi tertinggi atas dukungan manajemen, dedikasi instruktur, serta partisipasi aktif para peserta, dengan harapan seluruh pengetahuan dan keterampilan baru yang diperoleh dapat segera diimplementasikan guna mendukung pencapaian sasaran strategis perusahaan.</p>
-                                                                    </td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td style="border: none; padding: 0;">
-                                                                        <table style="width:100%; text-align:center; border: none;">
-                                                                            <tr>
-                                                                                <td style="width:50%; border: none;"></td>
-                                                                                <td style="width:50%; border: none; text-align:center;">
+                                                                <tr style="page-break-inside: avoid;">
+                                                                    <td style="border: none; padding: 0; page-break-inside: avoid;">
+                                                                        <p style="text-align: justify; margin-bottom: 40px; color: #1e293b;">Seluruh rangkaian program pembelajaran telah berjalan dengan baik dan diharapkan mampu memberikan dampak nyata terhadap peningkatan kompetensi peserta. Kami menyampaikan apresiasi tertinggi atas dukungan manajemen, dedikasi instruktur, serta partisipasi aktif para peserta, dengan harapan seluruh pengetahuan dan keterampilan baru yang diperoleh dapat segera diimplementasikan guna mendukung pencapaian sasaran strategis perusahaan.</p>
+                                                                        
+                                                                        <table style="page-break-inside: avoid; width:100%; text-align:center; border: none;">
+                                                                            <tr style="page-break-inside: avoid;">
+                                                                                <td style="width:50%; border: none; page-break-inside: avoid;"></td>
+                                                                                <td style="width:50%; border: none; text-align:center; page-break-inside: avoid;">
                                                                                     {lokasi_ttd}, {tanggal_generate_str}<br>
                                                                                     Mengetahui,<br>
                                                                                     <b>MANAGER UPDL</b><br><br>
@@ -2328,11 +2316,12 @@ else:
                                                 </tbody>
                                             </table> <!-- END OF TABEL KONTEN BAB 1 SAMPAI 4 -->
 
-                                            <!-- PEMISAH HALAMAN MUTLAK (PAGE BREAK + SECTION BREAK) SEBELUM BAB 5 (DI LUAR TABEL) -->
-                                            <br clear="all" style="page-break-before:always; mso-break-type:page-break;" />
+                                            <!-- POIN 2: PEMISAH HALAMAN MUTLAK SEBELUM LAMPIRAN -->
+                                            <p style="page-break-before: always; mso-page-break-before: always; font-size: 0; line-height: 0; margin: 0; padding: 0;">&nbsp;</p>
+                                            <br clear="all" style="page-break-before:always;" />
 
-                                            <!-- TABEL BARU UNTUK LAMPIRAN AGAR HEADER REPEATING TETAP ADA -->
-                                            <table style="width: 100%; border: none; border-collapse: collapse;">
+                                            <!-- TABEL BARU UNTUK LAMPIRAN (Di-set agar wajib pindah halaman) -->
+                                            <table style="width: 100%; border: none; border-collapse: collapse; page-break-before: always;">
                                                 <thead>
                                                     <tr>
                                                         <th style="background-color: transparent; border: none; padding: 0 0 10px 0; border-bottom: 2px solid #003366;">
@@ -2402,7 +2391,6 @@ else:
                                         drive_status_type = "info"
                                         drive_msg = "ℹ️ ID Folder Drive untuk UPDL ini belum diatur. Laporan hanya tersedia untuk diunduh lokal."
 
-                                    # Simpan ke session state agar data tetap ada saat tombol diklik
                                     st.session_state["generated_lap_kelas"] = {
                                         "selected_option": opsi_pilih,
                                         "judul_pilih": judul_pilih,
@@ -2414,7 +2402,6 @@ else:
                                         "drive_msg": drive_msg
                                     }
 
-                            # --- POIN 2: RENDER TOMBOL DARI SESSION STATE (DILUAR BLOK if btn_gen_kelas) ---
                             if st.session_state.get("generated_lap_kelas") is not None:
                                 saved_data = st.session_state["generated_lap_kelas"]
                                 
@@ -2450,8 +2437,8 @@ else:
                                         else:
                                             st.info(saved_data.get("drive_msg", "ℹ️ Folder Drive belum diatur."))
 
-                                    with st.expander("👀 Pratinjau Desain Dokumen (Live Preview)"):
-                                        st.markdown(saved_data["html_kelas"], unsafe_allow_html=True)
+                                with st.expander("👀 Pratinjau Desain Dokumen (Live Preview)"):
+                                    st.markdown(saved_data["html_kelas"], unsafe_allow_html=True)
 
                         else:
                             st.info("⚠ Tidak ada kelas/judul pembelajaran yang sesuai untuk UPDL ini pada Master Data Nasional.")
