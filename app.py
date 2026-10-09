@@ -1941,15 +1941,15 @@ else:
                 except Exception as e:
                     st.error(f"Gagal memuat data sumber untuk laporan: {e}")
 
-        # -------------------------------------------------------------------------
+# ─────────────────────────────────────────────────────────────────────────
         # --- SUB TAB 2: LAPORAN PEMBELAJARAN (PER KELAS/JUDUL) ---
-        # -------------------------------------------------------------------------
+        # ─────────────────────────────────────────────────────────────────────────
         with sub_lap_pembelajaran:
             if st.session_state["role"] == "UPDL":
-                st.markdown("## 📄 Generator Laporan Pelaksanaan Pembelajaran")
+                st.markdown("## 📄 Generator Laporan Pembelajaran (Akses Terbatas)")
             else:
-                st.markdown("### 📄  Generator Laporan Pelaksanaan Pembelajaran")
-            st.write("Menyusun laporan pelaksanaan spesifik per pelaksanaan menggunakan Data SIMPLE, mencakup dasar penugasan,informasi kepesertaan dan biaya sesuai standar perusahaan")
+                st.markdown("### 📄 Generator Laporan Pembelajaran Per Kelas")
+            st.write("Menyusun laporan pelaksanaan spesifik per kelas dari Master Data Laporan Nasional, mencakup realisasi peserta, biaya, evaluasi, dan komentar berstandar  *Consulting Style* .")
             
             try:
                 sheet_id_nasional = '1h-5D5susznSg6nDl2cqgxVu05zSVyTSW19VICYDLtuU'
@@ -1975,7 +1975,7 @@ else:
                     list_updl = sorted(df_master['Sumber Data Implementasi'].dropna().unique().tolist())
                     
                     with st.container(border=True):
-                        col_u, col_j, col_btn = st.columns([0.5, 3, 1])
+                        col_u, col_j, col_btn = st.columns([1.5, 2, 1])
                         
                         if st.session_state["role"] == "SuperAdmin":
                             with col_u:
@@ -1983,17 +1983,30 @@ else:
                         else:
                             user_updl_raw = st.session_state.get('user_updl', '')
                             matched_updl = next((u for u in list_updl if str(u).strip().lower() == str(user_updl_raw).strip().lower()), user_updl_raw)
-                            
                             with col_u:
                                 opsi_updl = st.selectbox("🏢 Pilih UPDL:", [matched_updl], disabled=True, key="updl_report_disabled")
                         
                         df_updl = df_master[df_master['Sumber Data Implementasi'] == opsi_updl].copy()
                         
                         if not df_updl.empty:
-                            df_updl['Opsi_Dropdown'] = df_updl.apply(
-                                lambda x: f"{str(x.get('Judul Pembelajaran/ Asesmen/ Sertifikasi/ KSM', '-')).strip()} ({format_tanggal_indo(x.get('Tanggal Mulai'))} s.d {format_tanggal_indo(x.get('Tgl Akhir', x.get('Tanggal Selesai')))})", 
-                                axis=1
-                            )
+                            # --- POIN 1: MODIFIKASI FORMAT DROPDOWN (No + Judul + Tanggal) ---
+                            col_a_name = df_updl.columns[0]
+                            def buat_label_dropdown(row, idx):
+                                val_no = row.get(col_a_name)
+                                if pd.isna(val_no) or str(val_no).strip() in ["", "nan", "NaN", "None"]:
+                                    no_str = str(idx + 1)
+                                else:
+                                    try:
+                                        no_str = str(int(float(val_no)))
+                                    except Exception:
+                                        no_str = str(val_no).strip()
+                                
+                                jdl = str(row.get('Judul Pembelajaran/ Asesmen/ Sertifikasi/ KSM', '-')).strip()
+                                tgl_m = format_tanggal_indo(row.get('Tanggal Mulai'))
+                                tgl_s = format_tanggal_indo(row.get('Tgl Akhir', row.get('Tanggal Selesai')))
+                                return f"No. {no_str} - {jdl} ({tgl_m} s.d {tgl_s})"
+
+                            df_updl['Opsi_Dropdown'] = [buat_label_dropdown(r, i) for i, (_, r) in enumerate(df_updl.iterrows())]
                             list_opsi = df_updl['Opsi_Dropdown'].dropna().unique().tolist()
                             
                             with col_j:
@@ -2001,6 +2014,14 @@ else:
                             with col_btn:
                                 st.markdown("<br>", unsafe_allow_html=True)
                                 btn_gen_kelas = st.button("🚀 Generate Laporan Kelas", type="primary", use_container_width=True)
+                            
+                            # --- POIN 2: INISIALISASI & RESET STATE DOKUMEN ---
+                            if "generated_lap_kelas" not in st.session_state:
+                                st.session_state["generated_lap_kelas"] = None
+
+                            if st.session_state["generated_lap_kelas"] is not None:
+                                if st.session_state["generated_lap_kelas"].get("selected_option") != opsi_pilih:
+                                    st.session_state["generated_lap_kelas"] = None
                             
                             if btn_gen_kelas:
                                 with st.spinner("Mengekstrak data pelaksanaan kelas..."):
@@ -2274,29 +2295,6 @@ else:
                                                                 <tr><td style="vertical-align: middle; padding: 10px;">Rencana Biaya</td><td style="vertical-align: middle; padding: 10px; text-align:right;"><b>{rab}</b></td></tr>
                                                                 <tr><td style="vertical-align: middle; padding: 10px;">Realisasi Biaya</td><td style="vertical-align: middle; padding: 10px; text-align:right; color: #003366;"><b>{realisasi}</b></td></tr>
                                                             </table>
-
-                                                            <h4 style="page-break-before: always;">5. EVALUASI PEMBELAJARAN & CUSTOMER VOICE</h4>
-                                                            <p>Hasil rekapitulasi evaluasi kepuasan peserta terhadap penyelenggaraan pembelajaran (Level 1) adalah sebagai berikut:</p>
-                                                            
-                                                            <table class="zebra">
-                                                                <tr>
-                                                                    <th style="width: 70%; text-align:center; vertical-align: middle; padding: 10px;">Pilar Evaluasi</th>
-                                                                    <th style="width: 30%; text-align:center; vertical-align: middle; padding: 10px;">Skor Kepuasan</th>
-                                                                </tr>
-                                                                <tr><td style="vertical-align: middle; padding: 10px;">1. Materi Pembelajaran</td><td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold;">{s_mat}</td></tr>
-                                                                <tr><td style="vertical-align: middle; padding: 10px;">2. Instruktur & Fasilitator</td><td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold;">{s_ins}</td></tr>
-                                                                {sarpras_html}
-                                                                <tr style="background-color: #003366; color: white;">
-                                                                    <td style="vertical-align: middle; padding: 10px; font-weight:bold;">Rata-Rata Komposit Keseluruhan</td>
-                                                                    <td style="vertical-align: middle; padding: 10px; text-align:center; font-weight:bold;">{s_tot}</td>
-                                                                </tr>
-                                                            </table>
-                                                            
-                                                            <p style="margin-top:15px; margin-bottom:5px;"><b>Komentar Apresiasi (Voice of Customer):</b></p>
-                                                            {html_apresiasi}
-                                                            
-                                                            <p style="margin-top:10px; margin-bottom:5px;"><b>Komentar Masukan / Evaluasi:</b></p>
-                                                            {html_masukan}
                                                             
                                                             <br>
                                                             
@@ -2328,9 +2326,9 @@ else:
                                                         </td>
                                                     </tr>
                                                 </tbody>
-                                            </table> <!-- END OF TABEL KONTEN BAB 1 SAMPAI 5 -->
+                                            </table> <!-- END OF TABEL KONTEN BAB 1 SAMPAI 4 -->
 
-                                            <!-- PEMISAH HALAMAN MUTLAK (PAGE BREAK + SECTION BREAK) SEBELUM BAB 6 (DI LUAR TABEL) -->
+                                            <!-- PEMISAH HALAMAN MUTLAK (PAGE BREAK + SECTION BREAK) SEBELUM BAB 5 (DI LUAR TABEL) -->
                                             <br clear="all" style="page-break-before:always; mso-break-type:page-break;" />
 
                                             <!-- TABEL BARU UNTUK LAMPIRAN AGAR HEADER REPEATING TETAP ADA -->
@@ -2350,7 +2348,7 @@ else:
                                                 <tbody>
                                                     <tr>
                                                         <td style="border: none; padding: 20px 10px 10px 10px; background-color: transparent;">
-                                                            <h4 style="color:#0055A4; border-bottom: 2px solid #cbd5e1; padding-bottom:5px;">6. LAMPIRAN DOKUMEN</h4>
+                                                            <h4 style="color:#0055A4; border-bottom: 2px solid #cbd5e1; padding-bottom:5px;">5. LAMPIRAN DOKUMEN</h4>
                                                             <p>Berikut adalah kelengkapan administrasi dan bukti pelaksanaan program:</p>
                                                             <ul style="line-height:2.0; font-weight:bold; color: #0055A4;">
                                                                 <li>Lampiran 1: Dasar Surat Penugasan</li>
@@ -2367,7 +2365,7 @@ else:
                                             <!-- PENEMPATAN FOOTER BERADA DI PALING AKHIR SECTION 2 -->
                                             <div style="mso-element:footer" id="f1">
                                                 <p style="text-align: center; font-size: 8.5pt; color: #64748b; margin: 0;">
-                                                    Dokumen ini digenerate secara otomatis oleh sistem PLN Corporate University
+                                                    Dokumen ini digenerate secara otomatis oleh sistem Jakarta Insight Hub
                                                 </p>
                                             </div>
 
@@ -2376,51 +2374,85 @@ else:
                                     </html>
                                     """
                                     
-                                    st.success(f"✅ Dokumen Laporan Pembelajaran {judul_pilih} berhasil disusun!")
-                                    
                                     safe_kode = re.sub(r'[\\/*?:"<>|]', "", str(kode_pemb)).strip()
                                     safe_judul = re.sub(r'[\\/*?:"<>|]', "", str(judul_pilih)).strip()
                                     file_name = f"{safe_kode}_{safe_judul}.doc"
-                                    
                                     file_bytes = html_kelas.encode('utf-8')
                                     
-                                    col_dl1, col_dl2 = st.columns(2)
-                                    
-                                    with col_dl1:
-                                        st.download_button(
-                                            label="📥 DOWNLOAD LAPORAN KELAS (.doc)",
-                                            data=file_bytes,
-                                            file_name=file_name,
-                                            mime="application/msword",
-                                            type="primary",
-                                            use_container_width=True
-                                        )
-                                    
+                                    drive_link_val = None
+                                    drive_status_type = None
+                                    drive_msg = None
+
                                     if updl_key in DRIVE_FOLDER_DICT:
                                         target_folder = DRIVE_FOLDER_DICT[updl_key]
                                         with st.spinner(f"☁ Sedang mengarsipkan otomatis ke Google Drive ({updl_key})..."):
                                             res_upload = upload_dokumen_ke_drive(file_bytes, file_name, target_folder)
                                             
-                                        with col_dl2:
-                                            if res_upload == "ERROR_IMPORT":
-                                                st.warning("⚠ Module 'google-api-python-client' belum terinstall.")
-                                            elif str(res_upload).startswith("ERROR"):
-                                                st.error(f"⚠️ Gagal arsip: {res_upload}")
-                                            else:
-                                                drive_link = f"https://drive.google.com/drive/folders/{target_folder}"
-                                                st.link_button(
-                                                    "☁️ BUKA ARSIP DI GOOGLE DRIVE", 
-                                                    drive_link, 
-                                                    type="primary", 
-                                                    use_container_width=True
-                                                )
-                                                st.success("✅ Arsip laporan berhasil diamankan ke Google Drive!")
+                                        if res_upload == "ERROR_IMPORT":
+                                            drive_status_type = "warning"
+                                            drive_msg = "⚠ Module 'google-api-python-client' belum terinstall."
+                                        elif str(res_upload).startswith("ERROR"):
+                                            drive_status_type = "error"
+                                            drive_msg = f"⚠️ Gagal arsip: {res_upload}"
+                                        else:
+                                            drive_link_val = f"https://drive.google.com/drive/folders/{target_folder}"
+                                            drive_status_type = "success"
+                                            drive_msg = "✅ Arsip laporan berhasil diamankan ke Google Drive!"
                                     else:
-                                        with col_dl2:
-                                            st.info("ℹ️ ID Folder Drive untuk UPDL ini belum diatur. Laporan hanya tersedia untuk diunduh lokal.")
+                                        drive_status_type = "info"
+                                        drive_msg = "ℹ️ ID Folder Drive untuk UPDL ini belum diatur. Laporan hanya tersedia untuk diunduh lokal."
+
+                                    # Simpan ke session state agar data tetap ada saat tombol diklik
+                                    st.session_state["generated_lap_kelas"] = {
+                                        "selected_option": opsi_pilih,
+                                        "judul_pilih": judul_pilih,
+                                        "file_name": file_name,
+                                        "file_bytes": file_bytes,
+                                        "html_kelas": html_kelas,
+                                        "drive_link": drive_link_val,
+                                        "drive_status_type": drive_status_type,
+                                        "drive_msg": drive_msg
+                                    }
+
+                            # --- POIN 2: RENDER TOMBOL DARI SESSION STATE (DILUAR BLOK if btn_gen_kelas) ---
+                            if st.session_state.get("generated_lap_kelas") is not None:
+                                saved_data = st.session_state["generated_lap_kelas"]
+                                
+                                st.success(f"✅ Dokumen Laporan Pembelajaran {saved_data['judul_pilih']} berhasil disusun!")
+                                
+                                col_dl1, col_dl2 = st.columns(2)
+                                
+                                with col_dl1:
+                                    st.download_button(
+                                        label="📥 DOWNLOAD LAPORAN KELAS (.doc)",
+                                        data=saved_data["file_bytes"],
+                                        file_name=saved_data["file_name"],
+                                        mime="application/msword",
+                                        type="primary",
+                                        use_container_width=True
+                                    )
+                                
+                                with col_dl2:
+                                    if saved_data["drive_link"]:
+                                        st.link_button(
+                                            "☁️ BUKA ARSIP DI GOOGLE DRIVE", 
+                                            saved_data["drive_link"], 
+                                            type="primary", 
+                                            use_container_width=True
+                                        )
+                                        if saved_data.get("drive_msg"):
+                                            st.success(saved_data["drive_msg"])
+                                    else:
+                                        if saved_data.get("drive_status_type") == "warning":
+                                            st.warning(saved_data["drive_msg"])
+                                        elif saved_data.get("drive_status_type") == "error":
+                                            st.error(saved_data["drive_msg"])
+                                        else:
+                                            st.info(saved_data.get("drive_msg", "ℹ️ Folder Drive belum diatur."))
 
                                     with st.expander("👀 Pratinjau Desain Dokumen (Live Preview)"):
-                                        st.markdown(html_kelas, unsafe_allow_html=True)
+                                        st.markdown(saved_data["html_kelas"], unsafe_allow_html=True)
+
                         else:
                             st.info("⚠ Tidak ada kelas/judul pembelajaran yang sesuai untuk UPDL ini pada Master Data Nasional.")
                 else:
