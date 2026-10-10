@@ -493,7 +493,26 @@ else:
     button[kind="primary"]:hover, [data-testid="stLinkButton"] a:hover { 
         transform: scale(1.02) !important; box-shadow: 0px 6px 15px rgba(23, 162, 184, 0.4) !important; color: white !important; border-color: transparent !important; 
     }
-    
+    /* ===================================================================== */
+    /* JURUS PAMUNGKAS: Mengubah Warna Tag Multiselect menjadi Biru Tua      */
+    /* ===================================================================== */
+    div[data-testid="stMultiSelect"] span[data-baseweb="tag"] {
+        background-color: #0055A4 !important;
+        border: none !important;
+    }
+    div[data-testid="stMultiSelect"] span[data-baseweb="tag"] span {
+        color: #FFFFFF !important;
+        font-weight: 500 !important;
+    }
+    div[data-testid="stMultiSelect"] span[data-baseweb="tag"] svg {
+        fill: #FFFFFF !important;
+        color: #FFFFFF !important;
+    }
+    div[data-testid="stMultiSelect"] span[data-baseweb="tag"] span[role="presentation"]:hover {
+        background-color: rgba(255, 255, 255, 0.2) !important;
+        border-radius: 50% !important;
+    }
+    /* ===================================================================== */
     </style>
     """
     st.markdown(custom_css, unsafe_allow_html=True)
