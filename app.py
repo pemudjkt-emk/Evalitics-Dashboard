@@ -1709,8 +1709,8 @@ else:
         # -------------------------------------------------------------------------
         if st.session_state["role"] == "SuperAdmin":
             with sub_rep_generator:
-                st.markdown("### 📑 Generator Laporan Manajemen Mutu (Otomatis)")
-                st.write("Menyusun laporan evaluasi mutu L1 komprehensif, mencakup capaian kategori, analisis IPA Kuadran 1, seluruh komentar apresiasi & masukan per judul pembelajaran, PIC KI, serta narasi AI Executive Summary.")
+                st.markdown("### 📑 Generator Laporan Manajemen Evaluasi")
+                st.write("Menyusun laporan evaluasi Level 1 secara komprehensif, mencakup capaian per kategori, analisis IPA Kuadran 1, seluruh komentar apresiasi & masukan per judul pembelajaran, PIC KI, serta narasi AI Executive Summary.")
                 
                 try:
                     df_rep_raw = pd.read_csv(url)
