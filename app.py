@@ -2543,26 +2543,53 @@ else:
                             if c in df_katalog_raw.columns:
                                 df_katalog_raw[c] = pd.to_numeric(df_katalog_raw[c], errors='coerce')
                         
-                        col_f1, col_f2 = st.columns(2)
+                        # 🌟 FITUR BARU: Ekstraksi Bulan & Tahun untuk Program Instruktur Terbaik Bulanan
+                        if 'Tgl Mulai' in df_katalog_raw.columns:
+                            df_katalog_raw['Tgl Mulai'] = pd.to_datetime(df_katalog_raw['Tgl Mulai'], errors='coerce')
+                            
+                            # Dictionary untuk mapping bulan ke Bahasa Indonesia
+                            bulan_indo = {'01':'Januari', '02':'Februari', '03':'Maret', '04':'April', 
+                                          '05':'Mei', '06':'Juni', '07':'Juli', '08':'Agustus', 
+                                          '09':'September', '10':'Oktober', '11':'November', '12':'Desember'}
+                            
+                            def format_bulan(x):
+                                if pd.isna(x): return "Tidak Terdefinisi"
+                                return f"{bulan_indo.get(x.strftime('%m'), x.strftime('%m'))} {x.strftime('%Y')}"
+                            
+                            df_katalog_raw['Periode_Bulan'] = df_katalog_raw['Tgl Mulai'].apply(format_bulan)
+                        else:
+                            df_katalog_raw['Periode_Bulan'] = "Tidak Terdefinisi"
+                        
+                        # 🎛️ FITUR BARU: Layout menjadi 3 Kolom untuk penambahan Filter Bulan
+                        col_f1, col_f2, col_f3 = st.columns(3)
+                        
                         with col_f1:
                             if 'UPDL' in df_katalog_raw.columns:
                                 list_updl = ["Semua UPDL"] + list(df_katalog_raw['UPDL'].dropna().unique())
-                                selected_updl = st.selectbox("🏢 Pilih UPDL Penyelenggara:", list_updl, key="k_updl")
+                                selected_updl = st.selectbox("🏢 Pilih UPDL:", list_updl, key="k_updl")
                             else:
                                 selected_updl = "Semua UPDL"
                                 st.info("ℹ️ Kolom UPDL belum terdeteksi. Silakan upload data baru.")
                                 
                         with col_f2:
-                            if selected_updl != "Semua UPDL" and 'UPDL' in df_katalog_raw.columns:
-                                df_filt_updl = df_katalog_raw[df_katalog_raw['UPDL'] == selected_updl]
-                            else:
-                                df_filt_updl = df_katalog_raw
+                            # Mengambil list bulan unik (mengabaikan yang tidak valid)
+                            list_bulan = ["Semua Waktu"] + [b for b in df_katalog_raw['Periode_Bulan'].dropna().unique() if b != "Tidak Terdefinisi"]
+                            selected_bulan = st.selectbox("🗓️ Pilih Periode Bulan:", list_bulan, key="k_bulan")
                                 
-                            if 'Judul Diklat' in df_filt_updl.columns:
-                                list_diklat = ["Semua Pembelajaran"] + list(df_filt_updl['Judul Diklat'].dropna().unique())
+                        with col_f3:
+                            # Logika Filter Berjenjang (Berdasarkan UPDL & Bulan yang dipilih)
+                            df_filt1 = df_katalog_raw
+                            if selected_updl != "Semua UPDL" and 'UPDL' in df_katalog_raw.columns:
+                                df_filt1 = df_filt1[df_filt1['UPDL'] == selected_updl]
+                            
+                            if selected_bulan != "Semua Waktu":
+                                df_filt1 = df_filt1[df_filt1['Periode_Bulan'] == selected_bulan]
+                                
+                            if 'Judul Diklat' in df_filt1.columns:
+                                list_diklat = ["Semua Pembelajaran"] + list(df_filt1['Judul Diklat'].dropna().unique())
                             else:
                                 list_diklat = ["Semua Pembelajaran"]
-                            selected_diklat = st.selectbox("📚 Pilih Judul Pembelajaran:", list_diklat, key="k_diklat")
+                            selected_diklat = st.selectbox("📚 Pilih Pembelajaran:", list_diklat, key="k_diklat")
                         
                         with st.expander("⚖️ Konfigurasi Pembobotan & Ambang Batas Rekomendasi", expanded=False):
                             col_w1, col_w2 = st.columns([3, 2])
@@ -2571,13 +2598,15 @@ else:
                                 bobot_jam = 100 - bobot_skor
                                 st.caption(f"Proporsi: **{bobot_skor}% Mutu Evaluasi** : **{bobot_jam}% Jam Terbang**")
                             with col_w2:
+                                # Default value disarankan minimal 2 untuk program bulanan
                                 min_jam_terbang = st.number_input("Syarat Minimal Mengajar (Threshold Top Rekomendasi):", min_value=1, max_value=10, value=2, step=1, key="min_jt")
                                 st.caption(f"Instruktur dengan jam terbang < {min_jam_terbang} kali akan ditandai sebagai *Evaluasi Awal*.")
 
+                        # Terapkan filter akhir Judul Pembelajaran (Jika ada)
                         if selected_diklat != "Semua Pembelajaran":
-                            df_final_kat = df_filt_updl[df_filt_updl['Judul Diklat'] == selected_diklat]
+                            df_final_kat = df_filt1[df_filt1['Judul Diklat'] == selected_diklat]
                         else:
-                            df_final_kat = df_filt_updl
+                            df_final_kat = df_filt1
                             
                         if not df_final_kat.empty and 'Nama' in df_final_kat.columns:
                             agg_dict = {
@@ -2612,28 +2641,37 @@ else:
                             df_kat_grouped = df_kat_grouped.sort_values(by='Indeks_Rekomendasi', ascending=False).reset_index(drop=True)
                             df_eligible = df_kat_grouped[df_kat_grouped['Status_Eligible'] == "Eligible"]
                             
-                            if selected_diklat != "Semua Pembelajaran":
-                                st.markdown("### 🏆 Top Rekomendasi Instruktur")
-                                if not df_eligible.empty:
-                                    top_n = min(3, len(df_eligible))
-                                    cols = st.columns(top_n)
-                                    for i in range(top_n):
-                                        with cols[i]:
-                                            nama_ins = df_eligible['Nama'].iloc[i]
-                                            skor_ins = df_eligible['Skor_Akhir_InsRat'].iloc[i]
-                                            jam_ins = df_eligible['Frekuensi_Mengajar'].iloc[i]
-                                            indeks_ins = df_eligible['Indeks_Rekomendasi'].iloc[i]
-                                            
-                                            st.metric(
-                                                label=f"🥇 Peringkat {i+1}: {nama_ins}",
-                                                value=f"{indeks_ins:.1f} Poin",
-                                                delta=f"{skor_ins:.2f} ⭐ | {jam_ins}x Mengajar",
-                                                delta_color="normal"
-                                            )
-                                else:
-                                    st.warning(f"⚠️ Belum ada instruktur yang memenuhi syarat minimal {min_jam_terbang} kali mengajar untuk pembelajaran ini.")
-                                st.markdown("---")
+                            # 🏆 FITUR BARU: Logika Visualisasi Dinamis (Berdasarkan Konteks Filter)
+                            if selected_bulan != "Semua Waktu" and selected_diklat == "Semua Pembelajaran":
+                                st.markdown(f"### 🏆 Hall of Fame: Instruktur Terbaik Bulan **{selected_bulan}**")
+                            elif selected_diklat != "Semua Pembelajaran":
+                                st.markdown(f"### 🎯 Top Rekomendasi Instruktur untuk **{selected_diklat}**")
+                            else:
+                                st.markdown("### 🌟 Top 3 Instruktur Sepanjang Masa (All-Time Best)")
+                            
+                            if not df_eligible.empty:
+                                top_n = min(3, len(df_eligible))
+                                cols = st.columns(top_n)
+                                medals = ["🥇", "🥈", "🥉"] # Penambahan Medali untuk 3 Besar
                                 
+                                for i in range(top_n):
+                                    with cols[i]:
+                                        nama_ins = df_eligible['Nama'].iloc[i]
+                                        skor_ins = df_eligible['Skor_Akhir_InsRat'].iloc[i]
+                                        jam_ins = df_eligible['Frekuensi_Mengajar'].iloc[i]
+                                        indeks_ins = df_eligible['Indeks_Rekomendasi'].iloc[i]
+                                        
+                                        st.metric(
+                                            label=f"{medals[i]} Peringkat {i+1}: {nama_ins}",
+                                            value=f"{indeks_ins:.1f} Poin",
+                                            delta=f"{skor_ins:.2f} ⭐ | {jam_ins}x Mengajar",
+                                            delta_color="normal"
+                                        )
+                            else:
+                                st.warning(f"⚠️ Belum ada instruktur yang memenuhi syarat minimal {min_jam_terbang} kali mengajar pada kriteria ini.")
+                                
+                            st.markdown("---")
+                            
                             st.subheader("📋 Detail Rapor & Peringkat Komposit")
                             show_kategori = st.checkbox("Tampilkan Detail Sub-Kategori (Ins-Eng, Ins-Rel, Ins-Sat)", value=True, key="k_showkat")
                             
