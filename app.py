@@ -437,10 +437,10 @@ if not st.session_state["logged_in"]:
                     else:
                         st.error("Username atau Password tidak valid!")
 
-# ══════════════════════════════════════════════════════════════════════════════
-# HALAMAN UTAMA APLIKASI
-# ══════════════════════════════════════════════════════════════════════════════
 else:
+    # ─────────────────────────────────────────────────────────────────────────
+    # CSS UTAMA DASHBOARD
+    # ─────────────────────────────────────────────────────────────────────────
     custom_css = """
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
