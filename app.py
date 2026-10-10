@@ -516,28 +516,24 @@ else:
     </style>
     """
     st.markdown(custom_css, unsafe_allow_html=True)
+    # === CSS MODULAR KHUSUS WARNA BIRU TAG MULTISELECT ===
     st.markdown("""
         <style>
-        /* Mengubah latar belakang tag */
-        span[data-baseweb="tag"] {
+        .stMultiSelect span[data-baseweb="tag"] {
             background-color: #0055A4 !important;
             border: 1px solid #0055A4 !important;
         }
-        
-        /* Memastikan teks di dalam tag berwarna putih */
-        span[data-baseweb="tag"] span[title] {
+        .stMultiSelect span[data-baseweb="tag"] span[title] {
             color: #FFFFFF !important;
+            font-weight: 600 !important;
         }
-        
-        /* Mengubah warna latar belakang saat hover pada ikon (X) */
-        span[data-baseweb="tag"] span[role="presentation"]:hover {
-            background-color: rgba(255, 255, 255, 0.2) !important;
-        }
-
-        /* Memastikan ikon (X) berwarna putih */
-        span[data-baseweb="tag"] svg {
+        .stMultiSelect span[data-baseweb="tag"] svg {
             fill: #FFFFFF !important;
             color: #FFFFFF !important;
+        }
+        .stMultiSelect span[data-baseweb="tag"] span[role="presentation"]:hover {
+            background-color: rgba(255, 255, 255, 0.25) !important;
+            border-radius: 50% !important;
         }
         </style>
     """, unsafe_allow_html=True)
