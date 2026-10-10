@@ -446,11 +446,11 @@ else:
     <style>
     [data-testid="stFileUploader"] { background: #ffffff; border: 2px dashed #17a2b8; border-radius: 12px; padding: 20px; }
     [data-testid="stSidebar"] { background-color: #f1f5f9 !important; }
-    [data-testid="stSidebar"] [data-testid="stRadio"] > div { gap: 12px; }
+    [data-testid="stSidebar"] [data-testid="stRadio"] > div { gap: 12px; width: 100% !important; align-items: stretch !important; display: flex; flex-direction: column; }
     [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] > div:first-child,
     [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label > div:first-child { display: none !important; }
     [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"],
-    [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label { background-color: #FFFFFF; border-radius: 10px; padding: 12px 15px; cursor: pointer; transition: all 0.3s ease-in-out; box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.05); border: none; margin: 0; width: 100%; box-sizing: border-box; display: block; }
+[data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label { background-color: #FFFFFF; border-radius: 10px; padding: 12px 15px; cursor: pointer; transition: all 0.3s ease-in-out; box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.05); border: none; margin: 0 !important; width: 100% !important; box-sizing: border-box; display: block; }
     [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] div[data-testid="stMarkdownContainer"],
     [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label div[data-testid="stMarkdownContainer"] { margin-left: 0px !important; }
     [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] p,
