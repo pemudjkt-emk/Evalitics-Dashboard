@@ -571,27 +571,44 @@ else:
             st.markdown("### 🎛 Filter Data")
 
             def build_filters(suffix):
+                # 1. MEMBUAT KOLOM VIRTUAL GABUNGAN UNTUK FILTER
+                df['Opsi_Judul_Tgl'] = df.apply(
+                    lambda x: f"{str(x.get('Judul Pembelajaran/Kegiatan', '-')).strip()} ({str(x.get('Tanggal Mulai', '-'))} s.d {str(x.get('Tanggal Selesai', '-'))})", 
+                    axis=1
+                )
+
+                # 2. MENARIK OPSI UNIK DARI MASING-MASING KOLOM
                 opsi_bulan    = list(df['Laporan Bulan'].dropna().unique())
                 opsi_strategi = list(df['Strategi Pelaksanaan'].dropna().unique())
                 opsi_valid    = ["Semua Status"] + list(df['% Valid'].dropna().unique())
-                
+                opsi_judul    = list(df['Opsi_Judul_Tgl'].dropna().unique()) # Opsi untuk dropdown baru
+
+                # 3. MEMBANGUN TAMPILAN FILTER 3 KOLOM EKSISTING
                 col_f1, col_f2, col_f3 = st.columns(3)
                 with col_f1:
-                    filter_bulan = st.multiselect("Laporan Bulan", options=opsi_bulan,
-                                                  default=opsi_bulan, key=f"bulan_{suffix}")
+                    filter_bulan = st.multiselect("Laporan Bulan", options=opsi_bulan, default=opsi_bulan, key=f"bulan_{suffix}")
                 with col_f2:
-                    filter_strategi = st.multiselect("Strategi Pelaksanaan", options=opsi_strategi,
-                                                     default=opsi_strategi, key=f"strategi_{suffix}")
+                    filter_strategi = st.multiselect("Strategi Pelaksanaan", options=opsi_strategi, default=opsi_strategi, key=f"strategi_{suffix}")
                 with col_f3:
                     filter_valid = st.selectbox("Validitas", opsi_valid, key=f"valid_{suffix}")
 
+                # 4. MENAMBAHKAN FILTER BARU DI BAWAH KETIGA KOLOM TERSEBUT
+                filter_judul = st.multiselect("📚 Judul Pembelajaran & Waktu Pelaksanaan", options=opsi_judul, key=f"judul_tgl_{suffix}")
+
                 df_f = df.copy()
-                
+    
+                # 5. MENERAPKAN LOGIKA PEMOTONGAN DATA (FILTERING)
                 df_f = df_f[df_f['Laporan Bulan'].isin(filter_bulan)] if filter_bulan else df_f
                 df_f = df_f[df_f['Strategi Pelaksanaan'].isin(filter_strategi)] if filter_strategi else df_f
-                
+    
                 if filter_valid != "Semua Status":
                     df_f = df_f[df_f['% Valid'] == filter_valid]
+        
+                # Memfilter berdasarkan multiselect Judul & Waktu (jika ada yang dipilih)
+                if filter_judul:
+                    df_f = df_f[df_f['Opsi_Judul_Tgl'].isin(filter_judul)]
+
+    # === BATAS KODE YANG DIGANTI (Kode di bawahnya seperti for col in kolom_mentah: biarkan saja) ===
 
                 kolom_mentah = ['INS1','INS2','INS3','INS4','INS5','INS6','INS7','INS8',
                                 'MAT1','MAT2','MAT3','MAT4','MAT5','MAT6','MAT7','RATA DS','RATA SP','RATA-RATA KESELURUHAN']
