@@ -1745,7 +1745,7 @@ else:
                                     bulan_pilih = st.selectbox("📅 Pilih Periode Laporan Mutu:", opsi_bulan_rep, key="bln_report")
                                 with col_r2:
                                     st.markdown("<br>", unsafe_allow_html=True)
-                                    btn_generate = st.button("🚀 Generate Laporan Mutu (Word)", type="primary", use_container_width=True)
+                                    btn_generate = st.button("🚀 Generate Laporan Evaluasi", type="primary", use_container_width=True)
                             
                             if btn_generate:
                                 with st.spinner(f"Memproses kalkulasi data & menyusun laporan mutu periode {bulan_pilih}..."):
