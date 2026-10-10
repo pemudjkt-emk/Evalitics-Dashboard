@@ -569,7 +569,7 @@ else:
     st.markdown("""
         <style>
         button[data-baseweb="tab"] div[data-testid="stMarkdownContainer"] p {
-            font-size: 20px !important;
+            font-size: 40px !important;
             font-weight: bold !important;
         }
         </style>
