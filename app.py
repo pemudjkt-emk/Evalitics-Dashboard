@@ -472,7 +472,7 @@ else:
     ul[data-baseweb="menu"] li { font-size: 20px !important; }
     
     button[kind="primary"], [data-testid="stLinkButton"] a { 
-        background: linear-gradient(90deg, #17a2b8 0%, #20c997 100%) !important; 
+        background: linear-gradient(90deg, #17a2b8 0%, #0055A4 100%) !important; 
         color: white !important; 
         border: none !important; 
         border-radius: 30px !important; 
