@@ -497,6 +497,17 @@ else:
     </style>
     """
     st.markdown(custom_css, unsafe_allow_html=True)
+    # === CSS KHUSUS UKURAN FONT TAB NAVIGASI ===
+    st.markdown("""
+        <style>
+        button[data-baseweb="tab"], 
+        button[data-baseweb="tab"] p,
+        button[data-baseweb="tab"] div[data-testid="stMarkdownContainer"] p {
+            font-size: 20px !important;
+            font-weight: bold !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
     # === CSS MODULAR KHUSUS WARNA BIRU TAG MULTISELECT ===
     # === JURUS CSS ULTRA-SPESIFIK ===
     st.markdown("""
