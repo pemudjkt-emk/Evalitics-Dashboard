@@ -450,7 +450,7 @@ else:
     [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] > div:first-child,
     [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label > div:first-child { display: none !important; }
     [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"],
-[data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label { background-color: #FFFFFF; border-radius: 10px; padding: 12px 15px; cursor: pointer; transition: all 0.3s ease-in-out; box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.05); border: none; margin: 0 !important; width: 100% !important; box-sizing: border-box; display: block; }
+    [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label { background-color: #FFFFFF; border-radius: 10px; padding: 12px 15px; cursor: pointer; transition: all 0.3s ease-in-out; box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.05); border: none; margin: 0 !important; width: 100% !important; box-sizing: border-box; display: block; }
     [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] div[data-testid="stMarkdownContainer"],
     [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label div[data-testid="stMarkdownContainer"] { margin-left: 0px !important; }
     [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"] p,
@@ -461,11 +461,13 @@ else:
     [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label:has(input:checked) { background: linear-gradient(90deg, #17a2b8 0%, #20c997 100%); box-shadow: 0px 4px 12px rgba(23, 162, 184, 0.3); border-left: 6px solid #0f766e; border-radius: 10px; }
     [data-testid="stSidebar"] [data-testid="stRadio"] label[data-baseweb="radio"]:has(input:checked) p,
     [data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label:has(input:checked) p { color: #FFFFFF !important; font-weight: 600; }
+    
     [data-testid="stSidebar"] button[kind="secondary"] { background: linear-gradient(90deg, #17a2b8 0%, #20c997 100%); color: white !important; border: none; border-radius: 20px; padding: 12px; font-weight: bold; box-shadow: 0px 4px 12px rgba(23, 162, 184, 0.3); transition: all 0.3s ease; margin-top: 20px; }
     [data-testid="stSidebar"] button[kind="secondary"] div,
     [data-testid="stSidebar"] button[kind="secondary"] p { color: white !important; }
     [data-testid="stSidebar"] button[kind="secondary"]:hover { transform: scale(1.02); box-shadow: 0px 6px 15px rgba(23, 162, 184, 0.4); border-color: transparent; color: white !important; }
     [data-testid="stSidebar"] hr { margin-top: 30px; border-top: 1px solid #cbd5e1; }
+    
     .stTabs [data-baseweb="tab-list"] button div[data-testid="stMarkdownContainer"] p { font-size: 60px !important; font-weight: 800 !important; }
     .stSelectbox div[data-baseweb="select"] { font-size: 22px !important; min-height: 48px !important; }
     .stSelectbox div[data-baseweb="select"] span { font-size: 22px !important; }
@@ -473,75 +475,46 @@ else:
     
     button[kind="primary"], [data-testid="stLinkButton"] a { 
         background: linear-gradient(90deg, #17a2b8 0%, #0055A4 100%) !important; 
-        color: white !important; 
-        border: none !important; 
-        border-radius: 30px !important; 
-        padding: 12px 24px !important; 
-        font-weight: bold !important; 
+        color: white !important; border: none !important; border-radius: 30px !important; 
+        padding: 12px 24px !important; font-weight: bold !important; 
         box-shadow: 0px 4px 12px rgba(23, 162, 184, 0.3) !important; 
-        transition: all 0.3s ease !important; 
-        text-decoration: none !important; 
-        display: inline-flex !important; 
-        align-items: center !important; 
-        justify-content: center !important; 
-        width: 100% !important; 
-        box-sizing: border-box !important; 
+        transition: all 0.3s ease !important; text-decoration: none !important; 
+        display: inline-flex !important; align-items: center !important; 
+        justify-content: center !important; width: 100% !important; box-sizing: border-box !important; 
     }
-    button[kind="primary"] div, button[kind="primary"] p, [data-testid="stLinkButton"] a div, [data-testid="stLinkButton"] a p { 
-        color: white !important; font-size: 18px !important; margin: 0 !important; 
-    }
-    button[kind="primary"]:hover, [data-testid="stLinkButton"] a:hover { 
-        transform: scale(1.02) !important; box-shadow: 0px 6px 15px rgba(23, 162, 184, 0.4) !important; color: white !important; border-color: transparent !important; 
-    }
+    button[kind="primary"] div, button[kind="primary"] p, [data-testid="stLinkButton"] a div, [data-testid="stLinkButton"] a p { color: white !important; font-size: 18px !important; margin: 0 !important; }
+    button[kind="primary"]:hover, [data-testid="stLinkButton"] a:hover { transform: scale(1.02) !important; box-shadow: 0px 6px 15px rgba(23, 162, 184, 0.4) !important; color: white !important; border-color: transparent !important; }
+    
     /* ===================================================================== */
-    /* JURUS PAMUNGKAS: Mengubah Warna Tag Multiselect menjadi Biru Tua      */
+    /* WARNA CHIP / TAG MULTISELECT MENJADI BIRU TUA JAKARTA INSIGHT HUB     */
     /* ===================================================================== */
-    div[data-testid="stMultiSelect"] span[data-baseweb="tag"] {
+    .stMultiSelect span[data-baseweb="tag"],
+    span[data-baseweb="tag"] {
         background-color: #0055A4 !important;
-        border: none !important;
+        border: 1px solid #0055A4 !important;
     }
-    div[data-testid="stMultiSelect"] span[data-baseweb="tag"] span {
+    
+    .stMultiSelect span[data-baseweb="tag"] span,
+    span[data-baseweb="tag"] span[title] {
         color: #FFFFFF !important;
-        font-weight: 500 !important;
+        font-weight: 600 !important;
     }
-    div[data-testid="stMultiSelect"] span[data-baseweb="tag"] svg {
+    
+    .stMultiSelect span[data-baseweb="tag"] svg,
+    span[data-baseweb="tag"] svg {
         fill: #FFFFFF !important;
         color: #FFFFFF !important;
     }
-    div[data-testid="stMultiSelect"] span[data-baseweb="tag"] span[role="presentation"]:hover {
-        background-color: rgba(255, 255, 255, 0.2) !important;
+    
+    .stMultiSelect span[data-baseweb="tag"] span[role="presentation"]:hover,
+    span[data-baseweb="tag"] span[role="presentation"]:hover {
+        background-color: rgba(255, 255, 255, 0.25) !important;
         border-radius: 50% !important;
     }
     /* ===================================================================== */
     </style>
     """
-    st.markdown(custom_css, unsafe_allow_html=True)
-    st.markdown("""
-        <style>
-        /* Mengubah latar belakang tag */
-        span[data-baseweb="tag"] {
-            background-color: #0055A4 !important;
-            border: 1px solid #0055A4 !important;
-        }
-        
-        /* Memastikan teks di dalam tag berwarna putih */
-        span[data-baseweb="tag"] span[title] {
-            color: #FFFFFF !important;
-        }
-        
-        /* Mengubah warna latar belakang saat hover pada ikon (X) */
-        span[data-baseweb="tag"] span[role="presentation"]:hover {
-            background-color: rgba(255, 255, 255, 0.2) !important;
-        }
-
-        /* Memastikan ikon (X) berwarna putih */
-        span[data-baseweb="tag"] svg {
-            fill: #FFFFFF !important;
-            color: #FFFFFF !important;
-        }
-        </style>
-    """, unsafe_allow_html=True)
-    
+    st.markdown(custom_css, unsafe_allow_html=True)    
 
     def get_base64_logo(file_path):
         if os.path.exists(file_path):
