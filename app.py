@@ -566,6 +566,14 @@ else:
         <div style="flex:1;display:flex;align-items:center;justify-content:flex-end;">{img_pln}</div>
     </div>
     """, unsafe_allow_html=True)
+    st.markdown("""
+        <style>
+        button[data-baseweb="tab"] div[data-testid="stMarkdownContainer"] p {
+            font-size: 20px !important;
+            font-weight: bold !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
 
     with st.sidebar:
         st.markdown("### 🧭 JAKARTA INSIGHT HUB")
