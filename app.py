@@ -493,20 +493,36 @@ else:
     button[kind="primary"]:hover, [data-testid="stLinkButton"] a:hover { 
         transform: scale(1.02) !important; box-shadow: 0px 6px 15px rgba(23, 162, 184, 0.4) !important; color: white !important; border-color: transparent !important; 
     }
-    /* Mengubah warna latar kotak pilihan (tag) multiselect menjadi biru tua */
-    span[data-baseweb="tag"] {
-        background-color: #0055A4 !important;
-    }
     
-    /* Memastikan warna teks dan ikon 'x' di dalam kotak tetap putih */
-    span[data-baseweb="tag"] span, 
-    span[data-baseweb="tag"] svg {
-        color: #FFFFFF !important;
-        fill: #FFFFFF !important;
-    }
     </style>
     """
     st.markdown(custom_css, unsafe_allow_html=True)
+    st.markdown("""
+        <style>
+        /* Mengubah latar belakang tag */
+        span[data-baseweb="tag"] {
+            background-color: #0055A4 !important;
+            border: 1px solid #0055A4 !important;
+        }
+        
+        /* Memastikan teks di dalam tag berwarna putih */
+        span[data-baseweb="tag"] span[title] {
+            color: #FFFFFF !important;
+        }
+        
+        /* Mengubah warna latar belakang saat hover pada ikon (X) */
+        span[data-baseweb="tag"] span[role="presentation"]:hover {
+            background-color: rgba(255, 255, 255, 0.2) !important;
+        }
+
+        /* Memastikan ikon (X) berwarna putih */
+        span[data-baseweb="tag"] svg {
+            fill: #FFFFFF !important;
+            color: #FFFFFF !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+    
 
     def get_base64_logo(file_path):
         if os.path.exists(file_path):
