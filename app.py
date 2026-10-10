@@ -498,23 +498,32 @@ else:
     """
     st.markdown(custom_css, unsafe_allow_html=True)
     # === CSS MODULAR KHUSUS WARNA BIRU TAG MULTISELECT ===
+    # === JURUS CSS ULTRA-SPESIFIK ===
     st.markdown("""
         <style>
-        .stMultiSelect span[data-baseweb="tag"] {
+        /* Menargetkan span apapun di dalam stMultiSelect yang berperan sebagai tag */
+        div[data-testid="stMultiSelect"] span[data-baseweb="tag"], 
+        div[data-testid="stMultiSelect"] div[role="button"] {
             background-color: #0055A4 !important;
-            border: 1px solid #0055A4 !important;
+            border-color: #0055A4 !important;
         }
-        .stMultiSelect span[data-baseweb="tag"] span[title] {
+        
+        /* Warna teks di dalam kotak pilihan */
+        div[data-testid="stMultiSelect"] span[data-baseweb="tag"] span,
+        div[data-testid="stMultiSelect"] span[data-baseweb="tag"] p {
             color: #FFFFFF !important;
             font-weight: 600 !important;
         }
-        .stMultiSelect span[data-baseweb="tag"] svg {
+        
+        /* Ikon silang (x) */
+        div[data-testid="stMultiSelect"] span[data-baseweb="tag"] svg {
             fill: #FFFFFF !important;
             color: #FFFFFF !important;
         }
-        .stMultiSelect span[data-baseweb="tag"] span[role="presentation"]:hover {
-            background-color: rgba(255, 255, 255, 0.25) !important;
-            border-radius: 50% !important;
+        
+        /* Efek Hover Silang */
+        div[data-testid="stMultiSelect"] span[data-baseweb="tag"] span[role="presentation"]:hover {
+            background-color: rgba(255, 255, 255, 0.3) !important;
         }
         </style>
     """, unsafe_allow_html=True)
