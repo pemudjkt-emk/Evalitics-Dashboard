@@ -994,7 +994,7 @@ else:
                             col_chart_top1, col_chart_top2 = st.columns([3, 2])
                             
                             with col_chart_top1:
-                                st.markdown("### 📈 Skor Detail Berdasarkan Strategi Pelaksanaan")
+                                st.markdown("### 📈 Skor Evaluasi Level 1 - Strategi Pelaksanaan")
                                 df_bar = df_filtered_dash.groupby('Strategi Pelaksanaan')[['RATA-RATA KESELURUHAN', 'RATA MAT', 'RATA INST', 'RATA SASPRAS']].mean().reset_index()
                                 df_bar_melted = df_bar.melt(id_vars='Strategi Pelaksanaan', value_vars=['RATA-RATA KESELURUHAN', 'RATA MAT', 'RATA INST', 'RATA SASPRAS'], var_name='Kategori', value_name='Skor')
                                 
@@ -1018,7 +1018,7 @@ else:
                                 st.plotly_chart(fig_bar, use_container_width=True)
 
                             with col_chart_top2:
-                                st.markdown("### 🎯 Kepatuhan Evaluasi Terhadap Standar TMP")
+                                st.markdown("### 🎯 Jumlah Pembelajaran Memenuhi TMP Skor Evaluasi")
                                 df_tmp = df_filtered_dash.dropna(subset=['RATA-RATA KESELURUHAN']).copy()
                                 if not df_tmp.empty:
                                     df_tmp['Status TMP'] = df_tmp['RATA-RATA KESELURUHAN'].apply(lambda x: 'Memenuhi (≥ 4.5)' if x >= 4.5 else 'Tidak Memenuhi (< 4.5)')
@@ -1041,7 +1041,7 @@ else:
 
                             st.markdown("---")
                             
-                            st.markdown("### 📆 Tren Skor Historis (Multi-Aspek) per Bulan")
+                            st.markdown("### 📆 Grafik Skor Evaluasi Level 1 - Semua Aspek")
                             if 'Laporan Bulan' in df_filtered_dash.columns:
                                 URUTAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember']
                                 df_tren = df_filtered_dash.groupby('Laporan Bulan')[['RATA-RATA KESELURUHAN', 'RATA MAT', 'RATA INST', 'RATA SASPRAS']].mean().reset_index()
