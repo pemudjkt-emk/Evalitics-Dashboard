@@ -623,7 +623,7 @@ else:
                 return pd.read_csv(url)
 
             # Load Data Evaluasi (Eksisting)
-            df = load_csv(url_eval)
+            df = load_csv(url)
             
             # Load Data Kinerja (Baru)
             df_looker = load_csv(url_kinerja_looker)
