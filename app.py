@@ -113,6 +113,11 @@ sheet_id = '1IDAmFwTbBQDZcKM3eiiEDcA3KwM9WKqW4zCrk__6-PU'
 sheet_name = 'L1%20Tertutup' 
 url = "https://docs.google.com/spreadsheets/d/" + str(sheet_id) + "/gviz/tq?tqx=out:csv&sheet=" + str(sheet_name)
 
+# 2. URL Sumber Data Kinerja (Baru)
+sheet_id_kinerja = '17tK8xNv4NaZo4OsErwk90IDGp8vqqSquGWVXNdzm1fs'
+url_kinerja_looker = f"https://docs.google.com/spreadsheets/d/{sheet_id_kinerja}/gviz/tq?tqx=out:csv&sheet=Dataset_Looker"
+url_kinerja_referensi = f"https://docs.google.com/spreadsheets/d/{sheet_id_kinerja}/gviz/tq?tqx=out:csv&sheet=Kinerja%20UPDL%20Jakarta"
+
 # ─────────────────────────────────────────────────────────────────────────────
 # HELPER FUNCTIONS
 # ─────────────────────────────────────────────────────────────────────────────
@@ -617,7 +622,12 @@ else:
             def load_csv(url):
                 return pd.read_csv(url)
 
-            df = load_csv(url)
+            # Load Data Evaluasi (Eksisting)
+            df = load_csv(url_eval)
+            
+            # Load Data Kinerja (Baru)
+            df_looker = load_csv(url_kinerja_looker)
+            df_referensi = load_csv(url_kinerja_referensi)
             st.markdown("### 🎛 Filter Data")
 
             def build_filters(suffix):
@@ -1306,8 +1316,186 @@ else:
                 # TAB UTAMA 2: DASHBOARD KINERJA (BARU)
                 # ==========================================
                 with tab_utama_kinerja:
-                    st.markdown("### 📈 Analisis Kinerja")
-                    st.info("🚧 Ruangan untuk Dashboard Kinerja sudah siap. Menunggu integrasi sumber data spreadsheet baru.")
+                    st.markdown("### 📈 Analisis Kinerja UPDL Jakarta")
+                    
+                    try:
+                        # 2. FILTER INTERAKTIF
+                        st.markdown("#### 🎛 Filter Rentang Kinerja")
+                        col_fk1, col_fk2 = st.columns(2)
+                        
+                        list_bulan = df_looker['Bulan'].dropna().unique().tolist()
+                        with col_fk1:
+                            bulan_terpilih = st.selectbox("📅 Pilih Bulan Laporan:", list_bulan, index=len(list_bulan)-1 if list_bulan else 0)
+                            
+                        with col_fk2:
+                            opsi_pic = ["Semua PIC Utama"] + df_looker['PIC Utama'].dropna().unique().tolist()
+                            pic_terpilih = st.selectbox("👥 Filter Penanggung Jawab (PIC):", opsi_pic)
+                        
+                        # Terapkan Filter
+                        df_bulan_ini = df_looker[df_looker['Bulan'] == bulan_terpilih].copy()
+                        if pic_terpilih != "Semua PIC Utama":
+                            df_bulan_ini = df_bulan_ini[df_bulan_ini['PIC Utama'] == pic_terpilih]
+
+                        st.markdown("---")
+
+                        # 3. BAGIAN A: GRAFIK NILAI KINERJA OVERALL (KPI CARDS)
+                        st.markdown("#### A. Ringkasan Pencapaian Kinerja")
+                        
+                        total_kinerja = pd.to_numeric(df_bulan_ini['Nilai Kinerja'], errors='coerce').sum()
+                        total_bobot_maksimal = pd.to_numeric(df_bulan_ini['Bobot'], errors='coerce').sum() 
+                        
+                        # Hitung persentase kumulatif
+                        persentase_pencapaian = (total_kinerja / total_bobot_maksimal * 100) if total_bobot_maksimal > 0 else 0
+                        
+                        # Tentukan Status Overall
+                        if persentase_pencapaian > 100:
+                            status_overall = "Beyond Target"
+                            warna_border = "#22c55e" # Hijau
+                            warna_teks = "#15803d"
+                        elif persentase_pencapaian >= 90:
+                            status_overall = "Tercapai / Aman"
+                            warna_border = "#0055A4" # Biru PLN
+                            warna_teks = "#003366"
+                        else:
+                            status_overall = "Bahaya / Underperform"
+                            warna_border = "#ef4444" # Merah
+                            warna_teks = "#b91c1c"
+                            
+                        # Hitung Indikator Bahaya/Aman (Berdasarkan Status Kolom di Data)
+                        jml_bahaya = len(df_bulan_ini[df_bulan_ini['Status'].astype(str).str.strip().str.lower() == 'bahaya'])
+                        jml_beyond = len(df_bulan_ini[df_bulan_ini['Status'].astype(str).str.strip().str.lower() == 'beyond target'])
+                        jml_tercapai = len(df_bulan_ini[df_bulan_ini['Status'].astype(str).str.strip().str.lower() == 'tercapai'])
+                        
+                        cols_kinerja = st.columns(4)
+                        with cols_kinerja[0]: 
+                            st.markdown(f'<div class="kpi-card" style="border-left-color: {warna_border};"><div class="kpi-title">🏆 Skor Kinerja<br>Akumulasi</div><div class="kpi-value" style="color:{warna_teks};">{total_kinerja:.2f} / {total_bobot_maksimal:.0f}</div></div>', unsafe_allow_html=True)
+                        with cols_kinerja[1]: 
+                            st.markdown(f'<div class="kpi-card" style="border-left-color: {warna_border};"><div class="kpi-title">📊 Persentase<br>Pencapaian</div><div class="kpi-value" style="color:{warna_teks};">{persentase_pencapaian:.1f}%</div><div style="font-size:12px; font-weight:bold; color:{warna_teks}; margin-top:5px;">Status: {status_overall}</div></div>', unsafe_allow_html=True)
+                        with cols_kinerja[2]: 
+                            st.markdown(f'<div class="kpi-card card-warn"><div class="kpi-title">🚨 Indikator<br>Status Bahaya</div><div class="kpi-value">{jml_bahaya}</div></div>', unsafe_allow_html=True)
+                        with cols_kinerja[3]: 
+                            st.markdown(f'<div class="kpi-card card-ok"><div class="kpi-title">🚀 Indikator<br>Beyond Target</div><div class="kpi-value">{jml_beyond + jml_tercapai}</div></div>', unsafe_allow_html=True)
+
+                        st.markdown("<br>", unsafe_allow_html=True)
+
+                        # 4. BAGIAN B: GRAFIK NILAI KINERJA PER KATEGORI (TRAJECTORY)
+                        col_grafik1, col_grafik2 = st.columns([6, 4])
+                        
+                        with col_grafik1:
+                            st.markdown("#### B. Trajectory Kinerja per Indikator")
+                            
+                            df_traj = df_looker.copy()
+                            if pic_terpilih != "Semua PIC Utama":
+                                df_traj = df_traj[df_traj['PIC Utama'] == pic_terpilih]
+                            
+                            df_traj = df_traj[df_traj['Status'].astype(str).str.strip().str.lower() != 'belum ada data']
+                            
+                            if not df_traj.empty:
+                                fig_traj = px.line(
+                                    df_traj, 
+                                    x='Bulan', 
+                                    y='Pencapaian Pct', 
+                                    color='Indikator Kinerja',
+                                    markers=True,
+                                    hover_data=['Realisasi', 'Target', 'Status']
+                                )
+                                fig_traj.update_traces(line=dict(width=3), marker=dict(size=8, line=dict(width=1, color='white')))
+                                fig_traj.add_hline(y=1.0, line_dash="dash", line_color="#ef4444", annotation_text="Batas Target Minimal (1.0)", annotation_position="top left")
+                                fig_traj.update_layout(
+                                    height=450, 
+                                    yaxis_title="Persentase Pencapaian (Skala 1.0 = 100%)", 
+                                    xaxis_title="",
+                                    legend=dict(orientation="h", yanchor="bottom", y=-0.5, xanchor="center", x=0.5),
+                                    margin=dict(t=10,b=10,l=10,r=10)
+                                )
+                                st.plotly_chart(fig_traj, use_container_width=True)
+                            else:
+                                st.info("Data belum tersedia untuk membentuk trajectory grafik.")
+                                
+                        with col_grafik2:
+                            st.markdown("#### Distribusi Status Indikator")
+                            if not df_bulan_ini.empty:
+                                df_pie_status = df_bulan_ini['Status'].value_counts().reset_index()
+                                df_pie_status.columns = ['Status', 'Jumlah']
+                                
+                                color_map_status = {
+                                    'Beyond Target': '#22c55e', 'beyond target': '#22c55e',
+                                    'Tercapai': '#0055A4', 'tercapai': '#0055A4',
+                                    'Bahaya': '#ef4444', 'bahaya': '#ef4444',
+                                    'Belum Ada Data': '#cbd5e1', 'belum ada data': '#cbd5e1'
+                                }
+                                
+                                fig_pie_status = px.pie(
+                                    df_pie_status, 
+                                    values='Jumlah', 
+                                    names='Status', 
+                                    hole=0.5,
+                                    color='Status',
+                                    color_discrete_map=color_map_status
+                                )
+                                fig_pie_status.update_traces(textposition='inside', textinfo='percent+label')
+                                fig_pie_status.update_layout(height=450, showlegend=False, margin=dict(t=20,b=20,l=20,r=20))
+                                st.plotly_chart(fig_pie_status, use_container_width=True)
+
+                        st.markdown("---")
+                        
+                        # 5. BAGIAN C: LAPORAN KINERJA (SMART NARRATIVE AI / PERFORMANCE DIALOGUE)
+                        st.markdown("#### C. Smart Narrative (Performance Dialogue Area)")
+                        st.write("Area ini mendeteksi secara otomatis metrik yang berada dalam zona bahaya untuk segera dilakukan dialog kinerja.")
+                        
+                        df_bahaya = df_bulan_ini[df_bulan_ini['Status'].astype(str).str.strip().str.lower() == 'bahaya'].copy()
+                        
+                        if not df_bahaya.empty:
+                            st.error(f"⚠️ Ditemukan **{len(df_bahaya)}** sub-indikator kritis yang memerlukan **Action Plan** segera pada periode **{bulan_terpilih}**.")
+                            
+                            for idx, row in df_bahaya.iterrows():
+                                indikator = row['Indikator Kinerja']
+                                sub_indikator = row['Sub Indikator']
+                                pic = row['PIC Utama']
+                                realisasi = float(row['Realisasi']) if pd.notna(row['Realisasi']) else 0.0
+                                target = float(row['Target']) if pd.notna(row['Target']) else 0.0
+                                
+                                action_plan = "[Belum ada rencana tindak lanjut yang ditulis di Master Data]"
+                                kendala = "[Belum ada kendala yang diidentifikasi]"
+                                
+                                df_ref_match = df_referensi[df_referensi['SUB INDIKATOR KINERJA'].astype(str).str.strip() == str(sub_indikator).strip()]
+                                if not df_ref_match.empty:
+                                    if 'ACTION PLAN' in df_ref_match.columns and pd.notna(df_ref_match['ACTION PLAN'].iloc[0]):
+                                        ap_val = str(df_ref_match['ACTION PLAN'].iloc[0]).strip()
+                                        if ap_val != "" and ap_val.lower() != "nan": action_plan = ap_val
+                                        
+                                    if 'KENDALA' in df_ref_match.columns and pd.notna(df_ref_match['KENDALA'].iloc[0]):
+                                        kd_val = str(df_ref_match['KENDALA'].iloc[0]).strip()
+                                        if kd_val != "" and kd_val.lower() != "nan": kendala = kd_val
+                                        
+                                with st.expander(f"🔴 Dialog Kinerja: {sub_indikator} (PIC: {pic})", expanded=True):
+                                    st.markdown(f'''
+                                    <div style="background-color: #fef2f2; padding: 15px; border-left: 5px solid #ef4444; border-radius: 5px;">
+                                        <p style="margin-top:0;">Pada <b>{bulan_terpilih}</b>, indikator <b>{sub_indikator}</b> tidak mencapai target yang ditetapkan. Diperlukan eskalasi dan diskusi mendalam antara Manager dan PIC <b>{pic}</b>.</p>
+                                        <table style="width:100%; border-collapse: collapse; margin-bottom: 10px;">
+                                            <tr>
+                                                <td style="padding: 5px; width: 30%; font-weight: bold; color: #7f1d1d;">Target Bulan Ini</td>
+                                                <td style="padding: 5px; color: #7f1d1d;">: {target:.2f}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 5px; font-weight: bold; color: #7f1d1d;">Realisasi Aktual</td>
+                                                <td style="padding: 5px; color: #7f1d1d;">: <b>{realisasi:.2f}</b></td>
+                                            </tr>
+                                        </table>
+                                        <p style="margin-bottom:2px; font-weight:bold; color:#991b1b;">🛑 Identifikasi Kendala:</p>
+                                        <p style="margin-top:0; font-style:italic; color:#7f1d1d;">"{kendala}"</p>
+                                        <p style="margin-bottom:2px; font-weight:bold; color:#065f46;">✅ Rekomendasi Action Plan (Tindak Lanjut):</p>
+                                        <p style="margin-top:0; color:#064e3b; background-color:#ecfdf5; padding: 10px; border-radius:4px;">{action_plan}</p>
+                                    </div>
+                                    ''', unsafe_allow_html=True)
+                        else:
+                            st.success(f"🎉 **Luar Biasa!** Tidak ada sub-indikator yang berstatus 'Bahaya' pada {bulan_terpilih}. Operasional unit berjalan optimal!")
+
+                        with st.expander("📄 Lihat Tabel Kinerja Detail", expanded=False):
+                            st.dataframe(df_bulan_ini, use_container_width=True)
+                            
+                    except Exception as e:
+                        st.error(f"Gagal memuat visualisasi Dashboard Kinerja: {e}")
                     
                 # ==========================================
                 # TAB UTAMA 3: DASHBOARD PENGAJARAN (BARU)
