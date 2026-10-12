@@ -2123,6 +2123,140 @@ else:
                                     def format_skor(val):
                                         return f"{val:.2f}" if pd.notna(val) else "-"
 
+                                    eng_ins = df_bln['Engagement Instruktur'].mean() if 'Engagement Instruktur' in df_bln.columns else np.nan
+                                    rel_ins = df_bln['Relevance Instruktur'].mean() if 'Relevance Instruktur' in df_bln.columns else np.nan
+                                    sat_ins = df_bln['Satisfaction Instruktur'].mean() if 'Satisfaction Instruktur' in df_bln.columns else np.nan
+                                    
+                                    eng_mat = df_bln['Engagement Materi'].mean() if 'Engagement Materi' in df_bln.columns else np.nan
+                                    rel_mat = df_bln['Relevance Materi'].mean() if 'Relevance Materi' in df_bln.columns else np.nan
+                                    sat_mat = df_bln['Satisfaction Materi'].mean() if 'Satisfaction Materi' in df_bln.columns else np.nan
+
+                                    # --- UPDATE BLOK html_content ANDA MENJADI SEPERTI INI ---
+                                    html_content = f"""
+                                    <html><head><meta charset="utf-8"></head><body style="font-family: 'Times New Roman', Times, serif; line-height: 1.5; font-size: 11.5pt;">
+                                        <h2 style="text-align:center; color:#003366; margin-bottom: 2px;">LAPORAN EVALUASI MUTU PEMBELAJARAN L1</h2>
+                                        <h3 style="text-align:center; margin-top: 0;">UPDL JAKARTA - PERIODE {bulan_pilih.upper()}</h3>
+                                        <hr style="border: 1.5px solid black; margin-bottom: 15px;">
+                                        
+                                        <table style="width:100%; border:none; margin-bottom:15px; font-size:11pt;">
+                                            <tr><td style="width:25%;"><b>Periode Laporan</b></td><td style="width:2%;">:</td><td style="width:73%;">{bulan_pilih}</td></tr>
+                                            <tr><td><b>PIC KI Terkait</b></td><td>:</td><td>{teks_pic_ki}</td></tr>
+                                            <tr><td><b>Total Kelas Terlaksana</b></td><td>:</td><td>{total_sesi} Pelatihan / Batch</td></tr>
+                                        </table>
+
+                                        <h4 style="color:#0055A4; margin-bottom: 5px;">1. RINGKASAN EKSEKUTIF (EXECUTIVE SUMMARY)</h4>
+                                        <p style="text-align: justify; margin-top: 0;">{narasi_eksekutif_ai}</p>
+
+                                        <h4 style="color:#0055A4; margin-bottom: 5px;">2. PENCAPAIAN SKOR EVALUASI PER PILAR PEMBELAJARAN</h4>
+                                        <table style="width:100%; border-collapse: collapse; text-align:left; font-size:11pt; margin-bottom: 15px;" border="1">
+                                            <tr style="background-color:#003366; color:white;">
+                                                <th style="padding: 6px 10px;">Pilar Evaluasi</th>
+                                                <th style="padding: 6px 10px; text-align:center;">Realisasi Skor</th>
+                                                <th style="padding: 6px 10px; text-align:center;">Standar TMP</th>
+                                                <th style="padding: 6px 10px; text-align:center;">Status Kepatuhan</th>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 5px 10px;">Kinerja Instruktur (Engagement, Relevance, Satisfaction)</td>
+                                                <td style="padding: 5px 10px; text-align:center;"><b>{format_skor(skor_instruktur)}</b></td>
+                                                <td style="padding: 5px 10px; text-align:center;">4.50</td>
+                                                <td style="padding: 5px 10px; text-align:center;">{format_status_badge(skor_instruktur)}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 5px 10px;">Materi Pembelajaran (Engagement, Relevance, Satisfaction)</td>
+                                                <td style="padding: 5px 10px; text-align:center;"><b>{format_skor(skor_materi)}</b></td>
+                                                <td style="padding: 5px 10px; text-align:center;">4.50</td>
+                                                <td style="padding: 5px 10px; text-align:center;">{format_status_badge(skor_materi)}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 5px 10px;">Sarana & Prasarana In-Class (Kenyamanan, Fasilitas)</td>
+                                                <td style="padding: 5px 10px; text-align:center;"><b>{format_skor(skor_sarpras)}</b></td>
+                                                <td style="padding: 5px 10px; text-align:center;">4.50</td>
+                                                <td style="padding: 5px 10px; text-align:center;">{format_status_badge(skor_sarpras)}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 5px 10px;">Sarana Digital (Aplikasi, Modul, Jaringan)</td>
+                                                <td style="padding: 5px 10px; text-align:center;"><b>{format_skor(skor_digital)}</b></td>
+                                                <td style="padding: 5px 10px; text-align:center;">4.50</td>
+                                                <td style="padding: 5px 10px; text-align:center;">{format_status_badge(skor_digital)}</td>
+                                            </tr>
+                                            <tr style="background-color:#f2f2f2;">
+                                                <td style="padding: 6px 10px;"><b>RATA-RATA TOTAL KESELURUHAN</b></td>
+                                                <td style="padding: 6px 10px; text-align:center;"><b>{format_skor(rata_l1)}</b></td>
+                                                <td style="padding: 6px 10px; text-align:center;"><b>4.50</b></td>
+                                                <td style="padding: 6px 10px; text-align:center;"><b>{'[ STATUS PRIMA ]' if pd.notna(rata_l1) and rata_l1 >= 4.50 else '[ PERLU EVALUASI ]'}</b></td>
+                                            </tr>
+                                        </table>
+
+                                        <h4 style="color:#0055A4; margin-bottom: 5px;">3. RINCIAN KUANTITATIF ASPEK MATERI & INSTRUKTUR</h4>
+                                        <p style="text-align: justify; margin-top: 0; font-size:10.5pt;">Tabel di bawah ini merincikan performa spesifik indikator pengukuran yang mempengaruhi skor akhir Materi dan Instruktur.</p>
+                                        <table style="width:100%; border-collapse: collapse; text-align:left; font-size:11pt; margin-bottom: 15px;" border="1">
+                                            <tr style="background-color:#003366; color:white;">
+                                                <th style="padding: 6px 10px;">Fokus Evaluasi</th>
+                                                <th style="padding: 6px 10px;">Kategori Pengukuran (Sub-Pilar)</th>
+                                                <th style="padding: 6px 10px; text-align:center;">Skor Rata-rata</th>
+                                                <th style="padding: 6px 10px; text-align:center;">Status TMP</th>
+                                            </tr>
+                                            <!-- Rincian Materi -->
+                                            <tr style="background-color:#f8f9fa;"><td colspan="4" style="padding: 4px 10px;"><b>A. Aspek Materi Pembelajaran</b></td></tr>
+                                            <tr>
+                                                <td rowspan="3" style="padding: 5px 10px; text-align:center;"><b>MATERI</b></td>
+                                                <td style="padding: 5px 10px;">Engagement (Keterlibatan Interaksi)</td>
+                                                <td style="padding: 5px 10px; text-align:center;">{format_skor(eng_mat)}</td>
+                                                <td style="padding: 5px 10px; text-align:center;">{format_status_badge(eng_mat)}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 5px 10px;">Relevance (Relevansi Konteks Pekerjaan)</td>
+                                                <td style="padding: 5px 10px; text-align:center;">{format_skor(rel_mat)}</td>
+                                                <td style="padding: 5px 10px; text-align:center;">{format_status_badge(rel_mat)}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 5px 10px;">Satisfaction (Kepuasan Struktur Kurikulum)</td>
+                                                <td style="padding: 5px 10px; text-align:center;">{format_skor(sat_mat)}</td>
+                                                <td style="padding: 5px 10px; text-align:center;">{format_status_badge(sat_mat)}</td>
+                                            </tr>
+                                            <!-- Rincian Instruktur -->
+                                            <tr style="background-color:#f8f9fa;"><td colspan="4" style="padding: 4px 10px;"><b>B. Aspek Kinerja Instruktur</b></td></tr>
+                                            <tr>
+                                                <td rowspan="3" style="padding: 5px 10px; text-align:center;"><b>INSTRUKTUR</b></td>
+                                                <td style="padding: 5px 10px;">Engagement (Metode & Antusiasme)</td>
+                                                <td style="padding: 5px 10px; text-align:center;">{format_skor(eng_ins)}</td>
+                                                <td style="padding: 5px 10px; text-align:center;">{format_status_badge(eng_ins)}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 5px 10px;">Relevance (Pemberian Studi Kasus)</td>
+                                                <td style="padding: 5px 10px; text-align:center;">{format_skor(rel_ins)}</td>
+                                                <td style="padding: 5px 10px; text-align:center;">{format_status_badge(rel_ins)}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 5px 10px;">Satisfaction (Penguasaan & Manajemen Waktu)</td>
+                                                <td style="padding: 5px 10px; text-align:center;">{format_skor(sat_ins)}</td>
+                                                <td style="padding: 5px 10px; text-align:center;">{format_status_badge(sat_ins)}</td>
+                                            </tr>
+                                        </table>
+
+                                        <h4 style="color:#0055A4; margin-bottom: 5px;">4. PEMETAAN AREA KRITIS (IMPORTANCE-PERFORMANCE ANALYSIS)</h4>
+                                        <p style="text-align: justify; margin-top: 0;">{teks_q1}</p>
+
+                                        <h4 style="color:#0055A4; margin-bottom: 5px;">5. SUARA PELANGGAN (KOMENTAR APRESIASI & MASUKAN PER JUDUL PEMBELAJARAN)</h4>
+                                        <p style="text-align: justify; margin-top: 0;">Total terekam <b>{jml_pos} komentar apresiasi</b> dan <b>{jml_neg} komentar masukan/keluhan</b> dari peserta diklat pada periode {bulan_pilih}:</p>
+                                        {komentar_per_judul_html}
+
+                                        <h4 style="color:#0055A4; margin-bottom: 5px;">6. REKOMENDASI TINDAK LANJUT OPERASIONAL</h4>
+                                        <p style="text-align: justify; margin-top: 0;">{teks_rekomendasi}</p>
+                                        
+                                        <br><br>
+                                        <table style="width:100%; text-align:center; border: none;">
+                                            <tr>
+                                                <td style="width:50%; border: none;"></td>
+                                                <td style="width:50%; border: none;">
+                                                    Disusun secara otomatis oleh sistem <b>EVALYTICS</b><br>
+                                                    UPDL Jakarta, {datetime.now().strftime('%d %B %Y')}<br><br><br><br>
+                                                    <b>( _________________________ )</b><br>Tim Pengendalian Mutu & Kinerja
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </body></html>
+                                    """
                                     html_content = f"""
                                     <html><head><meta charset="utf-8"></head><body style="font-family: 'Times New Roman', Times, serif; line-height: 1.5; font-size: 11.5pt;">
                                         <h2 style="text-align:center; color:#003366; margin-bottom: 2px;">LAPORAN EVALUASI MUTU PEMBELAJARAN L1</h2>
