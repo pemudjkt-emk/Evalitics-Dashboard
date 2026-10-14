@@ -1319,6 +1319,19 @@ else:
                     st.markdown("### 📈 Analisis Kinerja UPDL Jakarta")
                     
                     try:
+                        # Fungsi Pembersih Angka (Menghindari 0.00 karena format % atau koma dari Google Sheets)
+                        def robust_float(val):
+                            if pd.isna(val): return 0.0
+                            if isinstance(val, str):
+                                v = val.strip().replace(',', '.')
+                                if '%' in v:
+                                    try: return float(v.replace('%', '')) / 100.0
+                                    except: return 0.0
+                                try: return float(v)
+                                except: return 0.0
+                            try: return float(val)
+                            except: return 0.0
+
                         # 2. FILTER INTERAKTIF
                         st.markdown("#### 🎛 Filter Rentang Kinerja")
                         col_fk1, col_fk2 = st.columns(2)
@@ -1331,7 +1344,7 @@ else:
                             opsi_pic = ["Semua PIC Utama"] + df_looker['PIC Utama'].dropna().unique().tolist()
                             pic_terpilih = st.selectbox("👥 Filter Penanggung Jawab (PIC):", opsi_pic)
                         
-                        # Terapkan Filter
+                        # Terapkan Filter untuk Bulanan
                         df_bulan_ini = df_looker[df_looker['Bulan'] == bulan_terpilih].copy()
                         if pic_terpilih != "Semua PIC Utama":
                             df_bulan_ini = df_bulan_ini[df_bulan_ini['PIC Utama'] == pic_terpilih]
@@ -1341,20 +1354,30 @@ else:
                         # 3. BAGIAN A: GRAFIK NILAI KINERJA OVERALL (KPI CARDS)
                         st.markdown("#### A. Ringkasan Pencapaian Kinerja")
                         
-                        # Pastikan format numerik
-                        df_bulan_ini['Pencapaian Pct'] = pd.to_numeric(df_bulan_ini['Pencapaian Pct'], errors='coerce').fillna(0)
-                        df_bulan_ini['Bobot'] = pd.to_numeric(df_bulan_ini['Bobot'], errors='coerce').fillna(0)
-                        df_bulan_ini['Nilai Kinerja'] = pd.to_numeric(df_bulan_ini['Nilai Kinerja'], errors='coerce').fillna(0)
+                        # Bersihkan format angka agar tidak error/0.00
+                        df_bulan_ini['Pencapaian Pct'] = df_bulan_ini['Pencapaian Pct'].apply(robust_float)
+                        df_bulan_ini['Bobot'] = df_bulan_ini['Bobot'].apply(robust_float)
                         
-                        # --- KALKULASI SKOR BULANAN (CAPPING 110%) ---
+                        # --- 1. KALKULASI SKOR BULANAN (CAPPING 110%) ---
                         df_bulan_ini['Pencapaian_Capped'] = df_bulan_ini['Pencapaian Pct'].clip(upper=1.1)
                         df_bulan_ini['Skor_Bulanan'] = df_bulan_ini['Pencapaian_Capped'] * df_bulan_ini['Bobot']
                         
                         skor_kinerja_bulanan = df_bulan_ini['Skor_Bulanan'].sum()
                         total_bobot_maksimal = df_bulan_ini['Bobot'].sum()
                         
-                        # --- KALKULASI SKOR AKUMULASI SEMESTER ---
-                        skor_kinerja_akumulasi = df_bulan_ini['Nilai Kinerja'].sum()
+                        # --- 2. KALKULASI SKOR AKUMULASI SEMESTER ---
+                        # Mengambil murni dari df_referensi (sheet Kinerja UPDL Jakarta) kolom 'NILAI KINERJA' (Kolom AF)
+                        df_ref_clean = df_referensi.copy()
+                        df_ref_clean['NO'] = df_ref_clean['NO'].apply(robust_float)
+                        df_ref_clean['NILAI KINERJA'] = df_ref_clean['NILAI KINERJA'].apply(robust_float)
+                        
+                        # Sesuaikan dengan filter PIC jika Manager memilih PIC tertentu
+                        if pic_terpilih != "Semua PIC Utama":
+                            df_ref_clean = df_ref_clean[df_ref_clean['PIC UTAMA'].astype(str).str.strip() == pic_terpilih]
+                        
+                        # Hanya merangkum indikator dengan nomor 1 sampai 20 (mengabaikan baris Total di ujung file)
+                        df_ref_clean = df_ref_clean[(df_ref_clean['NO'] > 0) & (df_ref_clean['NO'] <= 20)]
+                        skor_kinerja_akumulasi = df_ref_clean['NILAI KINERJA'].sum()
                         
                         # Hitung persentase untuk penentuan warna status bulanan
                         persentase_pencapaian = (skor_kinerja_bulanan / total_bobot_maksimal * 100) if total_bobot_maksimal > 0 else 0
@@ -1382,7 +1405,7 @@ else:
                         with cols_kinerja[0]: 
                             st.markdown(f'<div class="kpi-card" style="border-left-color: {warna_border};"><div class="kpi-title">🏆 Skor Kinerja<br>Bulanan</div><div class="kpi-value" style="color:{warna_teks};">{skor_kinerja_bulanan:.2f} / {total_bobot_maksimal:.0f}</div><div style="font-size:11px; color:#64748b; margin-top:5px;">*Capping Max 110%</div></div>', unsafe_allow_html=True)
                         with cols_kinerja[1]: 
-                            st.markdown(f'<div class="kpi-card" style="border-left-color: {warna_border};"><div class="kpi-title">📈 Skor Akumulasi<br>Semester</div><div class="kpi-value" style="color:{warna_teks};">{skor_kinerja_akumulasi:.2f}</div><div style="font-size:12px; font-weight:bold; color:{warna_teks}; margin-top:5px;">Status: {status_overall}</div></div>', unsafe_allow_html=True)
+                            st.markdown(f'<div class="kpi-card" style="border-left-color: {warna_border};"><div class="kpi-title">📈 Skor Akumulasi<br>Semester</div><div class="kpi-value" style="color:{warna_teks};">{skor_kinerja_akumulasi:.2f}</div><div style="font-size:12px; font-weight:bold; color:{warna_teks}; margin-top:5px;">Status Bulanan: {status_overall}</div></div>', unsafe_allow_html=True)
                         with cols_kinerja[2]: 
                             st.markdown(f'<div class="kpi-card card-warn"><div class="kpi-title">🚨 Indikator<br>Status Bahaya</div><div class="kpi-value">{jml_bahaya}</div></div>', unsafe_allow_html=True)
                         with cols_kinerja[3]: 
@@ -1400,6 +1423,8 @@ else:
                             if pic_terpilih != "Semua PIC Utama":
                                 df_traj = df_traj[df_traj['PIC Utama'] == pic_terpilih]
                             
+                            # Bersihkan Pencapaian Pct di df_traj agar grafik terbaca
+                            df_traj['Pencapaian Pct'] = df_traj['Pencapaian Pct'].apply(robust_float)
                             df_traj = df_traj[df_traj['Status'].astype(str).str.strip().str.lower() != 'belum ada data']
                             
                             if not df_traj.empty:
@@ -1464,8 +1489,8 @@ else:
                                 indikator = row['Indikator Kinerja']
                                 sub_indikator = row['Sub Indikator']
                                 pic = row['PIC Utama']
-                                realisasi = float(row['Realisasi']) if pd.notna(row['Realisasi']) else 0.0
-                                target = float(row['Target']) if pd.notna(row['Target']) else 0.0
+                                realisasi = robust_float(row['Realisasi'])
+                                target = robust_float(row['Target'])
                                 
                                 action_plan = "[Belum ada rencana tindak lanjut yang ditulis di Master Data]"
                                 kendala = "[Belum ada kendala yang diidentifikasi]"
