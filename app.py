@@ -1341,11 +1341,23 @@ else:
                         # 3. BAGIAN A: GRAFIK NILAI KINERJA OVERALL (KPI CARDS)
                         st.markdown("#### A. Ringkasan Pencapaian Kinerja")
                         
-                        total_kinerja = pd.to_numeric(df_bulan_ini['Nilai Kinerja'], errors='coerce').sum()
-                        total_bobot_maksimal = pd.to_numeric(df_bulan_ini['Bobot'], errors='coerce').sum() 
+                        # Pastikan format numerik
+                        df_bulan_ini['Pencapaian Pct'] = pd.to_numeric(df_bulan_ini['Pencapaian Pct'], errors='coerce').fillna(0)
+                        df_bulan_ini['Bobot'] = pd.to_numeric(df_bulan_ini['Bobot'], errors='coerce').fillna(0)
+                        df_bulan_ini['Nilai Kinerja'] = pd.to_numeric(df_bulan_ini['Nilai Kinerja'], errors='coerce').fillna(0)
                         
-                        # Hitung persentase kumulatif
-                        persentase_pencapaian = (total_kinerja / total_bobot_maksimal * 100) if total_bobot_maksimal > 0 else 0
+                        # --- KALKULASI SKOR BULANAN (CAPPING 110%) ---
+                        df_bulan_ini['Pencapaian_Capped'] = df_bulan_ini['Pencapaian Pct'].clip(upper=1.1)
+                        df_bulan_ini['Skor_Bulanan'] = df_bulan_ini['Pencapaian_Capped'] * df_bulan_ini['Bobot']
+                        
+                        skor_kinerja_bulanan = df_bulan_ini['Skor_Bulanan'].sum()
+                        total_bobot_maksimal = df_bulan_ini['Bobot'].sum()
+                        
+                        # --- KALKULASI SKOR AKUMULASI SEMESTER ---
+                        skor_kinerja_akumulasi = df_bulan_ini['Nilai Kinerja'].sum()
+                        
+                        # Hitung persentase untuk penentuan warna status bulanan
+                        persentase_pencapaian = (skor_kinerja_bulanan / total_bobot_maksimal * 100) if total_bobot_maksimal > 0 else 0
                         
                         # Tentukan Status Overall
                         if persentase_pencapaian > 100:
@@ -1368,9 +1380,9 @@ else:
                         
                         cols_kinerja = st.columns(4)
                         with cols_kinerja[0]: 
-                            st.markdown(f'<div class="kpi-card" style="border-left-color: {warna_border};"><div class="kpi-title">🏆 Skor Kinerja<br>Akumulasi</div><div class="kpi-value" style="color:{warna_teks};">{total_kinerja:.2f} / {total_bobot_maksimal:.0f}</div></div>', unsafe_allow_html=True)
+                            st.markdown(f'<div class="kpi-card" style="border-left-color: {warna_border};"><div class="kpi-title">🏆 Skor Kinerja<br>Bulanan</div><div class="kpi-value" style="color:{warna_teks};">{skor_kinerja_bulanan:.2f} / {total_bobot_maksimal:.0f}</div><div style="font-size:11px; color:#64748b; margin-top:5px;">*Capping Max 110%</div></div>', unsafe_allow_html=True)
                         with cols_kinerja[1]: 
-                            st.markdown(f'<div class="kpi-card" style="border-left-color: {warna_border};"><div class="kpi-title">📊 Persentase<br>Pencapaian</div><div class="kpi-value" style="color:{warna_teks};">{persentase_pencapaian:.1f}%</div><div style="font-size:12px; font-weight:bold; color:{warna_teks}; margin-top:5px;">Status: {status_overall}</div></div>', unsafe_allow_html=True)
+                            st.markdown(f'<div class="kpi-card" style="border-left-color: {warna_border};"><div class="kpi-title">📈 Skor Akumulasi<br>Semester</div><div class="kpi-value" style="color:{warna_teks};">{skor_kinerja_akumulasi:.2f}</div><div style="font-size:12px; font-weight:bold; color:{warna_teks}; margin-top:5px;">Status: {status_overall}</div></div>', unsafe_allow_html=True)
                         with cols_kinerja[2]: 
                             st.markdown(f'<div class="kpi-card card-warn"><div class="kpi-title">🚨 Indikator<br>Status Bahaya</div><div class="kpi-value">{jml_bahaya}</div></div>', unsafe_allow_html=True)
                         with cols_kinerja[3]: 
