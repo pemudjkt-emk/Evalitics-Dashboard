@@ -1359,7 +1359,6 @@ else:
                         st.markdown("---")
 
                         # 3. MENGAMBIL TEPAT 20 INDIKATOR DARI SHEET KINERJA
-                        # Pastikan kolom NO dibaca sebagai angka dan mengunci baris 1-20
                         df_referensi['NO_clean'] = pd.to_numeric(df_referensi['NO'], errors='coerce')
                         df_20 = df_referensi[(df_referensi['NO_clean'] >= 1) & (df_referensi['NO_clean'] <= 20)].copy()
                         
@@ -1379,7 +1378,6 @@ else:
                         df_20['Skor_Akumulasi'] = df_20['NILAI KINERJA'].apply(robust_float)
 
                         # --- C. AMBIL STATUS LANGSUNG DARI KOLOM EXCEL (Status) ---
-                        # Memaksa string selain target/tercapai/bahaya menjadi 'Belum Ada Data'
                         def clean_status(val):
                             v = str(val).strip()
                             if v in ['nan', 'None', '', '#DIV/0!']: return 'Belum Ada Data'
@@ -1397,7 +1395,6 @@ else:
                         total_bobot_maksimal = df_20['Bobot_K'].sum()
                         skor_kinerja_akumulasi = df_20['Skor_Akumulasi'].sum()
 
-                        # Persentase untuk warna status bulan ini
                         persentase_pencapaian = (skor_kinerja_bulanan / total_bobot_maksimal * 100) if total_bobot_maksimal > 0 else 0
                         
                         if persentase_pencapaian >= 100:
@@ -1416,7 +1413,7 @@ else:
                         with cols_kinerja[0]: 
                             st.markdown(f'<div class="kpi-card" style="border-left-color: {warna_border};"><div class="kpi-title">🏆 Skor Kinerja<br>Bulanan</div><div class="kpi-value" style="color:{warna_teks};">{skor_kinerja_bulanan:.2f} <span style="font-size:16px;">/ {total_bobot_maksimal:.0f}</span></div><div style="font-size:11px; color:#64748b; margin-top:5px;">*Capping Max 110%</div></div>', unsafe_allow_html=True)
                         with cols_kinerja[1]: 
-                            st.markdown(f'<div class="kpi-card" style="border-left-color: {warna_border};"><div class="kpi-title">📈 Skor Akumulasi<br>Semester</div><div class="kpi-value" style="color:{warna_teks};">{skor_kinerja_akumulasi:.2f}</div><div style="font-size:12px; font-weight:bold; color:{warna_teks}; margin-top:5px;">Status Bulanan: {status_overall}</div></div>', unsafe_allow_html=True)
+                            st.markdown(f'<div class="kpi-card" style="border-left-color: {warna_border};"><div class="kpi-title">📈 Skor Akumulasi<br>Semester (Kolom AF)</div><div class="kpi-value" style="color:{warna_teks};">{skor_kinerja_akumulasi:.2f}</div><div style="font-size:12px; font-weight:bold; color:{warna_teks}; margin-top:5px;">Status Bulanan: {status_overall}</div></div>', unsafe_allow_html=True)
                         with cols_kinerja[2]: 
                             st.markdown(f'<div class="kpi-card card-warn"><div class="kpi-title">🚨 Indikator<br>Status Bahaya</div><div class="kpi-value">{jml_bahaya}</div></div>', unsafe_allow_html=True)
                         with cols_kinerja[3]: 
@@ -1428,40 +1425,75 @@ else:
                         col_grafik1, col_grafik2 = st.columns([6, 4])
                         
                         with col_grafik1:
-                            st.markdown("#### B. Trajectory Kinerja per Indikator")
+                            st.markdown("#### B. Analisis Tren Kinerja Berjalan")
                             
-                            # Membangun dataframe longitudinal secara otomatis dari df_referensi
+                            # Membangun dataframe longitudinal kaya fitur dari df_referensi
                             df_traj_list = []
                             for m_name, cols in month_col_map.items():
                                 t_c, r_c, p_c = cols
                                 df_temp = df_referensi[(df_referensi['NO_clean'] >= 1) & (df_referensi['NO_clean'] <= 20)].copy()
                                 df_temp['Bulan'] = m_name
+                                df_temp['Target'] = df_temp[t_c].apply(robust_float)
+                                df_temp['Realisasi'] = df_temp[r_c].apply(robust_float)
                                 df_temp['Pencapaian Pct'] = df_temp[p_c].apply(robust_float)
-                                # Status dinamis khusus chart trajectory karena ini merekam histori per bulan
+                                df_temp['Bobot'] = df_temp['BOBOT '].apply(robust_float)
+                                
+                                # Kalkulasi skor bulanan untuk data longitudinal (Capping 110%)
+                                df_temp['Capped'] = df_temp['Pencapaian Pct'].clip(upper=1.1)
+                                df_temp['Skor_Bln'] = df_temp['Capped'] * df_temp['Bobot']
+                                
+                                # Status dinamis spesifik untuk titik chart bulan ini
                                 df_temp['Status_Traj'] = df_temp.apply(lambda r: 'Belum Ada Data' if pd.isna(r[r_c]) or str(r[r_c]).strip() in ['', '-', 'nan'] else ('Beyond Target' if robust_float(r[p_c])>1.0 else ('Tercapai' if robust_float(r[p_c])==1.0 else 'Bahaya')), axis=1)
                                 df_temp['Indikator Kinerja'] = df_temp['INDIKATOR KINERJA']
                                 df_temp['PIC Utama'] = df_temp['PIC UTAMA']
-                                df_traj_list.append(df_temp[['Bulan', 'Indikator Kinerja', 'PIC Utama', 'Pencapaian Pct', 'Status_Traj']])
+                                df_traj_list.append(df_temp[['Bulan', 'Indikator Kinerja', 'PIC Utama', 'Target', 'Realisasi', 'Pencapaian Pct', 'Skor_Bln', 'Status_Traj']])
 
                             df_traj = pd.concat(df_traj_list, ignore_index=True)
                             
                             if pic_terpilih != "Semua PIC Utama":
                                 df_traj = df_traj[df_traj['PIC Utama'] == pic_terpilih]
-                                
-                            df_traj_plot = df_traj[df_traj['Status_Traj'] != 'Belum Ada Data']
+
+                            # 1. UI Pemilih Mode Visualisasi (Makro vs Mikro)
+                            jenis_tren = st.radio("Pilih Sudut Pandang Tren:", ["📈 Makro (Skor Kinerja Keseluruhan)", "🔍 Mikro (Deep-Dive per Indikator)"], horizontal=True, label_visibility="collapsed")
                             
-                            if not df_traj_plot.empty:
+                            if "Makro" in jenis_tren:
+                                # Agregasi skor total per bulan
+                                df_makro = df_traj.groupby('Bulan', sort=False)['Skor_Bln'].sum().reset_index()
                                 fig_traj = px.line(
-                                    df_traj_plot, 
-                                    x='Bulan', y='Pencapaian Pct', color='Indikator Kinerja',
-                                    markers=True, hover_data=['Status_Traj']
+                                    df_makro, x='Bulan', y='Skor_Bln', 
+                                    markers=True, text='Skor_Bln', title="Tren Skor Kinerja Total (Skala 0-100)"
                                 )
-                                fig_traj.update_traces(line=dict(width=3), marker=dict(size=8, line=dict(width=1, color='white')))
-                                fig_traj.add_hline(y=1.0, line_dash="dash", line_color="#ef4444", annotation_text="Batas Target Minimal (1.0)", annotation_position="top left")
-                                fig_traj.update_layout(height=450, yaxis_title="Persentase Pencapaian (1.0 = 100%)", xaxis_title="", legend=dict(orientation="h", yanchor="bottom", y=-0.5, xanchor="center", x=0.5), margin=dict(t=10,b=10,l=10,r=10))
+                                fig_traj.update_traces(
+                                    texttemplate='%{text:.2f}', textposition='top center', 
+                                    line=dict(width=4, color='#0055A4'), marker=dict(size=10, color='#0055A4')
+                                )
+                                fig_traj.update_layout(height=400, yaxis_title="Skor Kumulatif", xaxis_title="", margin=dict(t=40,b=10,l=10,r=10))
                                 st.plotly_chart(fig_traj, use_container_width=True)
+                                
                             else:
-                                st.info("Data belum tersedia untuk membentuk trajectory grafik.")
+                                # Mode Mikro (Pilih 1 Indikator)
+                                indikator_pilih = st.selectbox("🎯 Pilih Indikator Spesifik:", df_traj['Indikator Kinerja'].unique())
+                                df_mikro = df_traj[df_traj['Indikator Kinerja'] == indikator_pilih]
+                                df_mikro = df_mikro[df_mikro['Status_Traj'] != 'Belum Ada Data']
+                                
+                                if not df_mikro.empty:
+                                    fig_traj = px.line(
+                                        df_mikro, x='Bulan', y='Pencapaian Pct', 
+                                        markers=True, title=f"Kinerja: {indikator_pilih}",
+                                        hover_data={'Target': ':.2f', 'Realisasi': ':.2f', 'Status_Traj': True, 'Pencapaian Pct': ':.2f'}
+                                    )
+                                    fig_traj.update_traces(line=dict(width=4, color='#f97316'), marker=dict(size=10, line=dict(width=2, color='white')))
+                                    
+                                    # Background Banding (Zona Aman & Bahaya)
+                                    max_y = max(1.2, df_mikro['Pencapaian Pct'].max() + 0.1)
+                                    fig_traj.add_hrect(y0=1.0, y1=max_y, line_width=0, fillcolor="#22c55e", opacity=0.1, annotation_text="Area Aman (≥ 100%)", annotation_position="top left")
+                                    fig_traj.add_hrect(y0=0.0, y1=1.0, line_width=0, fillcolor="#ef4444", opacity=0.1, annotation_text="Area Bahaya (< 100%)", annotation_position="bottom left")
+                                    fig_traj.add_hline(y=1.0, line_dash="dash", line_color="#ef4444")
+                                    
+                                    fig_traj.update_layout(height=400, yaxis_title="Persentase Pencapaian (1.0 = 100%)", xaxis_title="", margin=dict(t=40,b=10,l=10,r=10))
+                                    st.plotly_chart(fig_traj, use_container_width=True)
+                                else:
+                                    st.info("Data bulanan belum tersedia untuk indikator ini.")
                                 
                         with col_grafik2:
                             st.markdown(f"#### Distribusi Status Indikator (Total 20)")
