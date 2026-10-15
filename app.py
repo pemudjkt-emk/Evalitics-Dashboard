@@ -1588,7 +1588,7 @@ else:
                                 textposition='inside', 
                                 textinfo='value+label',
                                 textfont=dict(color='white', weight='bold'),
-                                pull=[0.05] * len(df_pie_status) # Jarak renggang 5%
+                                pull=[0.04] * len(df_pie_status) # Jarak renggang 5%
                             )
                             
                             fig_pie_status.update_layout(
