@@ -1443,7 +1443,7 @@ else:
                                 
                                 df_temp['Status_Traj'] = df_temp.apply(lambda r: 'Belum Ada Data' if pd.isna(r[r_c]) or str(r[r_c]).strip() in ['', '-', 'nan'] else ('Beyond Target' if robust_float(r[p_c])>1.0 else ('Tercapai' if robust_float(r[p_c])==1.0 else 'Bahaya')), axis=1)
                                 df_temp['Indikator Kinerja'] = df_temp['INDIKATOR KINERJA']
-                                df_temp['Sub Indikator Kinerja'] = df_temp['SUB INDIKATOR KINERJA'] # Penambahan Sub Indikator
+                                df_temp['Sub Indikator Kinerja'] = df_temp['SUB INDIKATOR KINERJA']
                                 df_temp['PIC Utama'] = df_temp['PIC UTAMA']
                                 df_traj_list.append(df_temp[['Bulan', 'Indikator Kinerja', 'Sub Indikator Kinerja', 'PIC Utama', 'Target', 'Realisasi', 'Pencapaian Pct', 'Skor_Bln', 'Status_Traj']])
 
@@ -1468,7 +1468,16 @@ else:
                                 fig_traj.update_layout(
                                     height=400, yaxis_title="Skor Kumulatif", xaxis_title="", 
                                     margin=dict(t=40,b=10,l=10,r=10),
-                                    xaxis=dict(categoryorder='array', categoryarray=list_bulan)
+                                    plot_bgcolor='white',
+                                    xaxis=dict(
+                                        categoryorder='array', categoryarray=list_bulan,
+                                        showgrid=True, gridcolor='rgba(0,0,0,0.04)',
+                                        tickfont=dict(color='#0f172a', size=13, weight='bold')
+                                    ),
+                                    yaxis=dict(
+                                        showgrid=True, gridcolor='rgba(0,0,0,0.04)',
+                                        tickfont=dict(color='#0f172a', size=13, weight='bold')
+                                    )
                                 )
                                 st.plotly_chart(fig_traj, use_container_width=True)
                                 
@@ -1511,13 +1520,26 @@ else:
                                 fig_traj.add_hrect(y0=0.0, y1=1.0, line_width=0, fillcolor="#FF3366", opacity=0.08, annotation_text="🚨 Area Bahaya (< 100%)", annotation_position="bottom left", annotation_font=dict(color="#E11D48", size=13))
                                 fig_traj.add_hline(y=1.0, line_dash="dash", line_color="#E11D48", line_width=2)
                                 
+                                # Update sumbu X, sumbu Y (Persen + Bold), dan gridlines tersamar
                                 fig_traj.update_layout(
                                     height=400, 
-                                    yaxis_title="Persentase Pencapaian (1.0 = 100%)", 
+                                    yaxis_title="Persentase Pencapaian", 
                                     xaxis_title="", 
                                     margin=dict(t=40,b=10,l=10,r=10),
-                                    xaxis=dict(categoryorder='array', categoryarray=list_bulan),
-                                    # Kustomisasi Hoverlabel menjadi Ekstra Besar
+                                    plot_bgcolor='white',
+                                    xaxis=dict(
+                                        categoryorder='array', 
+                                        categoryarray=list_bulan,
+                                        showgrid=True,
+                                        gridcolor='rgba(0,0,0,0.04)',
+                                        tickfont=dict(color='#0f172a', size=13, weight='bold')
+                                    ),
+                                    yaxis=dict(
+                                        tickformat='.0%', # Mengubah angka desimal menjadi persen
+                                        showgrid=True,
+                                        gridcolor='rgba(0,0,0,0.04)',
+                                        tickfont=dict(color='#0f172a', size=13, weight='bold')
+                                    ),
                                     hoverlabel=dict(
                                         bgcolor="white",
                                         font_size=15,
