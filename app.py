@@ -1459,12 +1459,19 @@ else:
                                 df_makro = df_traj.groupby('Bulan', sort=False)['Skor_Bln'].sum().reset_index()
                                 fig_traj = px.line(
                                     df_makro, x='Bulan', y='Skor_Bln', 
-                                    markers=True, text='Skor_Bln', title="Tren Skor Kinerja Total (Skala 0-100)"
+                                    markers=True, title="Tren Skor Kinerja Total (Skala 0-100)"
                                 )
                                 fig_traj.update_traces(
-                                    texttemplate='%{text:.2f}', textposition='top center', 
-                                    line=dict(width=4, color='#0055A4'), marker=dict(size=10, color='#0055A4')
+                                    line=dict(width=4, color='#0055A4'), marker=dict(size=11, line=dict(width=2, color='white')),
+                                    hovertemplate="<br>Bulan: <b>%{x}</b><br>Skor Kumulatif: <b>%{y:.2f}</b><extra></extra>"
                                 )
+                                
+                                # Background Banding (Zona Aman & Bahaya Futuristik untuk Mode Makro)
+                                max_y = max(110, df_makro['Skor_Bln'].max() + 5)
+                                fig_traj.add_hrect(y0=100.0, y1=max_y, line_width=0, fillcolor="#00FA9A", opacity=0.15, annotation_text="✨ Area Aman (≥ 100)", annotation_position="top left", annotation_font=dict(color="#059669", size=13))
+                                fig_traj.add_hrect(y0=0.0, y1=100.0, line_width=0, fillcolor="#FF3366", opacity=0.08, annotation_text="🚨 Area Bahaya (< 100)", annotation_position="bottom left", annotation_font=dict(color="#E11D48", size=13))
+                                fig_traj.add_hline(y=100.0, line_dash="dash", line_color="#E11D48", line_width=2)
+                                
                                 fig_traj.update_layout(
                                     height=400, yaxis_title="Skor Kumulatif", xaxis_title="", 
                                     margin=dict(t=40,b=10,l=10,r=10),
@@ -1477,6 +1484,9 @@ else:
                                     yaxis=dict(
                                         showgrid=True, gridcolor='rgba(0,0,0,0.04)',
                                         tickfont=dict(color='#0f172a', size=13, weight='bold')
+                                    ),
+                                    hoverlabel=dict(
+                                        bgcolor="white", font_size=15, font_family="Arial", bordercolor="#0055A4"
                                     )
                                 )
                                 st.plotly_chart(fig_traj, use_container_width=True)
