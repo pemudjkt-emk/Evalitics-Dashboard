@@ -1459,15 +1459,18 @@ else:
                                 df_makro = df_traj.groupby('Bulan', sort=False)['Skor_Bln'].sum().reset_index()
                                 fig_traj = px.line(
                                     df_makro, x='Bulan', y='Skor_Bln', 
-                                    markers=True, title="Tren Skor Kinerja Total (Skala 0-100)"
+                                    markers=True, text='Skor_Bln', title="Tren Skor Kinerja Total (Skala 0-100)"
                                 )
+                                # Penambahan texttemplate dan format font untuk label data di atas titik
                                 fig_traj.update_traces(
-                                    line=dict(width=4, color='#0055A4'), marker=dict(size=11, line=dict(width=2, color='white')),
+                                    texttemplate='<b>%{text:.2f}</b>', textposition='top center', 
+                                    textfont=dict(size=12, color='#475569', family="Arial"), cliponaxis=False,
+                                    line=dict(width=4, color='#0055A4'), marker=dict(size=10, color='#0055A4'),
                                     hovertemplate="<br>Bulan: <b>%{x}</b><br>Skor Kumulatif: <b>%{y:.2f}</b><extra></extra>"
                                 )
                                 
-                                # Background Banding (Zona Aman & Bahaya Futuristik untuk Mode Makro)
-                                max_y = max(110, df_makro['Skor_Bln'].max() + 5)
+                                # Memberi ruang kosong di atas agar angka tidak terpotong tepi tabel
+                                max_y = max(110, df_makro['Skor_Bln'].max() + 15)
                                 fig_traj.add_hrect(y0=100.0, y1=max_y, line_width=0, fillcolor="#00FA9A", opacity=0.15, annotation_text="✨ Area Aman (≥ 100)", annotation_position="top left", annotation_font=dict(color="#059669", size=13))
                                 fig_traj.add_hrect(y0=0.0, y1=100.0, line_width=0, fillcolor="#FF3366", opacity=0.08, annotation_text="🚨 Area Bahaya (< 100)", annotation_position="bottom left", annotation_font=dict(color="#E11D48", size=13))
                                 fig_traj.add_hline(y=100.0, line_dash="dash", line_color="#E11D48", line_width=2)
@@ -1505,11 +1508,13 @@ else:
                                 
                                 fig_traj = px.line(
                                     df_mikro, x='Bulan', y='Pencapaian Pct', 
-                                    markers=True, title=f"Kinerja: {indikator_pilih}"
+                                    markers=True, text='Pencapaian Pct', title=f"Kinerja: {indikator_pilih}"
                                 )
                                 
-                                # Warna Biru Tua Futuristik & Tooltip Interaktif Besar
+                                # Penambahan angka dalam format persen (.0%) tepat di atas bullet
                                 fig_traj.update_traces(
+                                    texttemplate='<b>%{text:.0%}</b>', textposition='top center',
+                                    textfont=dict(size=12, color='#475569', family="Arial"), cliponaxis=False,
                                     line=dict(width=4, color='#0055A4'), 
                                     marker=dict(size=11, line=dict(width=2, color='white')),
                                     hovertemplate="<br>".join([
@@ -1522,15 +1527,15 @@ else:
                                     customdata=df_mikro[['Target_Str', 'Real_Str', 'Status_Traj']]
                                 )
                                 
-                                # Background Banding (Zona Aman & Bahaya Futuristik)
-                                max_y = max(1.2, df_mikro['Pencapaian Pct'].max(skipna=True) + 0.1)
+                                # Background Banding (Zona Aman & Bahaya) dengan ruang atas dilebarkan
+                                max_y = max(1.2, df_mikro['Pencapaian Pct'].max(skipna=True) + 0.15)
                                 if pd.isna(max_y): max_y = 1.2
                                 
                                 fig_traj.add_hrect(y0=1.0, y1=max_y, line_width=0, fillcolor="#00FA9A", opacity=0.15, annotation_text="✨ Area Aman (≥ 100%)", annotation_position="top left", annotation_font=dict(color="#059669", size=13))
                                 fig_traj.add_hrect(y0=0.0, y1=1.0, line_width=0, fillcolor="#FF3366", opacity=0.08, annotation_text="🚨 Area Bahaya (< 100%)", annotation_position="bottom left", annotation_font=dict(color="#E11D48", size=13))
                                 fig_traj.add_hline(y=1.0, line_dash="dash", line_color="#E11D48", line_width=2)
                                 
-                                # Update sumbu X, sumbu Y (Persen + Bold), dan gridlines tersamar
+                                # Update sumbu X, sumbu Y, dan margin
                                 fig_traj.update_layout(
                                     height=400, 
                                     yaxis_title="Persentase Pencapaian", 
@@ -1545,7 +1550,7 @@ else:
                                         tickfont=dict(color='#0f172a', size=13, weight='bold')
                                     ),
                                     yaxis=dict(
-                                        tickformat='.0%', # Mengubah angka desimal menjadi persen
+                                        tickformat='.0%', # Mengubah angka desimal menjadi persen pada Y axis
                                         showgrid=True,
                                         gridcolor='rgba(0,0,0,0.04)',
                                         tickfont=dict(color='#0f172a', size=13, weight='bold')
