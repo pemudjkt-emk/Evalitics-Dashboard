@@ -1443,8 +1443,9 @@ else:
                                 
                                 df_temp['Status_Traj'] = df_temp.apply(lambda r: 'Belum Ada Data' if pd.isna(r[r_c]) or str(r[r_c]).strip() in ['', '-', 'nan'] else ('Beyond Target' if robust_float(r[p_c])>1.0 else ('Tercapai' if robust_float(r[p_c])==1.0 else 'Bahaya')), axis=1)
                                 df_temp['Indikator Kinerja'] = df_temp['INDIKATOR KINERJA']
+                                df_temp['Sub Indikator Kinerja'] = df_temp['SUB INDIKATOR KINERJA'] # Penambahan Sub Indikator
                                 df_temp['PIC Utama'] = df_temp['PIC UTAMA']
-                                df_traj_list.append(df_temp[['Bulan', 'Indikator Kinerja', 'PIC Utama', 'Target', 'Realisasi', 'Pencapaian Pct', 'Skor_Bln', 'Status_Traj']])
+                                df_traj_list.append(df_temp[['Bulan', 'Indikator Kinerja', 'Sub Indikator Kinerja', 'PIC Utama', 'Target', 'Realisasi', 'Pencapaian Pct', 'Skor_Bln', 'Status_Traj']])
 
                             df_traj = pd.concat(df_traj_list, ignore_index=True)
                             
@@ -1472,12 +1473,11 @@ else:
                                 st.plotly_chart(fig_traj, use_container_width=True)
                                 
                             else:
-                                # Mode Mikro (Pilih 1 Indikator)
-                                indikator_pilih = st.selectbox("🎯 Pilih Indikator Spesifik:", df_traj['Indikator Kinerja'].unique())
-                                df_mikro = df_traj[df_traj['Indikator Kinerja'] == indikator_pilih].copy()
+                                # Mode Mikro (Pilih 1 Sub Indikator secara Spesifik)
+                                indikator_pilih = st.selectbox("🎯 Pilih Indikator Spesifik:", df_traj['Sub Indikator Kinerja'].unique())
+                                df_mikro = df_traj[df_traj['Sub Indikator Kinerja'] == indikator_pilih].copy()
                                 
                                 # Mengatur agar baris yang 'Belum Ada Data' menjadi NaN
-                                # Ini menyebabkan garis berhenti, tetapi sumbu X tetap sampai Desember
                                 df_mikro.loc[df_mikro['Status_Traj'] == 'Belum Ada Data', 'Pencapaian Pct'] = float('nan')
                                 
                                 # Format string aman untuk hover agar jika NaN tampilnya rapi
