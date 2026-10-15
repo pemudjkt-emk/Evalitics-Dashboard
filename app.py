@@ -1573,7 +1573,7 @@ else:
                             color_map_status = {
                                 'Beyond Target': '#FFC000', # Warna Gold
                                 'Tercapai': '#15803d',      # Warna Hijau Lebih Gelap
-                                'Bahaya': '#b91c1c',        # Warna Merah Lebih Gelap
+                                'Bahaya': '#691707',        # Warna Merah Lebih Gelap
                                 'Belum Ada Data': '#cbd5e1'
                             }
                             
