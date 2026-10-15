@@ -1572,7 +1572,7 @@ else:
                             # 3, 4, 5. Pembaruan Palet Warna (Merah Gelap, Gold, Hijau Gelap)
                             color_map_status = {
                                 'Beyond Target': '#FFC000', # Warna Gold
-                                'Tercapai': '#15803d',      # Warna Hijau Lebih Gelap
+                                'Tercapai': '#42BF02',      # Warna Hijau Lebih Gelap
                                 'Bahaya': '#691707',        # Warna Merah Lebih Gelap
                                 'Belum Ada Data': '#cbd5e1'
                             }
