@@ -1569,19 +1569,33 @@ else:
                             df_pie_status = df_20['Status_Final'].value_counts().reset_index()
                             df_pie_status.columns = ['Status', 'Jumlah']
                             
+                            # 3, 4, 5. Pembaruan Palet Warna (Merah Gelap, Gold, Hijau Gelap)
                             color_map_status = {
-                                'Beyond Target': '#22c55e', 
-                                'Tercapai': '#0055A4', 
-                                'Bahaya': '#ef4444', 
+                                'Beyond Target': '#FFC000', # Warna Gold
+                                'Tercapai': '#15803d',      # Warna Hijau Lebih Gelap
+                                'Bahaya': '#b91c1c',        # Warna Merah Lebih Gelap
                                 'Belum Ada Data': '#cbd5e1'
                             }
                             
+                            # 1. Memperkecil lingkaran putih (hole=0.25)
                             fig_pie_status = px.pie(
-                                df_pie_status, values='Jumlah', names='Status', hole=0.5,
+                                df_pie_status, values='Jumlah', names='Status', hole=0.25,
                                 color='Status', color_discrete_map=color_map_status
                             )
-                            fig_pie_status.update_traces(textposition='inside', textinfo='value+label')
-                            fig_pie_status.update_layout(height=450, showlegend=False, margin=dict(t=20,b=20,l=20,r=20))
+                            
+                            # 2. Memberikan jarak pemisah antar kategori menggunakan fitur 'pull'
+                            fig_pie_status.update_traces(
+                                textposition='inside', 
+                                textinfo='value+label',
+                                textfont=dict(color='white', weight='bold'),
+                                pull=[0.05] * len(df_pie_status) # Jarak renggang 5%
+                            )
+                            
+                            fig_pie_status.update_layout(
+                                height=450, 
+                                showlegend=False, 
+                                margin=dict(t=20,b=20,l=20,r=20)
+                            )
                             
                             st.plotly_chart(fig_pie_status, use_container_width=True)
                             st.markdown(f"<div style='text-align:center; font-weight:bold; color:#64748b;'>Total Metrik Teranalisis: {df_pie_status['Jumlah'].sum()} Indikator</div>", unsafe_allow_html=True)
