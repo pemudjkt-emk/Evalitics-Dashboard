@@ -2308,34 +2308,87 @@ else:
                                         komentar_per_judul_html = f"<p><i>Gagal memproses data komentar: {e_k}</i></p>"
 
                                     if q1_items:
-                                        teks_q1 = "Berdasarkan pemetaan <i>Importance-Performance Analysis</i> (IPA), ditemukan indikator strategis yang masuk ke dalam <b>Kuadran 1 (Prioritas Utama)</b>, yaitu memiliki pengaruh korelasi tinggi terhadap kepuasan peserta namun realisasi kinerjanya masih berada di bawah standar TMP PLN (4.50):<ul style='margin-top:5px;'>" + "".join([f"<li><b>{kat}</b></li>" for kat in q1_items]) + "</ul>"
-                                        teks_rekomendasi = "Manajemen UPDL Jakarta bersama PIC KI terkait direkomendasikan untuk <b>segera menyusun Rencana Tindakan Korektif (Corrective Action Plan)</b> dengan memprioritaskan alokasi perbaikan pada indikator Kuadran 1 tersebut di atas guna mendongkrak indeks kepuasan mutu secara efektif pada siklus pembelajaran berikutnya."
-                                    else:
-                                        teks_q1 = "Berdasarkan analisis IPA, <b>tidak ditemukan indikator kritis yang jatuh ke dalam Kuadran 1</b>. Seluruh variabel mutu layanan berada pada tingkat kepuasan yang selaras dengan ekspektasi peserta."
-                                        teks_rekomendasi = "Manajemen direkomendasikan untuk mempertahankan konsistensi mutu layanan (<i>Service Excellence</i>) dan melakukan pemantauan berkala terhadap kestabilan performa sarana maupun instruktur."
+                                        teks_q1 = (
+                                            "Berdasarkan pemetaan <i>Importance-Performance Analysis</i> (IPA), "
+                                            "ditemukan indikator strategis yang masuk ke dalam <b>Kuadran 1 (Prioritas Utama)</b>, "
+                                            "yaitu memiliki pengaruh korelasi tinggi terhadap kepuasan peserta namun realisasi "
+                                            "kinerjanya masih berada di bawah standar TMP PLN (4.50):"
+                                            "<ul style='margin-top:5px;'>" + "".join([f"<li><b>{kat}</b></li>" for kat in q1_items]) + "</ul>"
+                                        )
+                                        
+                                        # Kalimat cadangan (fallback) jika koneksi AI terkendala
+                                        teks_rekomendasi_default = (
+                                            "Manajemen UPDL Jakarta bersama PIC KI terkait direkomendasikan untuk "
+                                            "<b>segera menyusun Rencana Tindakan Korektif (Corrective Action Plan)</b> "
+                                            "dengan memprioritaskan alokasi perbaikan pada indikator Kuadran 1 tersebut di atas "
+                                            "guna mendongkrak indeks kepuasan mutu secara efektif pada siklus pembelajaran berikutnya."
+                                        )
+                                        teks_rekomendasi = teks_rekomendasi_default
 
-                                    narasi_eksekutif_ai = ""
-                                    try:
-                                        prompt_ai = f"""
-                                        Anda adalah Senior Quality Management Specialist di PLN UPDL Jakarta. Buatkan Ringkasan Eksekutif (Executive Summary) formal, berbobot, dan padat (maksimal 2 paragraf) untuk Laporan Mutu Pembelajaran Level 1.
-                                        
-                                        Fakta Data Periode {bulan_pilih}:
-                                        - Total Pelaksanaan: {total_sesi} sesi/pelatihan.
-                                        - Rata-rata Skor L1 Keseluruhan: {rata_l1:.2f} (Standar TMP PLN: 4.50).
-                                        - Capaian Pilar: Instruktur = {skor_instruktur:.2f}, Materi = {skor_materi:.2f}, Sarana In-Class = {skor_sarpras:.2f}, Sarana Digital = {skor_digital:.2f}.
-                                        - Temuan Kuadran 1 (Prioritas Utama): {', '.join(q1_items) if q1_items else 'Tidak ada area kritis di Kuadran 1'}.
-                                        - Suara Pelanggan: {jml_pos} Komentar Apresiasi dan {jml_neg} Komentar Masukan/Keluhan.
-                                        - PIC KI yang bertugas: {teks_pic_ki}.
-                                        
-                                        Pedoman Penulisan:
-                                        1. Paragraf 1: Analisis capaian skor keseluruhan, kepatuhan terhadap standar TMP (4.50), and efektivitas koordinasi dengan PIC KI.
-                                        2. Paragraf 2: Sorotan area kritis Kuadran 1 yang memerlukan intervensi prioritas beserta ringkasan suara pelanggan (komentar masukan).
-                                        3. Gunakan Bahasa Indonesia baku korporat PLN, lugas, preskriptif, tanpa format markdown bintang tebal berlebih.
-                                        """
-                                        ai_resp = model.generate_content(prompt_ai)
-                                        narasi_eksekutif_ai = ai_resp.text.strip().replace('\n', '<br>')
-                                    except Exception as ai_err:
-                                        narasi_eksekutif_ai = f"Pada periode {bulan_pilih}, pelaksanaan evaluasi mutu pembelajaran Level 1 mencatatkan skor rata-rata keseluruhan sebesar {rata_l1:.2f} dari total {total_sesi} sesi pelatihan yang diselenggarakan bersama PIC KI ({teks_pic_ki}). Capaian mutu tercatat pada pilar Instruktur ({skor_instruktur:.2f}), Materi ({skor_materi:.2f}), Sarana In-Class ({skor_sarpras:.2f}), dan Sarana Digital ({skor_digital:.2f}).<br><br>Pemetaan analitik IPA mengidentifikasi fokus perbaikan pada area strategis dengan dukungan {jml_pos} komentar apresiasi dan {jml_neg} komentar masukan sebagai dasar perbaikan berkelanjutan di UPDL Jakarta."
+                                        # --- EKSEKUSI AI ANALYTICS UNTUK ACTION PLAN KUADRAN 1 ---
+                                        if "GEMINI_API_KEY" in st.secrets:
+                                            with st.spinner("🤖 AI Analytics sedang merumuskan Action Plan untuk Kuadran 1 (Prioritas Utama)..."):
+                                                try:
+                                                    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+                                                    raw_models = [
+                                                        m.name for m in genai.list_models() 
+                                                        if 'generateContent' in m.supported_generation_methods
+                                                    ]
+                                                    
+                                                    # Urutan prioritas model aktif
+                                                    active_models = []
+                                                    for p in ['2.5-flash', '2.0-flash', '1.5-flash', 'flash', 'pro']:
+                                                        for rm in raw_models:
+                                                            if p in rm.lower() and rm not in active_models:
+                                                                active_models.append(rm)
+                                                    for rm in raw_models:
+                                                        if rm not in active_models:
+                                                            active_models.append(rm)
+
+                                                    daftar_q1_str = ", ".join(q1_items)
+                                                    prompt_ipa = f"""
+                                                    Bertindaklah sebagai Konsultan Senior Quality Management & Learning Analytics di PT PLN (Persero) Pusdiklat (UPDL Jakarta).
+                                                    Berdasarkan hasil pemetaan Importance-Performance Analysis (IPA) pada tingkat "{level_ipa}", ditemukan variabel mutu pembelajaran yang jatuh ke dalam Kuadran 1 (Prioritas Utama - Importance Tinggi namun Performance di bawah standar TMP 4.50), yaitu:
+                                                    [{daftar_q1_str}]
+
+                                                    Tugas Anda:
+                                                    Susunlah Rencana Tindakan Korektif (Corrective Action Plan) yang taktis, spesifik, dan terukur (metode SMART) bagi Manajemen UPDL dan PIC Penyelenggara (PIC KI) untuk memperbaiki masing-masing indikator di atas pada siklus pembelajaran berikutnya.
+                                                    - Jika terkait Instruktur (INS / Engagement / Relevance / Satisfaction Instruktur): fokus pada briefing pra-mengajar, kalibrasi metode penyampaian interaktif, dan penguasaan studi kasus lapangan.
+                                                    - Jika terkait Materi (MAT): fokus pada pembaruan modul, relevansi materi dengan pekerjaan eksisting peserta, dan kejelasan alur bahan ajar.
+                                                    - Jika terkait Sarana Prasarana / Digital (SP / DS): fokus pada kesiapan infrastruktur kelas, keandalan jaringan/platform digital, dan responsivitas layanan pendukung.
+
+                                                    Aturan Output Wajib:
+                                                    1. Langsung berikan output dalam format HTML: awali dengan 1 kalimat pengantar singkat, lalu diikuti bullet points menggunakan tag <ul><li><b>Nama Indikator / Fokus Strategis:</b> Penjelasan langkah tindak lanjut...</li></ul>.
+                                                    2. JANGAN gunakan blok markdown seperti ```html atau ```.
+                                                    3. Gunakan bahasa korporat PLN yang tegas, preskriptif, dan aplikatif.
+                                                    """
+
+                                                    for m_name in active_models:
+                                                        try:
+                                                            temp_model = genai.GenerativeModel(m_name)
+                                                            resp_ipa = temp_model.generate_content(prompt_ipa)
+                                                            ai_ipa_text = resp_ipa.text.strip()
+                                                            
+                                                            if ai_ipa_text.startswith("```html"):
+                                                                ai_ipa_text = ai_ipa_text[7:-3].strip()
+                                                            elif ai_ipa_text.startswith("```"):
+                                                                ai_ipa_text = ai_ipa_text[3:-3].strip()
+                                                                
+                                                            teks_rekomendasi = ai_ipa_text
+                                                            break
+                                                        except Exception:
+                                                            continue
+                                                except Exception as e_ipa:
+                                                    teks_rekomendasi = f"<p style='color:#ef4444; font-size:12px;'>⚠️ Catatan AI: {e_ipa}</p>" + teks_rekomendasi_default
+                                    else:
+                                        teks_q1 = (
+                                            "Berdasarkan analisis IPA, <b>tidak ditemukan indikator kritis yang jatuh ke dalam Kuadran 1</b>. "
+                                            "Seluruh variabel mutu layanan berada pada tingkat kepuasan yang selaras dengan ekspektasi peserta."
+                                        )
+                                        teks_rekomendasi = (
+                                            "Manajemen direkomendasikan untuk mempertahankan konsistensi mutu layanan (<i>Service Excellence</i>) "
+                                            "dan melakukan pemantauan berkala terhadap kestabilan performa sarana maupun instruktur."
+                                        )
 
                                     # --- FUNGSI PEMBANTU UNTUK BAR CSS DAN BADGE ---
                                     def format_status_badge(skor):
