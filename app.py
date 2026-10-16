@@ -281,8 +281,8 @@ def upload_dokumen_ke_drive(file_bytes, file_name, folder_id):
 def load_gemini_model(): 
     if "GEMINI_API_KEY" in st.secrets: 
         genai.configure(api_key=st.secrets["GEMINI_API_KEY"]) 
-        # Tambahkan -latest atau gunakan 1.5-pro jika flash masih ditolak
-        return genai.GenerativeModel('gemini-1.5-flash-latest') 
+        # Menggunakan nama universal gemini-pro untuk keandalan maksimal
+        return genai.GenerativeModel('gemini-pro') 
     return None
 
 model = load_gemini_model()
@@ -1620,7 +1620,7 @@ else:
                                             genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
                                             
                                             # Rencana A, B, dan C jika API menolak nama model tertentu
-                                            models_to_try = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.0-pro']
+                                            models_to_try = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro', 'models/gemini-pro']
                                             berhasil = False
                                             pesan_error = ""
                                             
