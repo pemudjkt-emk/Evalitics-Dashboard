@@ -1476,8 +1476,7 @@ else:
                                 
                                 fig_traj.update_layout(
                                     height=400, yaxis_title="Skor Kumulatif", xaxis_title="", 
-                                    margin=dict(t=40,b=10,l=10,r=10),
-                                    plot_bgcolor='white',
+                                    margin=dict(t=40,b=10,l=10,r=10), plot_bgcolor='white',
                                     xaxis=dict(
                                         categoryorder='array', categoryarray=list_bulan,
                                         showgrid=True, gridcolor='rgba(0,0,0,0.04)',
@@ -1487,9 +1486,7 @@ else:
                                         showgrid=True, gridcolor='rgba(0,0,0,0.04)',
                                         tickfont=dict(color='#0f172a', size=15, weight='bold')
                                     ),
-                                    hoverlabel=dict(
-                                        bgcolor="white", font_size=16, font_family="Arial", bordercolor="#0055A4"
-                                    )
+                                    hoverlabel=dict(bgcolor="white", font_size=16, font_family="Arial", bordercolor="#0055A4")
                                 )
                                 st.plotly_chart(fig_traj, use_container_width=True)
                                 
@@ -1574,7 +1571,7 @@ else:
                         st.markdown("---")
                         
                         # ==============================================================
-                        # --- SMART NARRATIVE (PERFORMANCE DIALOGUE) DENGAN AI & GAP ---
+                        # --- SMART NARRATIVE (PERFORMANCE DIALOGUE) DENGAN SISTEM FALLBACK AI ---
                         # ==============================================================
                         st.markdown("<h3 style='font-size: 22px; color: #0f172a;'>C. Smart Narrative (Performance Dialogue Area)</h3>", unsafe_allow_html=True)
                         st.write("Area ini mendeteksi metrik yang berada dalam zona bahaya untuk segera dilakukan dialog kinerja.")
@@ -1584,7 +1581,6 @@ else:
                         if not df_bahaya.empty:
                             st.error(f"⚠️ Ditemukan **{len(df_bahaya)}** sub-indikator kritis yang memerlukan **Action Plan** segera berdasarkan evaluasi status terbaru.")
                             
-                            # Menambahkan spinner karena AI butuh 2-4 detik untuk men-generate narasi
                             with st.spinner("🤖 AI sedang merumuskan rekomendasi Action Plan cerdas..."):
                                 for idx, row in df_bahaya.iterrows():
                                     sub_indikator = row['SUB INDIKATOR KINERJA']
@@ -1616,34 +1612,50 @@ else:
                                     if action_plan_raw in ["", "nan", "None"]: action_plan_raw = "Belum ada rencana tindak lanjut di Master Data"
                                     if kendala in ["", "nan", "None"]: kendala = "Belum ada kendala yang diidentifikasi"
                                     
-                                    # --- EKSEKUSI PROMPT GEMINI AI UNTUK SMART ACTION PLAN ---
+                                    # --- EKSEKUSI PROMPT GEMINI AI (DENGAN FALLBACK) ---
                                     action_plan_smart = action_plan_raw
                                     
-                                    if action_plan_raw != "Belum ada rencana tindak lanjut di Master Data":
-                                        if model is not None:
-                                            try:
-                                                prompt_dialog = f"""
-                                                Bertindaklah sebagai Konsultan Manajemen Kinerja di PLN.
-                                                Tugas Anda adalah mengembangkan draft kalimat Action Plan singkat ini: "{action_plan_raw}" 
-                                                menjadi 3 poin langkah strategis manajerial (metode SMART) untuk mengatasi kendala "{kendala}" 
-                                                pada metrik "{sub_indikator}".
-                                                
-                                                Aturan Wajib:
-                                                - Gunakan format HTML list (<ul><li>...</li></ul>) secara langsung.
-                                                - JANGAN gunakan format markdown block (seperti ```html).
-                                                - Gunakan bahasa profesional, tajam, preskriptif, dan aplikatif.
-                                                """
-                                                resp_ai = model.generate_content(prompt_dialog)
-                                                ai_text = resp_ai.text.strip()
-                                                if ai_text.startswith("```html"): ai_text = ai_text[7:-3].strip()
-                                                elif ai_text.startswith("```"): ai_text = ai_text[3:-3].strip()
-                                                action_plan_smart = ai_text
-                                                
-                                            except Exception as e:
-                                                # Jika API Error, akan muncul peringatan merah sebelum teks asli
-                                                action_plan_smart = f"<p style='color:#ef4444; font-weight:bold;'>⚠️ Gagal memanggil AI: {e}</p><p>{action_plan_raw}</p>"
+                                    if action_plan_raw != "Belum ada rencana tindak lanjut di Master Data" and action_plan_raw != "":
+                                        if "GEMINI_API_KEY" in st.secrets:
+                                            genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+                                            
+                                            # Rencana A, B, dan C jika API menolak nama model tertentu
+                                            models_to_try = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.0-pro']
+                                            berhasil = False
+                                            pesan_error = ""
+                                            
+                                            prompt_dialog = f"""
+                                            Bertindaklah sebagai Konsultan Manajemen Kinerja di PLN.
+                                            Tugas Anda adalah mengembangkan draft kalimat Action Plan singkat ini: "{action_plan_raw}" 
+                                            menjadi 3 poin langkah strategis manajerial (metode SMART) untuk mengatasi kendala "{kendala}" 
+                                            pada metrik "{sub_indikator}".
+                                            
+                                            Aturan Wajib:
+                                            - Gunakan format HTML list (<ul><li>...</li></ul>) secara langsung.
+                                            - JANGAN gunakan format markdown block (seperti ```html).
+                                            - Gunakan bahasa profesional, tajam, preskriptif, dan aplikatif.
+                                            """
+                                            
+                                            for m_name in models_to_try:
+                                                try:
+                                                    temp_model = genai.GenerativeModel(m_name)
+                                                    resp_ai = temp_model.generate_content(prompt_dialog)
+                                                    ai_text = resp_ai.text.strip()
+                                                    
+                                                    if ai_text.startswith("```html"): ai_text = ai_text[7:-3].strip()
+                                                    elif ai_text.startswith("```"): ai_text = ai_text[3:-3].strip()
+                                                    
+                                                    action_plan_smart = ai_text
+                                                    berhasil = True
+                                                    break # Sukses! Langsung keluar dari loop percobaan
+                                                except Exception as e:
+                                                    pesan_error = str(e)
+                                                    continue # Jika error (404/400), coba nama model berikutnya
+                                            
+                                            if not berhasil:
+                                                # Menampilkan pesan error asli jika ketiga model tetap gagal
+                                                action_plan_smart = f"<p style='color:#ef4444; font-weight:bold;'>⚠️ AI Error: {pesan_error}</p><p>{action_plan_raw}</p>"
                                         else:
-                                            # Jika API Key tidak ada di Streamlit Secrets
                                             action_plan_smart = f"<p style='color:#f59e0b; font-weight:bold;'>⚠️ API Key Gemini belum dikonfigurasi di Streamlit Secrets.</p><p>{action_plan_raw}</p>"
                                     else:
                                         action_plan_smart = f"<p>{action_plan_raw}</p>"
