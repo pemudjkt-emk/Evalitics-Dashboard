@@ -1617,27 +1617,33 @@ else:
                                     
                                     # --- EKSEKUSI PROMPT GEMINI AI UNTUK SMART ACTION PLAN ---
                                     action_plan_smart = action_plan_raw
-                                    if model is not None and action_plan_raw != "Belum ada rencana tindak lanjut di Master Data":
-                                        try:
-                                            prompt_dialog = f"""
-                                            Bertindaklah sebagai Konsultan Manajemen Kinerja di PLN.
-                                            Tugas Anda adalah mengembangkan draft kalimat Action Plan singkat ini: "{action_plan_raw}" 
-                                            menjadi 3 poin langkah strategis manajerial (metode SMART) untuk mengatasi kendala "{kendala}" 
-                                            pada metrik "{sub_indikator}".
-                                            
-                                            Aturan Wajib:
-                                            - Gunakan format HTML list (<ul><li>...</li></ul>) secara langsung.
-                                            - JANGAN gunakan format markdown block (seperti ```html).
-                                            - Gunakan bahasa profesional, tajam, preskriptif, dan aplikatif.
-                                            """
-                                            resp_ai = model.generate_content(prompt_dialog)
-                                            ai_text = resp_ai.text.strip()
-                                            # Pembersihan jika AI bandel mengembalikan markdown block
-                                            if ai_text.startswith("```html"): ai_text = ai_text[7:-3].strip()
-                                            elif ai_text.startswith("```"): ai_text = ai_text[3:-3].strip()
-                                            action_plan_smart = ai_text
-                                        except Exception as e:
-                                            action_plan_smart = f"<p>{action_plan_raw}</p>"
+                                    
+                                    if action_plan_raw != "Belum ada rencana tindak lanjut di Master Data":
+                                        if model is not None:
+                                            try:
+                                                prompt_dialog = f"""
+                                                Bertindaklah sebagai Konsultan Manajemen Kinerja di PLN.
+                                                Tugas Anda adalah mengembangkan draft kalimat Action Plan singkat ini: "{action_plan_raw}" 
+                                                menjadi 3 poin langkah strategis manajerial (metode SMART) untuk mengatasi kendala "{kendala}" 
+                                                pada metrik "{sub_indikator}".
+                                                
+                                                Aturan Wajib:
+                                                - Gunakan format HTML list (<ul><li>...</li></ul>) secara langsung.
+                                                - JANGAN gunakan format markdown block (seperti ```html).
+                                                - Gunakan bahasa profesional, tajam, preskriptif, dan aplikatif.
+                                                """
+                                                resp_ai = model.generate_content(prompt_dialog)
+                                                ai_text = resp_ai.text.strip()
+                                                if ai_text.startswith("```html"): ai_text = ai_text[7:-3].strip()
+                                                elif ai_text.startswith("```"): ai_text = ai_text[3:-3].strip()
+                                                action_plan_smart = ai_text
+                                                
+                                            except Exception as e:
+                                                # Jika API Error, akan muncul peringatan merah sebelum teks asli
+                                                action_plan_smart = f"<p style='color:#ef4444; font-weight:bold;'>⚠️ Gagal memanggil AI: {e}</p><p>{action_plan_raw}</p>"
+                                        else:
+                                            # Jika API Key tidak ada di Streamlit Secrets
+                                            action_plan_smart = f"<p style='color:#f59e0b; font-weight:bold;'>⚠️ API Key Gemini belum dikonfigurasi di Streamlit Secrets.</p><p>{action_plan_raw}</p>"
                                     else:
                                         action_plan_smart = f"<p>{action_plan_raw}</p>"
                                             
