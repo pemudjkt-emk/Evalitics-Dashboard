@@ -1464,14 +1464,14 @@ else:
                                 # Penambahan texttemplate dan format font untuk label data di atas titik
                                 fig_traj.update_traces(
                                     texttemplate='<b>%{text:.2f}</b>', textposition='top center', 
-                                    textfont=dict(size=12, color='#475569', family="Arial"), cliponaxis=False,
+                                    textfont=dict(size=14, color='#475569', family="Arial"), cliponaxis=False,
                                     line=dict(width=4, color='#0055A4'), marker=dict(size=10, color='#0055A4'),
                                     hovertemplate="<br>Bulan: <b>%{x}</b><br>Skor Kumulatif: <b>%{y:.2f}</b><extra></extra>"
                                 )
                                 
                                 # Memberi ruang kosong di atas agar angka tidak terpotong tepi tabel
                                 max_y = max(110, df_makro['Skor_Bln'].max() + 15)
-                                fig_traj.add_hrect(y0=100.0, y1=max_y, line_width=0, fillcolor="#00FA9A", opacity=0.15, annotation_text="✨ Area Aman (≥ 100)", annotation_position="top left", annotation_font=dict(color="#059669", size=13))
+                                fig_traj.add_hrect(y0=100.0, y1=max_y, line_width=0, fillcolor="#00FA9A", opacity=0.15, annotation_text="✨ Area Aman (≥ 100)", annotation_position="top left", annotation_font=dict(color="#059669", size=15))
                                 fig_traj.add_hrect(y0=0.0, y1=100.0, line_width=0, fillcolor="#FF3366", opacity=0.08, annotation_text="🚨 Area Bahaya (< 100)", annotation_position="bottom left", annotation_font=dict(color="#E11D48", size=13))
                                 fig_traj.add_hline(y=100.0, line_dash="dash", line_color="#E11D48", line_width=2)
                                 
