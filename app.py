@@ -1312,7 +1312,7 @@ else:
                     else:
                         st.warning("⚠️ Tidak ada data. Sesuaikan filter.")
                 
-                # ==========================================
+               # ==========================================
                 # TAB UTAMA 2: DASHBOARD KINERJA (BARU)
                 # ==========================================
                 with tab_utama_kinerja:
@@ -1425,7 +1425,7 @@ else:
                         col_grafik1, col_grafik2 = st.columns([6, 4])
                         
                         with col_grafik1:
-                            st.markdown("#### B. Analisis Tren Kinerja Berjalan")
+                            st.markdown("<h3 style='font-size: 22px; color: #0f172a;'>B. Analisis Tren Kinerja Berjalan</h3>", unsafe_allow_html=True)
                             
                             # Membangun dataframe longitudinal dari df_referensi
                             df_traj_list = []
@@ -1461,7 +1461,6 @@ else:
                                     df_makro, x='Bulan', y='Skor_Bln', 
                                     markers=True, text='Skor_Bln', title="Tren Skor Kinerja Total (Skala 0-100)"
                                 )
-                                # Penambahan texttemplate dan format font untuk label data di atas titik
                                 fig_traj.update_traces(
                                     texttemplate='<b>%{text:.2f}</b>', textposition='top center', 
                                     textfont=dict(size=14, color='#475569', family="Arial"), cliponaxis=False,
@@ -1469,10 +1468,9 @@ else:
                                     hovertemplate="<br>Bulan: <b>%{x}</b><br>Skor Kumulatif: <b>%{y:.2f}</b><extra></extra>"
                                 )
                                 
-                                # Memberi ruang kosong di atas agar angka tidak terpotong tepi tabel
                                 max_y = max(110, df_makro['Skor_Bln'].max() + 15)
                                 fig_traj.add_hrect(y0=100.0, y1=max_y, line_width=0, fillcolor="#00FA9A", opacity=0.15, annotation_text="✨ Area Aman (≥ 100)", annotation_position="top left", annotation_font=dict(color="#059669", size=15))
-                                fig_traj.add_hrect(y0=0.0, y1=100.0, line_width=0, fillcolor="#FF3366", opacity=0.08, annotation_text="🚨 Area Bahaya (< 100)", annotation_position="bottom left", annotation_font=dict(color="#E11D48", size=13))
+                                fig_traj.add_hrect(y0=0.0, y1=100.0, line_width=0, fillcolor="#FF3366", opacity=0.08, annotation_text="🚨 Area Bahaya (< 100)", annotation_position="bottom left", annotation_font=dict(color="#E11D48", size=15))
                                 fig_traj.add_hline(y=100.0, line_dash="dash", line_color="#E11D48", line_width=2)
                                 
                                 fig_traj.update_layout(
@@ -1482,14 +1480,14 @@ else:
                                     xaxis=dict(
                                         categoryorder='array', categoryarray=list_bulan,
                                         showgrid=True, gridcolor='rgba(0,0,0,0.04)',
-                                        tickfont=dict(color='#0f172a', size=13, weight='bold')
+                                        tickfont=dict(color='#0f172a', size=15, weight='bold')
                                     ),
                                     yaxis=dict(
                                         showgrid=True, gridcolor='rgba(0,0,0,0.04)',
-                                        tickfont=dict(color='#0f172a', size=13, weight='bold')
+                                        tickfont=dict(color='#0f172a', size=15, weight='bold')
                                     ),
                                     hoverlabel=dict(
-                                        bgcolor="white", font_size=15, font_family="Arial", bordercolor="#0055A4"
+                                        bgcolor="white", font_size=16, font_family="Arial", bordercolor="#0055A4"
                                     )
                                 )
                                 st.plotly_chart(fig_traj, use_container_width=True)
@@ -1499,10 +1497,8 @@ else:
                                 indikator_pilih = st.selectbox("🎯 Pilih Indikator Spesifik:", df_traj['Sub Indikator Kinerja'].unique())
                                 df_mikro = df_traj[df_traj['Sub Indikator Kinerja'] == indikator_pilih].copy()
                                 
-                                # Mengatur agar baris yang 'Belum Ada Data' menjadi NaN
                                 df_mikro.loc[df_mikro['Status_Traj'] == 'Belum Ada Data', 'Pencapaian Pct'] = float('nan')
                                 
-                                # Format string aman untuk hover agar jika NaN tampilnya rapi
                                 df_mikro['Target_Str'] = df_mikro['Target'].apply(lambda x: f"{x:.2f}" if pd.notna(x) else "-")
                                 df_mikro['Real_Str'] = df_mikro['Realisasi'].apply(lambda x: f"{x:.2f}" if pd.notna(x) else "-")
                                 
@@ -1511,10 +1507,9 @@ else:
                                     markers=True, text='Pencapaian Pct', title=f"Kinerja: {indikator_pilih}"
                                 )
                                 
-                                # Penambahan angka dalam format persen (.0%) tepat di atas bullet
                                 fig_traj.update_traces(
                                     texttemplate='<b>%{text:.0%}</b>', textposition='top center',
-                                    textfont=dict(size=12, color='#475569', family="Arial"), cliponaxis=False,
+                                    textfont=dict(size=14, color='#475569', family="Arial"), cliponaxis=False,
                                     line=dict(width=4, color='#0055A4'), 
                                     marker=dict(size=11, line=dict(width=2, color='white')),
                                     hovertemplate="<br>".join([
@@ -1527,83 +1522,60 @@ else:
                                     customdata=df_mikro[['Target_Str', 'Real_Str', 'Status_Traj']]
                                 )
                                 
-                                # Background Banding (Zona Aman & Bahaya) dengan ruang atas dilebarkan
                                 max_y = max(1.2, df_mikro['Pencapaian Pct'].max(skipna=True) + 0.15)
                                 if pd.isna(max_y): max_y = 1.2
                                 
-                                fig_traj.add_hrect(y0=1.0, y1=max_y, line_width=0, fillcolor="#00FA9A", opacity=0.15, annotation_text="✨ Area Aman (≥ 100%)", annotation_position="top left", annotation_font=dict(color="#059669", size=13))
-                                fig_traj.add_hrect(y0=0.0, y1=1.0, line_width=0, fillcolor="#FF3366", opacity=0.08, annotation_text="🚨 Area Bahaya (< 100%)", annotation_position="bottom left", annotation_font=dict(color="#E11D48", size=13))
+                                fig_traj.add_hrect(y0=1.0, y1=max_y, line_width=0, fillcolor="#00FA9A", opacity=0.15, annotation_text="✨ Area Aman (≥ 100%)", annotation_position="top left", annotation_font=dict(color="#059669", size=15))
+                                fig_traj.add_hrect(y0=0.0, y1=1.0, line_width=0, fillcolor="#FF3366", opacity=0.08, annotation_text="🚨 Area Bahaya (< 100%)", annotation_position="bottom left", annotation_font=dict(color="#E11D48", size=15))
                                 fig_traj.add_hline(y=1.0, line_dash="dash", line_color="#E11D48", line_width=2)
                                 
-                                # Update sumbu X, sumbu Y, dan margin
                                 fig_traj.update_layout(
-                                    height=400, 
-                                    yaxis_title="Persentase Pencapaian", 
-                                    xaxis_title="", 
-                                    margin=dict(t=40,b=10,l=10,r=10),
-                                    plot_bgcolor='white',
+                                    height=400, yaxis_title="Persentase Pencapaian", xaxis_title="", 
+                                    margin=dict(t=40,b=10,l=10,r=10), plot_bgcolor='white',
                                     xaxis=dict(
-                                        categoryorder='array', 
-                                        categoryarray=list_bulan,
-                                        showgrid=True,
-                                        gridcolor='rgba(0,0,0,0.04)',
-                                        tickfont=dict(color='#0f172a', size=13, weight='bold')
+                                        categoryorder='array', categoryarray=list_bulan, showgrid=True,
+                                        gridcolor='rgba(0,0,0,0.04)', tickfont=dict(color='#0f172a', size=15, weight='bold')
                                     ),
                                     yaxis=dict(
-                                        tickformat='.0%', # Mengubah angka desimal menjadi persen pada Y axis
-                                        showgrid=True,
-                                        gridcolor='rgba(0,0,0,0.04)',
-                                        tickfont=dict(color='#0f172a', size=13, weight='bold')
+                                        tickformat='.0%', showgrid=True, gridcolor='rgba(0,0,0,0.04)',
+                                        tickfont=dict(color='#0f172a', size=15, weight='bold')
                                     ),
-                                    hoverlabel=dict(
-                                        bgcolor="white",
-                                        font_size=15,
-                                        font_family="Arial",
-                                        bordercolor="#0055A4"
-                                    )
+                                    hoverlabel=dict(bgcolor="white", font_size=16, font_family="Arial", bordercolor="#0055A4")
                                 )
                                 st.plotly_chart(fig_traj, use_container_width=True)
                                 
                         with col_grafik2:
-                            st.markdown(f"#### Distribusi Status Indikator (Total 20)")
+                            st.markdown("<h3 style='font-size: 22px; color: #0f172a;'>Distribusi Status Indikator (Total 20)</h3>", unsafe_allow_html=True)
                             df_pie_status = df_20['Status_Final'].value_counts().reset_index()
                             df_pie_status.columns = ['Status', 'Jumlah']
                             
-                            # 3, 4, 5. Pembaruan Palet Warna (Merah Gelap, Gold, Hijau Gelap)
                             color_map_status = {
-                                'Beyond Target': '#B59031', # Warna Gold
-                                'Tercapai': '#42BF02',      # Warna Hijau Lebih Gelap
-                                'Bahaya': '#691707',        # Warna Merah Lebih Gelap
+                                'Beyond Target': '#FFC000', 
+                                'Tercapai': '#15803d', 
+                                'Bahaya': '#b91c1c', 
                                 'Belum Ada Data': '#cbd5e1'
                             }
                             
-                            # 1. Memperkecil lingkaran putih (hole=0.25)
                             fig_pie_status = px.pie(
                                 df_pie_status, values='Jumlah', names='Status', hole=0.25,
                                 color='Status', color_discrete_map=color_map_status
                             )
-                            
-                            # 2. Memberikan jarak pemisah antar kategori menggunakan fitur 'pull'
                             fig_pie_status.update_traces(
-                                textposition='inside', 
-                                textinfo='value+label',
-                                textfont=dict(color='white', weight='bold', size=20),
-                                pull=[0.05] * len(df_pie_status) # Jarak renggang 5%
+                                textposition='inside', textinfo='value+label',
+                                textfont=dict(color='white', weight='bold', size=16),
+                                pull=[0.05] * len(df_pie_status)
                             )
-                            
-                            fig_pie_status.update_layout(
-                                height=450, 
-                                showlegend=False, 
-                                margin=dict(t=20,b=20,l=20,r=20)
-                            )
+                            fig_pie_status.update_layout(height=450, showlegend=False, margin=dict(t=20,b=20,l=20,r=20))
                             
                             st.plotly_chart(fig_pie_status, use_container_width=True)
-                            st.markdown(f"<div style='text-align:center; font-weight:bold; color:#64748b;'>Total Metrik Teranalisis: {df_pie_status['Jumlah'].sum()} Indikator</div>", unsafe_allow_html=True)
+                            st.markdown(f"<div style='text-align:center; font-size:16px; font-weight:bold; color:#64748b;'>Total Metrik Teranalisis: {df_pie_status['Jumlah'].sum()} Indikator</div>", unsafe_allow_html=True)
 
                         st.markdown("---")
                         
-                        # --- SMART NARRATIVE (DIALOG KINERJA) ---
-                        st.markdown("#### C. Smart Narrative (Performance Dialogue Area)")
+                        # ==============================================================
+                        # --- SMART NARRATIVE (PERFORMANCE DIALOGUE) DENGAN AI & GAP ---
+                        # ==============================================================
+                        st.markdown("<h3 style='font-size: 22px; color: #0f172a;'>C. Smart Narrative (Performance Dialogue Area)</h3>", unsafe_allow_html=True)
                         st.write("Area ini mendeteksi metrik yang berada dalam zona bahaya untuk segera dilakukan dialog kinerja.")
                         
                         df_bahaya = df_20[df_20['Status_Final'] == 'Bahaya']
@@ -1611,38 +1583,90 @@ else:
                         if not df_bahaya.empty:
                             st.error(f"⚠️ Ditemukan **{len(df_bahaya)}** sub-indikator kritis yang memerlukan **Action Plan** segera berdasarkan evaluasi status terbaru.")
                             
-                            for idx, row in df_bahaya.iterrows():
-                                sub_indikator = row['SUB INDIKATOR KINERJA']
-                                pic = row['PIC UTAMA']
-                                realisasi = row['Realisasi_Bulan']
-                                target = row['Target_Bulan']
-                                
-                                action_plan = str(row['ACTION PLAN']).strip() if pd.notna(row['ACTION PLAN']) else ""
-                                kendala = str(row['KENDALA']).strip() if pd.notna(row['KENDALA']) else ""
-                                
-                                if action_plan in ["", "nan", "None"]: action_plan = "[Belum ada rencana tindak lanjut di Master Data]"
-                                if kendala in ["", "nan", "None"]: kendala = "[Belum ada kendala yang diidentifikasi]"
-                                        
-                                with st.expander(f"🔴 Dialog Kinerja: {sub_indikator} (PIC: {pic})", expanded=True):
-                                    st.markdown(f'''
-                                    <div style="background-color: #fef2f2; padding: 15px; border-left: 5px solid #ef4444; border-radius: 5px;">
-                                        <p style="margin-top:0;">Indikator <b>{sub_indikator}</b> tidak mencapai target yang ditetapkan. Diperlukan eskalasi dan diskusi mendalam bersama PIC <b>{pic}</b>.</p>
-                                        <table style="width:100%; border-collapse: collapse; margin-bottom: 10px;">
-                                            <tr>
-                                                <td style="padding: 5px; width: 30%; font-weight: bold; color: #7f1d1d;">Target ({bulan_terpilih})</td>
-                                                <td style="padding: 5px; color: #7f1d1d;">: {target:.2f}</td>
-                                            </tr>
-                                            <tr>
-                                                <td style="padding: 5px; font-weight: bold; color: #7f1d1d;">Realisasi Aktual</td>
-                                                <td style="padding: 5px; color: #7f1d1d;">: <b>{realisasi:.2f}</b></td>
-                                            </tr>
-                                        </table>
-                                        <p style="margin-bottom:2px; font-weight:bold; color:#991b1b;">🛑 Identifikasi Kendala:</p>
-                                        <p style="margin-top:0; font-style:italic; color:#7f1d1d;">"{kendala}"</p>
-                                        <p style="margin-bottom:2px; font-weight:bold; color:#065f46;">✅ Rekomendasi Action Plan (Tindak Lanjut):</p>
-                                        <p style="margin-top:0; color:#064e3b; background-color:#ecfdf5; padding: 10px; border-radius:4px;">{action_plan}</p>
-                                    </div>
-                                    ''', unsafe_allow_html=True)
+                            # Menambahkan spinner karena AI butuh 2-4 detik untuk men-generate narasi
+                            with st.spinner("🤖 AI sedang merumuskan rekomendasi Action Plan cerdas..."):
+                                for idx, row in df_bahaya.iterrows():
+                                    sub_indikator = row['SUB INDIKATOR KINERJA']
+                                    pic = row['PIC UTAMA']
+                                    realisasi = row['Realisasi_Bulan']
+                                    target = row['Target_Bulan']
+                                    pct = row['Pencapaian_Pct']
+                                    
+                                    # Kalkulasi Gap/Selisih
+                                    gap_aktual = abs(target - realisasi)
+                                    
+                                    # Klasifikasi Tingkat Keparahan (Severity Level)
+                                    if pct < 0.5:
+                                        bg_color = "#fef2f2" # Merah Pucat (Kritis)
+                                        border_color = "#ef4444" 
+                                        icon_sev = "🔴"
+                                        teks_sev = "KRITIS (< 50%)"
+                                        color_sev = "#7f1d1d"
+                                    else:
+                                        bg_color = "#fffbeb" # Oranye/Kuning Pucat (Peringatan)
+                                        border_color = "#f59e0b" 
+                                        icon_sev = "🟠"
+                                        teks_sev = "PERINGATAN (50% - 99%)"
+                                        color_sev = "#92400e"
+                                    
+                                    action_plan_raw = str(row['ACTION PLAN']).strip() if pd.notna(row['ACTION PLAN']) else ""
+                                    kendala = str(row['KENDALA']).strip() if pd.notna(row['KENDALA']) else ""
+                                    
+                                    if action_plan_raw in ["", "nan", "None"]: action_plan_raw = "Belum ada rencana tindak lanjut di Master Data"
+                                    if kendala in ["", "nan", "None"]: kendala = "Belum ada kendala yang diidentifikasi"
+                                    
+                                    # --- EKSEKUSI PROMPT GEMINI AI UNTUK SMART ACTION PLAN ---
+                                    action_plan_smart = action_plan_raw
+                                    if model is not None and action_plan_raw != "Belum ada rencana tindak lanjut di Master Data":
+                                        try:
+                                            prompt_dialog = f"""
+                                            Bertindaklah sebagai Konsultan Manajemen Kinerja di PLN.
+                                            Tugas Anda adalah mengembangkan draft kalimat Action Plan singkat ini: "{action_plan_raw}" 
+                                            menjadi 3 poin langkah strategis manajerial (metode SMART) untuk mengatasi kendala "{kendala}" 
+                                            pada metrik "{sub_indikator}".
+                                            
+                                            Aturan Wajib:
+                                            - Gunakan format HTML list (<ul><li>...</li></ul>) secara langsung.
+                                            - JANGAN gunakan format markdown block (seperti ```html).
+                                            - Gunakan bahasa profesional, tajam, preskriptif, dan aplikatif.
+                                            """
+                                            resp_ai = model.generate_content(prompt_dialog)
+                                            ai_text = resp_ai.text.strip()
+                                            # Pembersihan jika AI bandel mengembalikan markdown block
+                                            if ai_text.startswith("```html"): ai_text = ai_text[7:-3].strip()
+                                            elif ai_text.startswith("```"): ai_text = ai_text[3:-3].strip()
+                                            action_plan_smart = ai_text
+                                        except Exception as e:
+                                            action_plan_smart = f"<p>{action_plan_raw}</p>"
+                                    else:
+                                        action_plan_smart = f"<p>{action_plan_raw}</p>"
+                                            
+                                    with st.expander(f"{icon_sev} Dialog Kinerja: {sub_indikator} (PIC: {pic}) - {teks_sev}", expanded=False):
+                                        st.markdown(f'''
+                                        <div style="background-color: {bg_color}; padding: 15px; border-left: 5px solid {border_color}; border-radius: 5px;">
+                                            <p style="margin-top:0;">Indikator <b>{sub_indikator}</b> berada di level <b>{teks_sev}</b>. Diperlukan eskalasi dan diskusi mendalam bersama PIC <b>{pic}</b>.</p>
+                                            <table style="width:100%; border-collapse: collapse; margin-bottom: 10px;">
+                                                <tr>
+                                                    <td style="padding: 5px; width: 30%; font-weight: bold; color: {color_sev}; border-bottom: 1px solid rgba(0,0,0,0.05);">Target ({bulan_terpilih})</td>
+                                                    <td style="padding: 5px; color: {color_sev}; border-bottom: 1px solid rgba(0,0,0,0.05);">: {target:.2f}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="padding: 5px; font-weight: bold; color: {color_sev}; border-bottom: 1px solid rgba(0,0,0,0.05);">Realisasi Aktual</td>
+                                                    <td style="padding: 5px; color: {color_sev}; border-bottom: 1px solid rgba(0,0,0,0.05);">: <b>{realisasi:.2f}</b></td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="padding: 5px; font-weight: bold; color: #b91c1c;">Gap / Selisih (Shortfall)</td>
+                                                    <td style="padding: 5px; color: #b91c1c; font-weight: bold;">: -{gap_aktual:.2f}</td>
+                                                </tr>
+                                            </table>
+                                            <p style="margin-bottom:2px; font-weight:bold; color:{color_sev};">🛑 Identifikasi Kendala:</p>
+                                            <p style="margin-top:0; font-style:italic; color:{color_sev};">"{kendala}"</p>
+                                            <p style="margin-bottom:2px; font-weight:bold; color:#065f46;">✨ Rekomendasi Action Plan Cerdas (AI-Generated):</p>
+                                            <div style="margin-top:0; color:#064e3b; background-color:#ecfdf5; padding: 10px; border-radius:4px; border: 1px solid #a7f3d0;">
+                                                {action_plan_smart}
+                                            </div>
+                                        </div>
+                                        ''', unsafe_allow_html=True)
                         else:
                             st.success(f"🎉 **Luar Biasa!** Tidak ada sub-indikator yang berstatus 'Bahaya'. Operasional berjalan optimal!")
 
