@@ -275,14 +275,33 @@ def upload_dokumen_ke_drive(file_bytes, file_name, folder_id):
         return f"ERROR_OAUTH: {e}"
 
 # ─────────────────────────────────────────────────────────────────────────────
-# GEMINI & SENTIMENT ANALYSIS AI
+# GEMINI & SENTIMENT ANALYSIS AI (AUTO-DISCOVERY MODEL)
 # ─────────────────────────────────────────────────────────────────────────────
 @st.cache_resource 
 def load_gemini_model(): 
     if "GEMINI_API_KEY" in st.secrets: 
-        genai.configure(api_key=st.secrets["GEMINI_API_KEY"]) 
-        # Menggunakan nama universal gemini-pro untuk keandalan maksimal
-        return genai.GenerativeModel('gemini-pro') 
+        try:
+            genai.configure(api_key=st.secrets["GEMINI_API_KEY"]) 
+            # Memanggil ListModels sesuai instruksi resmi API Google
+            available_models = [
+                m.name for m in genai.list_models() 
+                if 'generateContent' in m.supported_generation_methods
+            ]
+            
+            if not available_models:
+                return None
+                
+            # Prioritaskan model generasi terbaru yang cepat & stabil
+            prioritas_keyword = ['2.5-flash', '2.0-flash', '1.5-flash', 'flash', 'pro', 'gemini']
+            for kw in prioritas_keyword:
+                for m_name in available_models:
+                    if kw in m_name.lower():
+                        return genai.GenerativeModel(m_name)
+                        
+            # Jika tidak ada keyword yang cocok, gunakan model valid pertama dari server
+            return genai.GenerativeModel(available_models[0])
+        except Exception:
+            return None
     return None
 
 model = load_gemini_model()
@@ -1350,7 +1369,6 @@ else:
                         
                         list_bulan = list(month_col_map.keys())
                         with col_fk1:
-                            # Default memilih bulan ketiga (September)
                             bulan_terpilih = st.selectbox("📅 Pilih Bulan Laporan:", list_bulan, index=2)
                             
                         with col_fk2:
@@ -1428,7 +1446,6 @@ else:
                         with col_grafik1:
                             st.markdown("<h3 style='font-size: 22px; color: #0f172a;'>B. Analisis Tren Kinerja Berjalan</h3>", unsafe_allow_html=True)
                             
-                            # Membangun dataframe longitudinal dari df_referensi
                             df_traj_list = []
                             for m_name, cols in month_col_map.items():
                                 t_c, r_c, p_c = cols
@@ -1453,7 +1470,6 @@ else:
                             if pic_terpilih != "Semua PIC Utama":
                                 df_traj = df_traj[df_traj['PIC Utama'] == pic_terpilih]
 
-                            # UI Pemilih Mode Visualisasi
                             jenis_tren = st.radio("Pilih Sudut Pandang Tren:", ["📈 Makro (Skor Kinerja Keseluruhan)", "🔍 Mikro (Deep-Dive per Indikator)"], horizontal=True, label_visibility="collapsed")
                             
                             if "Makro" in jenis_tren:
@@ -1491,7 +1507,6 @@ else:
                                 st.plotly_chart(fig_traj, use_container_width=True)
                                 
                             else:
-                                # Mode Mikro (Pilih 1 Sub Indikator secara Spesifik)
                                 indikator_pilih = st.selectbox("🎯 Pilih Indikator Spesifik:", df_traj['Sub Indikator Kinerja'].unique())
                                 df_mikro = df_traj[df_traj['Sub Indikator Kinerja'] == indikator_pilih].copy()
                                 
@@ -1571,7 +1586,7 @@ else:
                         st.markdown("---")
                         
                         # ==============================================================
-                        # --- SMART NARRATIVE (PERFORMANCE DIALOGUE) DENGAN SISTEM FALLBACK AI ---
+                        # --- SMART NARRATIVE DENGAN DETEKSI MODEL OTOMATIS (LISTMODELS) ---
                         # ==============================================================
                         st.markdown("<h3 style='font-size: 22px; color: #0f172a;'>C. Smart Narrative (Performance Dialogue Area)</h3>", unsafe_allow_html=True)
                         st.write("Area ini mendeteksi metrik yang berada dalam zona bahaya untuk segera dilakukan dialog kinerja.")
@@ -1581,6 +1596,28 @@ else:
                         if not df_bahaya.empty:
                             st.error(f"⚠️ Ditemukan **{len(df_bahaya)}** sub-indikator kritis yang memerlukan **Action Plan** segera berdasarkan evaluasi status terbaru.")
                             
+                            # Deteksi daftar model aktif sekali saja sebelum looping indikator
+                            active_models = []
+                            error_init_ai = ""
+                            if "GEMINI_API_KEY" in st.secrets:
+                                try:
+                                    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+                                    raw_models = [
+                                        m.name for m in genai.list_models() 
+                                        if 'generateContent' in m.supported_generation_methods
+                                    ]
+                                    # Urutkan berdasarkan prioritas model generasi terbaru
+                                    prioritas = ['2.5-flash', '2.0-flash', '1.5-flash', 'flash', 'pro']
+                                    for p in prioritas:
+                                        for rm in raw_models:
+                                            if p in rm.lower() and rm not in active_models:
+                                                active_models.append(rm)
+                                    for rm in raw_models:
+                                        if rm not in active_models:
+                                            active_models.append(rm)
+                                except Exception as e_list:
+                                    error_init_ai = str(e_list)
+                            
                             with st.spinner("🤖 AI sedang merumuskan rekomendasi Action Plan cerdas..."):
                                 for idx, row in df_bahaya.iterrows():
                                     sub_indikator = row['SUB INDIKATOR KINERJA']
@@ -1589,22 +1626,14 @@ else:
                                     target = row['Target_Bulan']
                                     pct = row['Pencapaian_Pct']
                                     
-                                    # Kalkulasi Gap/Selisih
                                     gap_aktual = abs(target - realisasi)
                                     
-                                    # Klasifikasi Tingkat Keparahan (Severity Level)
                                     if pct < 0.5:
-                                        bg_color = "#fef2f2" # Merah Pucat (Kritis)
-                                        border_color = "#ef4444" 
-                                        icon_sev = "🔴"
-                                        teks_sev = "KRITIS (< 50%)"
-                                        color_sev = "#7f1d1d"
+                                        bg_color = "#fef2f2"; border_color = "#ef4444" 
+                                        icon_sev = "🔴"; teks_sev = "KRITIS (< 50%)"; color_sev = "#7f1d1d"
                                     else:
-                                        bg_color = "#fffbeb" # Oranye/Kuning Pucat (Peringatan)
-                                        border_color = "#f59e0b" 
-                                        icon_sev = "🟠"
-                                        teks_sev = "PERINGATAN (50% - 99%)"
-                                        color_sev = "#92400e"
+                                        bg_color = "#fffbeb"; border_color = "#f59e0b" 
+                                        icon_sev = "🟠"; teks_sev = "PERINGATAN (50% - 99%)"; color_sev = "#92400e"
                                     
                                     action_plan_raw = str(row['ACTION PLAN']).strip() if pd.notna(row['ACTION PLAN']) else ""
                                     kendala = str(row['KENDALA']).strip() if pd.notna(row['KENDALA']) else ""
@@ -1612,18 +1641,15 @@ else:
                                     if action_plan_raw in ["", "nan", "None"]: action_plan_raw = "Belum ada rencana tindak lanjut di Master Data"
                                     if kendala in ["", "nan", "None"]: kendala = "Belum ada kendala yang diidentifikasi"
                                     
-                                    # --- EKSEKUSI PROMPT GEMINI AI (DENGAN FALLBACK) ---
-                                    action_plan_smart = action_plan_raw
+                                    # --- EKSEKUSI PROMPT GEMINI AI ---
+                                    action_plan_smart = f"<p>{action_plan_raw}</p>"
                                     
                                     if action_plan_raw != "Belum ada rencana tindak lanjut di Master Data" and action_plan_raw != "":
-                                        if "GEMINI_API_KEY" in st.secrets:
-                                            genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-                                            
-                                            # Rencana A, B, dan C jika API menolak nama model tertentu
-                                            models_to_try = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro', 'models/gemini-pro']
-                                            berhasil = False
-                                            pesan_error = ""
-                                            
+                                        if "GEMINI_API_KEY" not in st.secrets:
+                                            action_plan_smart = f"<p style='color:#f59e0b; font-weight:bold;'>⚠️ API Key Gemini belum dikonfigurasi di Streamlit Secrets.</p><p>{action_plan_raw}</p>"
+                                        elif not active_models:
+                                            action_plan_smart = f"<p style='color:#ef4444; font-weight:bold;'>⚠️ Tidak ada model yang ditemukan untuk API Key ini ({error_init_ai}).</p><p>{action_plan_raw}</p>"
+                                        else:
                                             prompt_dialog = f"""
                                             Bertindaklah sebagai Konsultan Manajemen Kinerja di PLN.
                                             Tugas Anda adalah mengembangkan draft kalimat Action Plan singkat ini: "{action_plan_raw}" 
@@ -1635,8 +1661,9 @@ else:
                                             - JANGAN gunakan format markdown block (seperti ```html).
                                             - Gunakan bahasa profesional, tajam, preskriptif, dan aplikatif.
                                             """
-                                            
-                                            for m_name in models_to_try:
+                                            berhasil = False
+                                            pesan_error = ""
+                                            for m_name in active_models:
                                                 try:
                                                     temp_model = genai.GenerativeModel(m_name)
                                                     resp_ai = temp_model.generate_content(prompt_dialog)
@@ -1647,18 +1674,13 @@ else:
                                                     
                                                     action_plan_smart = ai_text
                                                     berhasil = True
-                                                    break # Sukses! Langsung keluar dari loop percobaan
+                                                    break
                                                 except Exception as e:
                                                     pesan_error = str(e)
-                                                    continue # Jika error (404/400), coba nama model berikutnya
+                                                    continue
                                             
                                             if not berhasil:
-                                                # Menampilkan pesan error asli jika ketiga model tetap gagal
                                                 action_plan_smart = f"<p style='color:#ef4444; font-weight:bold;'>⚠️ AI Error: {pesan_error}</p><p>{action_plan_raw}</p>"
-                                        else:
-                                            action_plan_smart = f"<p style='color:#f59e0b; font-weight:bold;'>⚠️ API Key Gemini belum dikonfigurasi di Streamlit Secrets.</p><p>{action_plan_raw}</p>"
-                                    else:
-                                        action_plan_smart = f"<p>{action_plan_raw}</p>"
                                             
                                     with st.expander(f"{icon_sev} Dialog Kinerja: {sub_indikator} (PIC: {pic}) - {teks_sev}", expanded=False):
                                         st.markdown(f'''
