@@ -277,11 +277,12 @@ def upload_dokumen_ke_drive(file_bytes, file_name, folder_id):
 # ─────────────────────────────────────────────────────────────────────────────
 # GEMINI & SENTIMENT ANALYSIS AI
 # ─────────────────────────────────────────────────────────────────────────────
-@st.cache_resource
-def load_gemini_model():
-    if "GEMINI_API_KEY" in st.secrets:
-        genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-        return genai.GenerativeModel('gemini-1.5-flash')
+@st.cache_resource 
+def load_gemini_model(): 
+    if "GEMINI_API_KEY" in st.secrets: 
+        genai.configure(api_key=st.secrets["GEMINI_API_KEY"]) 
+        # Tambahkan -latest atau gunakan 1.5-pro jika flash masih ditolak
+        return genai.GenerativeModel('gemini-1.5-flash-latest') 
     return None
 
 model = load_gemini_model()
