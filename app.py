@@ -1988,8 +1988,302 @@ else:
                     # SUB-TAB 2: PEMANTAUAN RISIKO REAL-TIME & KRI (ITEM 2)
                     # ─────────────────────────────────────────────────────────────
                     with subtab_monitoring:
-                        st.markdown("#### 📊 Pemantauan Risiko Real-Time & KRI")
-                        st.info("🚧 Ruangan untuk Dashboard Pemantauan Risiko Real-Time (Item 2) telah disiapkan dan siap dihubungkan dengan sheet Pemantauan Bulanan.")
+                        st.markdown("#### 📊 Pemantauan Risiko Real-Time & Key Risk Indicators (KRI)")
+                        st.write("Sistem monitoring berkelanjutan untuk memantau pergerakan level risiko, ambang batas KRI, dan efektivitas perlakuan risiko bulanan.")
+
+                        # URL Spreadsheet Monitoring Risiko (Sheet Dataset_Monitoring_Risiko)
+                        sheet_id_risiko = '139HX_RA0Dc71_CorxpdfoSQppzUS9GNe'
+                        url_monitoring_risiko = f"https://docs.google.com/spreadsheets/d/{sheet_id_risiko}/gviz/tq?tqx=out:csv&sheet=Dataset_Monitoring_Risiko"
+
+                        @st.cache_data(ttl=300)
+                        def load_data_monitoring_risiko(csv_url):
+                            df_m = pd.read_csv(csv_url)
+                            df_m.columns = df_m.columns.astype(str).str.strip()
+                            return df_m
+
+                        try:
+                            df_mon_raw = load_data_monitoring_risiko(url_monitoring_risiko)
+                        except Exception as e_mon:
+                            df_mon_raw = pd.DataFrame()
+                            st.error(f"Gagal memuat sheet 'Dataset_Monitoring_Risiko': {e_mon}")
+
+                        if not df_mon_raw.empty:
+                            # 1. PEMBERSIHAN DATA & NUMERIK
+                            cols_koordinat = ['IMPACT_INHEREN', 'LIKELIHOOD_INHEREN', 'IMPACT_RESIDUAL', 'LIKELIHOOD_RESIDUAL']
+                            for c_k in cols_koordinat:
+                                if c_k in df_mon_raw.columns:
+                                    df_mon_raw[c_k] = pd.to_numeric(df_mon_raw[c_k], errors='coerce').fillna(1)
+
+                            # 2. FILTER MANDIRI KHUSUS MONITORING
+                            col_fm1, col_fm2, col_fm3 = st.columns(3)
+                            
+                            urutan_bulan_mon = ['Juli', 'Agustus', 'September', 'Oktober']
+                            bulan_tersedia_mon = [b for b in urutan_bulan_mon if b in df_mon_raw['BULAN'].dropna().unique()]
+                            sisa_bln_mon = [b for b in df_mon_raw['BULAN'].dropna().unique() if b not in urutan_bulan_mon]
+                            list_bulan_mon = bulan_tersedia_mon + sisa_bln_mon
+                            
+                            with col_fm1:
+                                idx_default_bln = list_bulan_mon.index('Agustus') if 'Agustus' in list_bulan_mon else 0
+                                filter_bln_mon = st.selectbox("📅 Pilih Bulan Pemantauan:", list_bulan_mon, index=idx_default_bln, key="f_mon_bln")
+                            with col_fm2:
+                                opsi_pic_mon = ["Semua PIC"] + sorted(list(df_mon_raw['PIC'].dropna().unique()))
+                                filter_pic_mon = st.selectbox("👥 Filter PIC Penanggung Jawab:", opsi_pic_mon, key="f_mon_pic")
+                            with col_fm3:
+                                opsi_status_kri = ["Semua Status KRI"] + sorted(list(df_mon_raw['STATUS_KRI'].dropna().unique()))
+                                filter_status_kri = st.selectbox("🚦 Filter Status Peringatan KRI:", opsi_status_kri, key="f_mon_kri")
+
+                            # Terapkan Filter
+                            df_mon_filtered = df_mon_raw[df_mon_raw['BULAN'] == filter_bln_mon].copy()
+                            if filter_pic_mon != "Semua PIC":
+                                df_mon_filtered = df_mon_filtered[df_mon_filtered['PIC'] == filter_pic_mon]
+                            if filter_status_kri != "Semua Status KRI":
+                                df_mon_filtered = df_mon_filtered[df_mon_filtered['STATUS_KRI'] == filter_status_kri]
+
+                            # 3. TOP METRICS KPI MONITORING
+                            tot_register = len(df_mon_filtered)
+                            kri_bahaya = len(df_mon_filtered[df_mon_filtered['STATUS_KRI'].str.lower() == 'bahaya'])
+                            kri_hati = len(df_mon_filtered[df_mon_filtered['STATUS_KRI'].str.lower() == 'hati-hati'])
+                            kri_aman = len(df_mon_filtered[df_mon_filtered['STATUS_KRI'].str.lower() == 'aman'])
+                            tindak_lanjut_ya = len(df_mon_filtered[df_mon_filtered['PERLU_TINDAK_LANJUT'].str.lower() == 'ya'])
+
+                            st.markdown("---")
+                            cols_kpi_mon = st.columns(5)
+                            with cols_kpi_mon[0]:
+                                st.markdown(f'<div class="kpi-card"><div class="kpi-title">📋 Total Register<br>Terpantau</div><div class="kpi-value" style="color:#0055A4;">{tot_register}</div></div>', unsafe_allow_html=True)
+                            with cols_kpi_mon[1]:
+                                st.markdown(f'<div class="kpi-card card-sp"><div class="kpi-title">🔴 KRI Status<br>Bahaya</div><div class="kpi-value" style="color:#b91c1c;">{kri_bahaya}</div></div>', unsafe_allow_html=True)
+                            with cols_kpi_mon[2]:
+                                st.markdown(f'<div class="kpi-card card-warn"><div class="kpi-title">🟡 KRI Status<br>Hati-Hati</div><div class="kpi-value" style="color:#d97706;">{kri_hati}</div></div>', unsafe_allow_html=True)
+                            with cols_kpi_mon[3]:
+                                st.markdown(f'<div class="kpi-card card-ok"><div class="kpi-title">🟢 KRI Status<br>Aman</div><div class="kpi-value" style="color:#15803d;">{kri_aman}</div></div>', unsafe_allow_html=True)
+                            with cols_kpi_mon[4]:
+                                st.markdown(f'<div class="kpi-card card-inst"><div class="kpi-title">⚡ Perlu Intervensi<br>Tindak Lanjut</div><div class="kpi-value">{tindak_lanjut_ya}</div></div>', unsafe_allow_html=True)
+
+                            st.markdown("---")
+
+                            # 4. TATA LETAK 2 KOLOM (KIRI: HEATMAP 5x5 | KANAN: STATUS KRI & EARLY WARNING)
+                            col_mon_kiri, col_mon_kanan = st.columns([5, 5])
+
+                            with col_mon_kiri:
+                                st.markdown("##### 🗺️ Matriks Risiko 5x5 (Heatmap Standar Korporat)")
+                                
+                                mode_heatmap = st.radio(
+                                    "Pilih Perspektif Level Risiko:",
+                                    ["📌 Risiko Residual (Setelah Mitigasi)", "⚠️ Risiko Inheren (Sebelum Mitigasi)"],
+                                    horizontal=True,
+                                    label_visibility="collapsed"
+                                )
+
+                                is_residual = "Residual" in mode_heatmap
+                                col_x = 'IMPACT_RESIDUAL' if is_residual else 'IMPACT_INHEREN'
+                                col_y = 'LIKELIHOOD_RESIDUAL' if is_residual else 'LIKELIHOOD_INHEREN'
+
+                                # Nilai matriks 5x5 standar PLN / KBUMN (Baris Likelihood 5 ke 1, Kolom Impact 1 ke 5)
+                                z_colors = [
+                                    [2, 3, 4, 5, 5],  # Likelihood 5: Low-Mod(7), Mod(12), Mod-High(17), High(22), High(25)
+                                    [1, 2, 3, 4, 5],  # Likelihood 4: Low(4), Low-Mod(9), Mod(14), Mod-High(19), High(24)
+                                    [1, 2, 3, 4, 5],  # Likelihood 3: Low(3), Low-Mod(8), Mod(13), Mod-High(18), High(23)
+                                    [1, 2, 2, 4, 5],  # Likelihood 2: Low(2), Low-Mod(6), Low-Mod(11), Mod-High(16), High(21)
+                                    [1, 1, 2, 3, 5]   # Likelihood 1: Low(1), Low(5), Low-Mod(10), Mod(15), High(20)
+                                ]
+
+                                colorscale_pln = [
+                                    [0.0, '#4ade80'],   # 1: Low (Hijau Terang)
+                                    [0.25, '#a3e635'],  # 2: Low to Moderate (Kuning-Hijau)
+                                    [0.5, '#fde047'],   # 3: Moderate (Kuning)
+                                    [0.75, '#fb923c'],  # 4: Moderate to High (Oranye)
+                                    [1.0, '#f87171']    # 5: High (Merah)
+                                ]
+
+                                fig_hm = go.Figure()
+
+                                # Background Heatmap
+                                fig_hm.add_trace(go.Heatmap(
+                                    z=z_colors,
+                                    x=[1, 2, 3, 4, 5],
+                                    y=[5, 4, 3, 2, 1],
+                                    colorscale=colorscale_pln,
+                                    showscale=False,
+                                    hoverinfo='none',
+                                    opacity=0.65
+                                ))
+
+                                # Scatter Overlay untuk Titik-Titik Risiko
+                                df_mon_filtered['KODE_SINGKAT'] = df_mon_filtered['KODE_RISIKO'].apply(lambda x: str(x).split('.')[-1] if '.' in str(x) else str(x))
+
+                                # Menambahkan sedikit jitter agar titik pada koordinat yang sama tidak saling menutupi
+                                np.random.seed(42)
+                                jitter_x = (np.random.rand(len(df_mon_filtered)) - 0.5) * 0.18
+                                jitter_y = (np.random.rand(len(df_mon_filtered)) - 0.5) * 0.18
+
+                                fig_hm.add_trace(go.Scatter(
+                                    x=df_mon_filtered[col_x] + jitter_x,
+                                    y=df_mon_filtered[col_y] + jitter_y,
+                                    mode='markers+text',
+                                    text=df_mon_filtered['KODE_SINGKAT'],
+                                    textposition='middle center',
+                                    textfont=dict(size=10, color='white', family='Arial Black'),
+                                    marker=dict(
+                                        size=26,
+                                        color='#003366',
+                                        line=dict(width=2, color='white')
+                                    ),
+                                    hovertemplate="<br>".join([
+                                        "<b>%{customdata[0]}</b>",
+                                        "Peristiwa: %{customdata[1]}",
+                                        "PIC: %{customdata[2]}",
+                                        "Dampak (Impact): %{customdata[3]}",
+                                        "Kemungkinan (Likelihood): %{customdata[4]}",
+                                        "Status KRI: %{customdata[5]}"
+                                    ]) + "<extra></extra>",
+                                    customdata=df_mon_filtered[['KODE_RISIKO', 'PERISTIWA_RISIKO', 'PIC', col_x, col_y, 'STATUS_KRI']]
+                                ))
+
+                                fig_hm.update_layout(
+                                    height=380,
+                                    margin=dict(t=10, b=10, l=10, r=10),
+                                    xaxis=dict(
+                                        title="Tingkat Dampak (Consequence)",
+                                        tickmode='array',
+                                        tickvals=[1, 2, 3, 4, 5],
+                                        ticktext=["1: Sangat Rendah", "2: Rendah", "3: Moderat", "4: Tinggi", "5: Katastrofe"],
+                                        range=[0.5, 5.5]
+                                    ),
+                                    yaxis=dict(
+                                        title="Tingkat Kemungkinan (Likelihood)",
+                                        tickmode='array',
+                                        tickvals=[1, 2, 3, 4, 5],
+                                        ticktext=["1: Sangat Jarang", "2: Jarang", "3: Bisa Terjadi", "4: Sangat Mungkin", "5: Hampir Pasti"],
+                                        range=[0.5, 5.5]
+                                    )
+                                )
+                                st.plotly_chart(fig_hm, use_container_width=True)
+
+                            with col_mon_kanan:
+                                st.markdown("##### 🚦 Sistem Peringatan Dini KRI (Early Warning)")
+                                
+                                # Render kartu KRI berstatus Bahaya & Hati-Hati
+                                df_warning_kri = df_mon_filtered[df_mon_filtered['STATUS_KRI'].str.lower().isin(['bahaya', 'hati-hati'])]
+
+                                if not df_warning_kri.empty:
+                                    for _, r_kri in df_warning_kri.iterrows():
+                                        is_bahaya = str(r_kri['STATUS_KRI']).strip().lower() == 'bahaya'
+                                        bg_c = "#fef2f2" if is_bahaya else "#fffbeb"
+                                        border_c = "#ef4444" if is_bahaya else "#f59e0b"
+                                        badge_c = "#b91c1c" if is_bahaya else "#d97706"
+                                        icon_k = "🔴 BAHAYA" if is_bahaya else "🟡 HATI-HATI"
+
+                                        st.markdown(f"""
+                                        <div style="background-color: {bg_c}; border-left: 5px solid {border_c}; border-radius: 8px; padding: 12px; margin-bottom: 10px;">
+                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                                <b style="color: #0f172a; font-size: 13px;">{r_kri['KODE_RISIKO']} - {r_kri['PERISTIWA_RISIKO']}</b>
+                                                <span style="background-color: {badge_c}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: bold;">
+                                                    {icon_k}
+                                                </span>
+                                            </div>
+                                            <div style="font-size: 12px; color: #334155;">
+                                                <b>Indikator:</b> {r_kri['PARAMETER_KRI']} | <b>Target:</b> {r_kri['TARGET_KRI']} | <b>Realisasi:</b> <span style="color:{badge_c}; font-weight:bold;">{r_kri['REALISASI_KRI']}</span>
+                                            </div>
+                                            <div style="font-size: 11px; color: #475569; margin-top: 4px;">
+                                                <b>Rencana Mitigasi:</b> {r_kri['RENCANA_MITIGASI']} (PIC: <b>{r_kri['PIC']}</b>)
+                                            </div>
+                                        </div>
+                                        """, unsafe_allow_html=True)
+                                else:
+                                    st.success("🎉 **Kondisi Kondusif!** Seluruh parameter KRI berada pada zona aman (🟢). Tidak ada indikator yang memerlukan eskalasi mendesak.")
+
+                            # 5. TABEL LENGKAP DETAIL PEMANTAUAN RISIKO & MITIGASI
+                            st.markdown("---")
+                            st.markdown("##### 📋 Tabel Register Pemantauan Risiko & Action Plan")
+                            
+                            tabel_mon_tampil = df_mon_filtered[[
+                                'KODE_RISIKO', 'PERISTIWA_RISIKO', 'PIC', 'PARAMETER_KRI', 
+                                'TARGET_KRI', 'REALISASI_KRI', 'STATUS_KRI', 'PERLU_TINDAK_LANJUT', 'RENCANA_MITIGASI'
+                            ]]
+                            
+                            st.dataframe(tabel_mon_tampil, use_container_width=True, hide_index=True)
+
+                            # 6. ON-DEMAND AI MITIGATION ADVISOR (TRIGGER TOMBOL)
+                            st.markdown("---")
+                            st.markdown("#### 🤖 On-Demand AI Risk Mitigation Advisor")
+                            st.write("Sistem preskriptif berbasis AI untuk merumuskan langkah penanganan terarah khusus pada risiko yang melampaui toleransi ambang batas (*Risk Threshold*).")
+
+                            if "rekomendasi_mitigasi_ai" not in st.session_state:
+                                st.session_state["rekomendasi_mitigasi_ai"] = {}
+
+                            df_kritis_mon = df_mon_filtered[df_mon_filtered['STATUS_KRI'].str.lower() == 'bahaya']
+
+                            if not df_kritis_mon.empty:
+                                col_ai_m1, col_ai_m2 = st.columns([3, 1])
+                                with col_ai_m1:
+                                    opsi_risiko_kritis = [f"{r['KODE_RISIKO']} - {r['PERISTIWA_RISIKO']}" for _, r in df_kritis_mon.iterrows()]
+                                    pilihan_r_kritis = st.selectbox("🎯 Pilih Risiko Kritis untuk Dirumuskan Mitigasinya:", opsi_risiko_kritis, key="sel_kritis_mon")
+                                with col_ai_m2:
+                                    st.markdown("<br>", unsafe_allow_html=True)
+                                    btn_eval_mitigasi = st.button("⚡ Analisis Mitigasi Kritis (AI)", type="primary", use_container_width=True)
+
+                                kode_r_eval = pilihan_r_kritis.split(" - ")[0]
+                                row_r_eval = df_kritis_mon[df_kritis_mon['KODE_RISIKO'] == kode_r_eval].iloc[0]
+
+                                if btn_eval_mitigasi:
+                                    with st.spinner(f"Gemini AI sedang menyusun formula mitigasi taktis untuk {kode_r_eval}..."):
+                                        prompt_mitigasi_kritis = f"""
+                                        Bertindaklah sebagai Senior Enterprise Risk Officer & Auditor Manajemen Risiko PT PLN (Persero).
+                                        Evaluasi indikator risiko utama (KRI) yang jatuh ke status BAHAYA berikut untuk unit UPDL Jakarta:
+
+                                        Data Risiko:
+                                        - Kode Risiko: {row_r_eval['KODE_RISIKO']}
+                                        - Peristiwa Risiko: {row_r_eval['PERISTIWA_RISIKO']}
+                                        - PIC Penanggung Jawab: {row_r_eval['PIC']}
+                                        - Indikator KRI: {row_r_eval['PARAMETER_KRI']}
+                                        - Target Standar: {row_r_eval['TARGET_KRI']}
+                                        - Realisasi Aktual: {row_r_eval['REALISASI_KRI']} (Status: BAHAYA)
+                                        - Rencana Mitigasi Eksisting: {row_r_eval['RENCANA_MITIGASI']}
+                                        - Batasan Risiko Finansial Unit: Rp 22.594.100 (Risk Appetite)
+
+                                        Tugas Anda:
+                                        Rumuskan rekomendasi tindakan korektif darurat dan perbaikan pengendalian (Control Enhancement) agar risiko dapat ditekan kembali ke kuadran hijau dalam 30-60 hari ke depan.
+
+                                        Aturan Keluaran Wajib:
+                                        Keluarkan HASIL DALAM FORMAT HTML MURNI (tanpa format blok pembungkus seperti ```html atau ```).
+                                        Struktur:
+                                        1. <b>Akar Masalah Utama:</b> 1 kalimat diagnosis tajam mengapa gap terjadi.
+                                        2. <b>Tindakan Korektif Cepat (Immediate Action - 7 Hari):</b> bullet point terukur.
+                                        3. <b>Penguatan Pengendalian Berkelanjutan (Preventive Control - 30 Hari):</b> bullet point terukur.
+                                        Gunakan tata bahasa korporat resmi PLN yang tegas dan solutif.
+                                        """
+                                        try:
+                                            if model is not None:
+                                                resp_m_ai = model.generate_content(prompt_mitigasi_kritis)
+                                                teks_m_ai = resp_m_ai.text.strip()
+                                                if teks_m_ai.startswith("```html"): teks_m_ai = teks_m_ai[7:-3].strip()
+                                                elif teks_m_ai.startswith("```"): teks_m_ai = teks_m_ai[3:-3].strip()
+                                                
+                                                st.session_state["rekomendasi_mitigasi_ai"][kode_r_eval] = teks_m_ai
+                                            else:
+                                                st.warning("Model Gemini belum terkonfigurasi di secrets.")
+                                        except Exception as e_ai_m:
+                                            st.error(f"Gagal memanggil Gemini AI: {e_ai_m}")
+
+                                # Tampilkan Hasil Analisis AI jika Ada di Session State
+                                if kode_r_eval in st.session_state["rekomendasi_mitigasi_ai"]:
+                                    st.markdown(f"""
+                                    <div style="background-color: #f0fdf4; border: 1.5px solid #86efac; border-radius: 12px; padding: 20px; margin-top: 15px;">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                            <h4 style="margin: 0; color: #065f46;">🛡️ Rekomendasi Preskriptif Tindakan Korektif AI: {kode_r_eval}</h4>
+                                            <span style="background-color: #0055A4; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold;">
+                                                PIC: {row_r_eval['PIC']}
+                                            </span>
+                                        </div>
+                                        <div style="color: #1e293b; line-height: 1.6; font-size: 13.5px;">
+                                            {st.session_state["rekomendasi_mitigasi_ai"][kode_r_eval]}
+                                        </div>
+                                    </div>
+                                    """, unsafe_allow_html=True)
+                            else:
+                                st.info("Tidak ada risiko yang berstatus 'Bahaya' pada bulan yang Anda pilih. Operasional berada dalam batas toleransi.")
+                        else:
+                            st.warning("⚠️ Lembar kerja 'Dataset_Monitoring_Risiko' belum memuat data atau sedang disinkronkan.")
 
         except Exception as e:
             st.error(f"Gagal memuat data: {e}")
