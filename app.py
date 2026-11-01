@@ -932,7 +932,7 @@ else:
                 tab_utama_eval, tab_utama_kinerja, tab_utama_pengajaran, tab_utama_risiko = st.tabs([
                     "📋 Dashboard Evaluasi", 
                     "📈 Dashboard Kinerja", 
-                    "🎓 Dashboard Pengajaran"
+                    "🎓 Dashboard Pengajaran",
                     "🛡️ Dashboard Manajemen Risiko"
                 ])
                 
