@@ -928,11 +928,12 @@ else:
                     st.warning("⚠️ Tidak ada data. Sesuaikan filter.")
 
             elif menu_selection == "📊 DASHBOARD":
-                # ─── 1. MEMBUAT 3 TAB UTAMA (LEVEL 1) ─────────
-                tab_utama_eval, tab_utama_kinerja, tab_utama_pengajaran = st.tabs([
+                # ─── 1. MEMBUAT 4 TAB UTAMA (LEVEL 1) ─────────
+                tab_utama_eval, tab_utama_kinerja, tab_utama_pengajaran, tab_utama_risiko = st.tabs([
                     "📋 Dashboard Evaluasi", 
                     "📈 Dashboard Kinerja", 
                     "🎓 Dashboard Pengajaran"
+                    "🛡️ Dashboard Manajemen Risiko"
                 ])
                 
                 # ==========================================
@@ -1724,7 +1725,272 @@ else:
                 with tab_utama_pengajaran:
                     st.markdown("### 🎓 Statistik Pengajaran")
                     st.info("🚧 Ruangan untuk Dashboard Pengajaran sudah siap. Menunggu integrasi sumber data spreadsheet baru.")
+
+                # ==========================================
+                # TAB UTAMA 4: DASHBOARD MANAJEMEN RISIKO (BARU)
+                # ==========================================
+                with tab_utama_risiko:
+                    st.markdown("### 🛡️ Dashboard Manajemen Risiko UPDL Jakarta")
                     
+                    subtab_isu, subtab_monitoring = st.tabs([
+                        "🌐 Radar Isu Organisasi & AI Predictive Engine",
+                        "📊 Pemantauan Risiko Real-Time & KRI"
+                    ])
+
+                    # ─────────────────────────────────────────────────────────────
+                    # SUB-TAB 1: RADAR ISU ORGANISASI & AI PREDICTIVE ENGINE (ITEM 1)
+                    # ─────────────────────────────────────────────────────────────
+                    with subtab_isu:
+                        st.markdown("#### 🌐 Radar Pemantauan Isu Strategis (Internal & Eksternal)")
+                        st.write("Sistem analitik berbasis AI untuk mendeteksi dinamika lingkungan organisasi dan memproyeksikan dampaknya secara prediktif.")
+
+                        # URL Spreadsheet Monitoring Risiko (Sheet Dataset_Isu_Organisasi)
+                        sheet_id_risiko = '139HX_RA0Dc71_CorxpdfoSQppzUS9GNe'
+                        url_isu_organisasi = f"https://docs.google.com/spreadsheets/d/{sheet_id_risiko}/gviz/tq?tqx=out:csv&sheet=Dataset_Isu_Organisasi"
+
+                        @st.cache_data(ttl=300)
+                        def load_data_isu(csv_url):
+                            df_raw = pd.read_csv(csv_url)
+                            df_raw.columns = df_raw.columns.astype(str).str.strip()
+                            return df_raw
+
+                        try:
+                            df_isu_raw = load_data_isu(url_isu_organisasi)
+                        except Exception as e_load_isu:
+                            df_isu_raw = pd.DataFrame()
+                            st.error(f"Gagal memuat sheet 'Dataset_Isu_Organisasi': {e_load_isu}")
+
+                        if not df_isu_raw.empty:
+                            # 1. STANDARISASI KOLOM & NUMERIK
+                            kolom_num_isu = ['SKOR_URGENSI', 'POTENSI_DAMPAK']
+                            for col in kolom_num_isu:
+                                if col in df_isu_raw.columns:
+                                    df_isu_raw[col] = pd.to_numeric(df_isu_raw[col], errors='coerce').fillna(3)
+
+                            # 2. FILTER MANDIRI
+                            col_fi1, col_fi2, col_fi3 = st.columns(3)
+                            with col_fi1:
+                                opsi_kategori = ["Semua Kategori"] + sorted(list(df_isu_raw['KATEGORI'].dropna().unique()))
+                                filter_kategori = st.selectbox("🌐 Kategori Isu:", opsi_kategori, key="f_isu_kategori")
+                            with col_fi2:
+                                opsi_status = ["Semua Status"] + sorted(list(df_isu_raw['STATUS_ISU'].dropna().unique()))
+                                filter_status = st.selectbox("📌 Status Isu:", opsi_status, key="f_isu_status")
+                            with col_fi3:
+                                list_pic_sektor = sorted(list(df_isu_raw['PIC_SEKTOR'].dropna().unique())) if 'PIC_SEKTOR' in df_isu_raw.columns else []
+                                opsi_pic_sektor = ["Semua PIC Sektor"] + list_pic_sektor
+                                filter_pic_sektor = st.selectbox("👥 PIC Penanggung Jawab:", opsi_pic_sektor, key="f_isu_pic")
+
+                            # Terapkan Filter
+                            df_isu_filtered = df_isu_raw.copy()
+                            if filter_kategori != "Semua Kategori":
+                                df_isu_filtered = df_isu_filtered[df_isu_filtered['KATEGORI'] == filter_kategori]
+                            if filter_status != "Semua Status":
+                                df_isu_filtered = df_isu_filtered[df_isu_filtered['STATUS_ISU'] == filter_status]
+                            if filter_pic_sektor != "Semua PIC Sektor":
+                                df_isu_filtered = df_isu_filtered[df_isu_filtered['PIC_SEKTOR'] == filter_pic_sektor]
+
+                            # 3. TOP METRICS CARDS
+                            total_isu = len(df_isu_filtered)
+                            total_internal = len(df_isu_filtered[df_isu_filtered['KATEGORI'] == 'Internal'])
+                            total_eksternal = len(df_isu_filtered[df_isu_filtered['KATEGORI'] == 'Eksternal'])
+                            isu_kritis = len(df_isu_filtered[(df_isu_filtered['SKOR_URGENSI'] >= 4) & (df_isu_filtered['POTENSI_DAMPAK'] >= 4)])
+
+                            st.markdown("---")
+                            cols_kpi_isu = st.columns(4)
+                            with cols_kpi_isu[0]:
+                                st.markdown(f'<div class="kpi-card"><div class="kpi-title">📋 Total Isu<br>Teridentifikasi</div><div class="kpi-value" style="color:#0055A4;">{total_isu}</div></div>', unsafe_allow_html=True)
+                            with cols_kpi_isu[1]:
+                                st.markdown(f'<div class="kpi-card card-mat"><div class="kpi-title">🏢 Konteks<br>Internal</div><div class="kpi-value">{total_internal}</div></div>', unsafe_allow_html=True)
+                            with cols_kpi_isu[2]:
+                                st.markdown(f'<div class="kpi-card card-inst"><div class="kpi-title">🌍 Konteks<br>Eksternal</div><div class="kpi-value">{total_eksternal}</div></div>', unsafe_allow_html=True)
+                            with cols_kpi_isu[3]:
+                                st.markdown(f'<div class="kpi-card card-sp"><div class="kpi-title">🚨 Isu Kritis<br>(High Impact)</div><div class="kpi-value">{isu_kritis}</div></div>', unsafe_allow_html=True)
+
+                            st.markdown("---")
+
+                            # 4. TATA LETAK 2 KOLOM (KIRI: TABEL & FORM | KANAN: RADAR SCATTER & AI ENGINE)
+                            col_isu_kiri, col_isu_kanan = st.columns([5, 5])
+
+                            with col_isu_kiri:
+                                st.markdown("##### 📋 Daftar Isu Organisasi Terpantau")
+                                st.dataframe(
+                                    df_isu_filtered[['KODE_ISU', 'KATEGORI', 'DESKRIPSI_ISU', 'RISK_MAPPING', 'SKOR_URGENSI', 'POTENSI_DAMPAK', 'PIC_SEKTOR']],
+                                    use_container_width=True,
+                                    height=360,
+                                    hide_index=True
+                                )
+
+                                # Form Tambah / Update Isu Cepat (Simulasi Lokal)
+                                with st.expander("➕ Tambah / Perbarui Isu Baru", expanded=False):
+                                    with st.form("form_tambah_isu"):
+                                        c_in1, c_in2 = st.columns(2)
+                                        with c_in1:
+                                            new_kode = st.text_input("Kode Isu:", value=f"ISU-{len(df_isu_raw)+1:02d}")
+                                            new_kat = st.selectbox("Kategori:", ["Internal", "Eksternal"])
+                                            new_pic = st.selectbox("PIC Sektor:", ["TL JAR", "TL PKU", "TL K3L", "TL PBJ", "Manajemen"])
+                                        with c_in2:
+                                            new_urg = st.slider("Tingkat Urgensi (1-5):", 1, 5, 3)
+                                            new_dampak = st.slider("Potensi Dampak (1-5):", 1, 5, 3)
+                                            new_risk = st.text_input("Pemetaan Risiko Terkait:", "UPDLJKT.26.R05")
+                                        new_desc = st.text_area("Deskripsi Isu:", placeholder="Jelaskan dinamika atau isu strategis yang sedang terjadi...")
+                                        btn_simpan_isu = st.form_submit_button("Simpan Isu")
+                                        if btn_simpan_isu:
+                                            st.info("Simulasi tersimpan. Untuk penyimpanan permanen ke Google Sheets, pastikan fitur pipeline upload telah terhubung.")
+
+                            with col_isu_kanan:
+                                st.markdown("##### 🎯 Matriks Radar Urgensi vs Dampak")
+                                
+                                # Scatter Plot Quadrant Plotly
+                                fig_radar = px.scatter(
+                                    df_isu_filtered,
+                                    x='SKOR_URGENSI',
+                                    y='POTENSI_DAMPAK',
+                                    color='KATEGORI',
+                                    text='KODE_ISU',
+                                    hover_data=['DESKRIPSI_ISU', 'RISK_MAPPING', 'PIC_SEKTOR'],
+                                    color_discrete_map={'Internal': '#0055A4', 'Eksternal': '#f59e0b'}
+                                )
+                                fig_radar.update_traces(
+                                    marker=dict(size=14, line=dict(width=1.5, color='white')),
+                                    textposition='top center',
+                                    textfont=dict(size=11, color='#1e293b', weight='bold')
+                                )
+                                # Batas Kuadran (Cross-lines)
+                                fig_radar.add_hline(y=3.5, line_dash="dash", line_color="#ef4444", annotation_text="Ambang Batas Dampak Tinggi", annotation_position="top left")
+                                fig_radar.add_vline(x=3.5, line_dash="dash", line_color="#ef4444", annotation_text="Ambang Batas Urgensi Tinggi", annotation_position="top left")
+                                
+                                fig_radar.update_layout(
+                                    height=360,
+                                    margin=dict(t=20, b=20, l=20, r=20),
+                                    xaxis=dict(title="Tingkat Urgensi (1 - 5)", range=[0.5, 5.5], dtick=1),
+                                    yaxis=dict(title="Potensi Dampak (1 - 5)", range=[0.5, 5.5], dtick=1),
+                                    plot_bgcolor='#f8fafc',
+                                    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+                                )
+                                st.plotly_chart(fig_radar, use_container_width=True)
+
+                            # 5. AI PREDICTIVE ENGINE SECTION
+                            st.markdown("---")
+                            st.markdown("#### 🤖 Predictive Engine: Simulasi Proyeksi Dampak AI")
+                            st.write("Gunakan mesin AI terintegrasi untuk memproyeksikan skenario risiko 6-12 bulan ke depan jika isu strategis tidak tertangani secara preventif.")
+
+                            # Dropdown Pilihan Isu untuk Analisis AI
+                            list_pilihan_isu = [
+                                f"{row['KODE_ISU']} - {row['DESKRIPSI_ISU'][:80]}..." 
+                                for _, row in df_isu_filtered.iterrows()
+                            ]
+
+                            if list_pilihan_isu:
+                                col_ai_sel, col_ai_btn = st.columns([4, 1])
+                                with col_ai_sel:
+                                    isu_terpilih_str = st.selectbox("🎯 Pilih Isu Organisasi untuk Dianalisis AI:", list_pilihan_isu, key="sel_ai_isu")
+                                with col_ai_btn:
+                                    st.markdown("<br>", unsafe_allow_html=True)
+                                    btn_run_ai = st.button("⚡ Jalankan Prediksi AI", type="primary", use_container_width=True)
+
+                                # Ambil data isu terpilih
+                                kode_terpilih = isu_terpilih_str.split(" - ")[0]
+                                row_isu = df_isu_filtered[df_isu_filtered['KODE_ISU'] == kode_terpilih].iloc[0]
+
+                                if "hasil_prediksi_ai" not in st.session_state:
+                                    st.session_state["hasil_prediksi_ai"] = None
+
+                                if btn_run_ai:
+                                    with st.spinner(f"AI sedang memproyeksikan skenario dampak untuk [{kode_terpilih}]..."):
+                                        prompt_prediksi = f"""
+                                        Bertindaklah sebagai Senior Enterprise Risk Analyst & L&D Specialist PT PLN (Persero).
+                                        Lakukan evaluasi prediktif terhadap isu organisasi berikut:
+
+                                        Unit: PT PLN (Persero) UPDL Jakarta (Pusat Pendidikan & Pelatihan)
+                                        Model Biaya: Cost Center
+                                        Anggaran Operasional (OPEX): Rp 1.129.705.000
+                                        Batasan Toleransi Risiko: Rp 22.594.100 (2%)
+                                        
+                                        Informasi Isu Teridentifikasi:
+                                        - Kode Isu: {row_isu.get('KODE_ISU')}
+                                        - Kategori: {row_isu.get('KATEGORI')}
+                                        - Deskripsi: {row_isu.get('DESKRIPSI_ISU')}
+                                        - Kaitan Risiko Eksisting: {row_isu.get('RISK_MAPPING')}
+                                        - PIC Sektor: {row_isu.get('PIC_SEKTOR')}
+                                        - Skor Urgensi Saat Ini: {row_isu.get('SKOR_URGENSI')}/5
+                                        - Potensi Dampak Awal: {row_isu.get('POTENSI_DAMPAK')}/5
+
+                                        Tugas Anda:
+                                        Proyeksikan dampak ke depan (time horizon 6 - 12 bulan) bila isu ini tidak segera dimitigasi.
+                                        Keluarkan HANYA JSON valid (tanpa blok pembungkus apapun) dengan format:
+                                        {{
+                                            "proyeksi_operasional": "Analisis dampak konkret terhadap proses pembelajaran, instruktur, atau kepuasan peserta (maksimal 2 kalimat).",
+                                            "kpi_terancam": ["Indikator 1", "Indikator 2"],
+                                            "proyeksi_anggaran_kepatuhan": "Estimasi dampak terhadap penyerapan anggaran, risiko temuan, atau kepatuhan regulasi.",
+                                            "kategori_keparahan": "MODERATE / HIGH / CRITICAL",
+                                            "early_warning_signals": ["Sinyal peringatan dini 1", "Sinyal peringatan dini 2"],
+                                            "rekomendasi_preventif": ["Langkah mitigasi taktis 1", "Langkah mitigasi taktis 2"]
+                                        }}
+                                        """
+                                        try:
+                                            # Memanfaatkan pemanggilan model yang sudah terintegrasi
+                                            if model is not None:
+                                                response_ai = model.generate_content(prompt_prediksi)
+                                                teks_ai = response_ai.text.strip()
+                                                # Ekstraksi format JSON via regex
+                                                match_json = re.search(r'\{.*\}', teks_ai, re.DOTALL)
+                                                if match_json:
+                                                    data_prediksi = json.loads(match_json.group(0))
+                                                    st.session_state["hasil_prediksi_ai"] = {
+                                                        "kode": kode_terpilih,
+                                                        "data": data_prediksi
+                                                    }
+                                                else:
+                                                    st.error("Gagal mengekstrak output JSON dari AI.")
+                                            else:
+                                                st.warning("Model AI belum terkonfigurasi. Pastikan GEMINI_API_KEY aktif di Streamlit Secrets.")
+                                        except Exception as e_gemini:
+                                            st.error(f"Terjadi kesalahan saat memanggil AI: {e_gemini}")
+
+                                # Tampilkan Hasil Prediksi AI dalam Wadah Interaktif
+                                if st.session_state["hasil_prediksi_ai"] and st.session_state["hasil_prediksi_ai"]["kode"] == kode_terpilih:
+                                    res_data = st.session_state["hasil_prediksi_ai"]["data"]
+                                    
+                                    warna_badge = "#b91c1c" if res_data.get("kategori_keparahan") in ["HIGH", "CRITICAL"] else "#0d9488"
+                                    
+                                    st.markdown(f"""
+                                    <div style="background-color: #f0fdf4; border: 1.5px solid #86efac; border-radius: 12px; padding: 20px; margin-top: 15px;">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                            <h4 style="margin: 0; color: #065f46;">📊 Hasil Pemodelan Proyeksi Dampak AI: {kode_terpilih}</h4>
+                                            <span style="background-color: {warna_badge}; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold;">
+                                                Status Keparahan: {res_data.get('kategori_keparahan', 'MODERATE')}
+                                            </span>
+                                        </div>
+                                        <p style="color: #1e293b; margin-bottom: 10px;"><b>Proyeksi Dampak Operasional:</b><br>{res_data.get('proyeksi_operasional')}</p>
+                                        <p style="color: #1e293b; margin-bottom: 10px;"><b>Proyeksi Dampak Anggaran & Kepatuhan:</b><br>{res_data.get('proyeksi_anggaran_kepatuhan')}</p>
+                                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+                                            <div style="background: white; padding: 12px; border-radius: 8px; border: 1px solid #d1fae5;">
+                                                <b style="color: #b45309;">⚠️ Early Warning Signals (Indikator Pemicu):</b>
+                                                <ul style="margin: 5px 0 0 15px; padding: 0; color: #334155; font-size: 13px;">
+                                                    {''.join([f'<li>{s}</li>' for s in res_data.get('early_warning_signals', [])])}
+                                                </ul>
+                                            </div>
+                                            <div style="background: white; padding: 12px; border-radius: 8px; border: 1px solid #d1fae5;">
+                                                <b style="color: #047857;">🛡️ Rekomendasi Mitigasi Preventif:</b>
+                                                <ul style="margin: 5px 0 0 15px; padding: 0; color: #334155; font-size: 13px;">
+                                                    {''.join([f'<li>{r}</li>' for r in res_data.get('rekomendasi_preventif', [])])}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    """, unsafe_allow_html=True)
+                            else:
+                                st.info("Tidak ada isu yang terpilih.")
+                        else:
+                            st.warning("⚠️ Lembar kerja 'Dataset_Isu_Organisasi' belum memuat data atau sedang disinkronkan.")
+
+                    # ─────────────────────────────────────────────────────────────
+                    # SUB-TAB 2: PEMANTAUAN RISIKO REAL-TIME & KRI (ITEM 2)
+                    # ─────────────────────────────────────────────────────────────
+                    with subtab_monitoring:
+                        st.markdown("#### 📊 Pemantauan Risiko Real-Time & KRI")
+                        st.info("🚧 Ruangan untuk Dashboard Pemantauan Risiko Real-Time (Item 2) telah disiapkan dan siap dihubungkan dengan sheet Pemantauan Bulanan.")
+
         except Exception as e:
             st.error(f"Gagal memuat data: {e}")
             
