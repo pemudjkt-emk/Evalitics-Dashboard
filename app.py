@@ -1917,7 +1917,7 @@ else:
 
                                         Tugas Anda:
                                         Proyeksikan dampak ke depan (time horizon 6 - 12 bulan) bila isu ini tidak segera dimitigasi.
-                                        Keluarkan HANYA JSON valid (tanpa blok pembungkus apapun) dengan format:
+                                        Keluarkan HANYA JSON valid (tanpa blok pembungkus markdown apapun) dengan format:
                                         {{
                                             "proyeksi_operasional": "Analisis dampak konkret terhadap proses pembelajaran, instruktur, atau kepuasan peserta (maksimal 2 kalimat).",
                                             "kpi_terancam": ["Indikator 1", "Indikator 2"],
@@ -1927,25 +1927,58 @@ else:
                                             "rekomendasi_preventif": ["Langkah mitigasi taktis 1", "Langkah mitigasi taktis 2"]
                                         }}
                                         """
-                                        try:
-                                            # Memanfaatkan pemanggilan model yang sudah terintegrasi
-                                            if model is not None:
-                                                response_ai = model.generate_content(prompt_prediksi)
-                                                teks_ai = response_ai.text.strip()
-                                                # Ekstraksi format JSON via regex
-                                                match_json = re.search(r'\{.*\}', teks_ai, re.DOTALL)
-                                                if match_json:
-                                                    data_prediksi = json.loads(match_json.group(0))
-                                                    st.session_state["hasil_prediksi_ai"] = {
-                                                        "kode": kode_terpilih,
-                                                        "data": data_prediksi
-                                                    }
-                                                else:
-                                                    st.error("Gagal mengekstrak output JSON dari AI.")
-                                            else:
-                                                st.warning("Model AI belum terkonfigurasi. Pastikan GEMINI_API_KEY aktif di Streamlit Secrets.")
-                                        except Exception as e_gemini:
-                                            st.error(f"Terjadi kesalahan saat memanggil AI: {e_gemini}")
+                                        
+                                        # 1. Deteksi dinamis model yang aktif di akun Google API (Benchmark Dashboard Kinerja)
+                                        active_models = []
+                                        error_init_ai = ""
+                                        if "GEMINI_API_KEY" in st.secrets:
+                                            try:
+                                                genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+                                                raw_models = [
+                                                    m.name for m in genai.list_models() 
+                                                    if 'generateContent' in m.supported_generation_methods
+                                                ]
+                                                # Urutan prioritas dari versi terbaru/rekomendasi hingga fallback stabil
+                                                prioritas = ['3.8-flash', '2.5-flash', '2.0-flash', '1.5-flash', 'flash', 'pro', 'gemini-pro']
+                                                for p in prioritas:
+                                                    for rm in raw_models:
+                                                        if p in rm.lower() and rm not in active_models:
+                                                            active_models.append(rm)
+                                                for rm in raw_models:
+                                                    if rm not in active_models:
+                                                        active_models.append(rm)
+                                            except Exception as e_list:
+                                                error_init_ai = str(e_list)
+
+                                        # 2. Eksekusi pemanggilan berjenjang (Multi-model Fallback)
+                                        berhasil_ai = False
+                                        pesan_error_terakhir = ""
+
+                                        if not active_models:
+                                            st.error(f"⚠️ Kunci API Gemini tidak menemukan model aktif ({error_init_ai}). Periksa konfigurasi di Streamlit Secrets.")
+                                        else:
+                                            for m_name in active_models:
+                                                try:
+                                                    temp_model = genai.GenerativeModel(m_name)
+                                                    response_ai = temp_model.generate_content(prompt_prediksi)
+                                                    teks_ai = response_ai.text.strip()
+                                                    
+                                                    # Ekstraksi string JSON menggunakan Regex
+                                                    match_json = re.search(r'\{.*\}', teks_ai, re.DOTALL)
+                                                    if match_json:
+                                                        data_prediksi = json.loads(match_json.group(0))
+                                                        st.session_state["hasil_prediksi_ai"] = {
+                                                            "kode": kode_terpilih,
+                                                            "data": data_prediksi
+                                                        }
+                                                        berhasil_ai = True
+                                                        break
+                                                except Exception as e_try:
+                                                    pesan_error_terakhir = str(e_try)
+                                                    continue  # Lanjut ke kandidat model berikutnya jika model ini 404/gagal
+
+                                            if not berhasil_ai:
+                                                st.error(f"Terjadi kesalahan saat memanggil AI: {pesan_error_terakhir}")
 
                                 # Tampilkan Hasil Prediksi AI dalam Wadah Interaktif
                                 if st.session_state["hasil_prediksi_ai"] and st.session_state["hasil_prediksi_ai"]["kode"] == kode_terpilih:
