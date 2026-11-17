@@ -118,6 +118,11 @@ sheet_id_kinerja = '17tK8xNv4NaZo4OsErwk90IDGp8vqqSquGWVXNdzm1fs'
 url_kinerja_looker = f"https://docs.google.com/spreadsheets/d/{sheet_id_kinerja}/gviz/tq?tqx=out:csv&sheet=Dataset_Looker"
 url_kinerja_referensi = f"https://docs.google.com/spreadsheets/d/{sheet_id_kinerja}/gviz/tq?tqx=out:csv&sheet=Kinerja%20UPDL%20Jakarta"
 
+# 3. URL Sumber Data Action Tracker & Program Strategis (Baru)
+sheet_id_action = '147uJ-KrYvfTdOkG6myQFAwpGRW6SfXikHtFWKwzn2xU'
+url_action_tracker = f"https://docs.google.com/spreadsheets/d/{sheet_id_action}/gviz/tq?tqx=out:csv&sheet=Action%20Tracker"
+url_prog_strategis = f"https://docs.google.com/spreadsheets/d/{sheet_id_action}/gviz/tq?tqx=out:csv&sheet=Program%20Strategis"
+
 # ─────────────────────────────────────────────────────────────────────────────
 # HELPER FUNCTIONS
 # ─────────────────────────────────────────────────────────────────────────────
@@ -933,7 +938,8 @@ else:
                     "📋 Dashboard Evaluasi", 
                     "📈 Dashboard Kinerja", 
                     "🎓 Dashboard Pengajaran",
-                    "🛡️ Dashboard Manajemen Risiko"
+                    "🛡️ Dashboard Manajemen Risiko",
+                    "🚀 Dashboard Action Tracker"
                 ])
                 
                 # ==========================================
@@ -2317,7 +2323,308 @@ else:
                                 st.info("Tidak ada risiko yang berstatus 'Bahaya' pada bulan yang Anda pilih. Operasional berada dalam batas toleransi.")
                         else:
                             st.warning("⚠️ Lembar kerja 'Dataset_Monitoring_Risiko' belum memuat data atau sedang disinkronkan.")
+                # ==========================================
+                # TAB UTAMA 5: DASHBOARD ACTION TRACKER (BARU)
+                # ==========================================
+                with tab_utama_action:
+                    st.markdown("### 🚀 Dashboard Pemantauan Action Tracker & Program Strategis")
+                    
+                    subtab_at_ops, subtab_at_strat = st.tabs([
+                        "📋 Action Tracker Operasional (Rapat)",
+                        "🎯 Pantauan Program Strategis"
+                    ])
 
+                    # ─────────────────────────────────────────────────────────────
+                    # SUB-TAB 1: ACTION TRACKER OPERASIONAL
+                    # ─────────────────────────────────────────────────────────────
+                    with subtab_at_ops:
+                        st.markdown("#### 📋 Rekam Jejak Tindak Lanjut Rapat Manajemen")
+                        st.write("Pemantauan eksekusi tindak lanjut operasional dari rapat reguler, rapat kinerja, dan tinjauan manajemen.")
+
+                        @st.cache_data(ttl=300)
+                        def load_action_tracker(csv_url):
+                            # Membaca CSV dan mendeteksi baris header yang tepat (karena baris 1-2 di sheet di-merge)
+                            df_raw = pd.read_csv(csv_url, header=None)
+                            header_idx = 0
+                            for idx, row in df_raw.iterrows():
+                                row_vals = [str(v).strip().upper() for v in row.values]
+                                if 'JENIS RAPAT' in row_vals or 'ACTION PLAN / TINDAK LANJUT' in row_vals:
+                                    header_idx = idx
+                                    break
+                            df_clean = pd.read_csv(csv_url, skiprows=header_idx)
+                            df_clean.columns = df_clean.columns.astype(str).str.strip().str.replace('\n', ' ')
+                            # Buang baris kosong yang tidak memiliki Action Plan
+                            col_ap = next((c for c in df_clean.columns if 'Action Plan' in c), None)
+                            if col_ap:
+                                df_clean = df_clean.dropna(subset=[col_ap], how='all')
+                                df_clean = df_clean[df_clean[col_ap].astype(str).str.strip() != '']
+                            return df_clean
+
+                        try:
+                            df_at = load_action_tracker(url_action_tracker)
+                        except Exception as e_at:
+                            df_at = pd.DataFrame()
+                            st.error(f"Gagal memuat sheet 'Action Tracker': {e_at}")
+
+                        if not df_at.empty:
+                            # Identifikasi nama kolom secara dinamis agar tahan terhadap perubahan spasi/enter
+                            col_jenis = next((c for c in df_at.columns if 'Jenis Rapat' in c), 'Jenis Rapat')
+                            col_tgl = next((c for c in df_at.columns if 'Tanggal' in c), 'Tanggal')
+                            col_isu = next((c for c in df_at.columns if 'Isu' in c), 'Isu')
+                            col_ap = next((c for c in df_at.columns if 'Action Plan' in c), 'Action Plan / Tindak Lanjut')
+                            col_pic = next((c for c in df_at.columns if 'PIC' in c), 'PIC')
+                            col_target = next((c for c in df_at.columns if 'Target Waktu' in c), 'Target Waktu')
+                            col_looker = next((c for c in df_at.columns if 'looker' in c.lower()), col_target)
+                            col_prog = next((c for c in df_at.columns if 'Progress' in c), 'Progress')
+                            col_cat = next((c for c in df_at.columns if 'Catatan' in c), 'Catatan')
+
+                            # Standarisasi teks status Progress
+                            df_at[col_prog] = df_at[col_prog].fillna('NOT STARTED').astype(str).str.strip().str.upper()
+                            df_at[col_pic] = df_at[col_pic].fillna('Belum Ditentukan').astype(str).str.strip()
+                            df_at[col_jenis] = df_at[col_jenis].fillna('Lainnya').astype(str).str.strip()
+
+                            # Parsing tanggal untuk deteksi Overdue (Lewat Tenggat)
+                            df_at['Target_Date_Clean'] = pd.to_datetime(df_at[col_looker], errors='coerce')
+                            if df_at['Target_Date_Clean'].isna().all():
+                                df_at['Target_Date_Clean'] = pd.to_datetime(df_at[col_target], errors='coerce')
+
+                            today_ts = pd.Timestamp.today().normalize()
+                            df_at['Is_Overdue'] = (df_at[col_prog] != 'DONE') & (df_at['Target_Date_Clean'].notna()) & (df_at['Target_Date_Clean'] < today_ts)
+
+                            # 1. FILTER INTERAKTIF
+                            col_f_at1, col_f_at2, col_f_at3 = st.columns(3)
+                            with col_f_at1:
+                                opsi_rapat = ["Semua Jenis Rapat"] + sorted(list(df_at[col_jenis].unique()))
+                                f_rapat = st.selectbox("📅 Filter Jenis Rapat:", opsi_rapat, key="f_at_rapat")
+                            with col_f_at2:
+                                opsi_pic_at = ["Semua PIC"] + sorted(list(df_at[col_pic].unique()))
+                                f_pic_at = st.selectbox("👥 Filter PIC Penanggung Jawab:", opsi_pic_at, key="f_at_pic")
+                            with col_f_at3:
+                                opsi_prog_at = ["Semua Status"] + sorted(list(df_at[col_prog].unique()))
+                                f_prog_at = st.selectbox("🚦 Filter Status Progress:", opsi_prog_at, key="f_at_prog")
+
+                            df_at_f = df_at.copy()
+                            if f_rapat != "Semua Jenis Rapat":
+                                df_at_f = df_at_f[df_at_f[col_jenis] == f_rapat]
+                            if f_pic_at != "Semua PIC":
+                                df_at_f = df_at_f[df_at_f[col_pic] == f_pic_at]
+                            if f_prog_at != "Semua Status":
+                                df_at_f = df_at_f[df_at_f[col_prog] == f_prog_at]
+
+                            # 2. KPI CARDS
+                            tot_action = len(df_at_f)
+                            tot_done = len(df_at_f[df_at_f[col_prog] == 'DONE'])
+                            tot_onprog = len(df_at_f[df_at_f[col_prog] == 'ON PROGRESS'])
+                            tot_notstart = len(df_at_f[df_at_f[col_prog] == 'NOT STARTED'])
+                            tot_overdue = int(df_at_f['Is_Overdue'].sum())
+                            pct_done = (tot_done / tot_action * 100) if tot_action > 0 else 0.0
+
+                            st.markdown("---")
+                            cols_kpi_at = st.columns(5)
+                            with cols_kpi_at[0]:
+                                st.markdown(f'<div class="kpi-card"><div class="kpi-title">📋 Total Action<br>Plan</div><div class="kpi-value" style="color:#0055A4;">{tot_action}</div></div>', unsafe_allow_html=True)
+                            with cols_kpi_at[1]:
+                                st.markdown(f'<div class="kpi-card card-ok"><div class="kpi-title">✅ Selesai (DONE)<br>Completion Rate</div><div class="kpi-value" style="color:#15803d;">{tot_done} <span style="font-size:18px;">({pct_done:.1f}%)</span></div></div>', unsafe_allow_html=True)
+                            with cols_kpi_at[2]:
+                                st.markdown(f'<div class="kpi-card card-inst"><div class="kpi-title">⏳ Sedang Berjalan<br>(ON PROGRESS)</div><div class="kpi-value" style="color:#d97706;">{tot_onprog}</div></div>', unsafe_allow_html=True)
+                            with cols_kpi_at[3]:
+                                st.markdown(f'<div class="kpi-card card-warn"><div class="kpi-title">🛑 Belum Dimulai<br>(NOT STARTED)</div><div class="kpi-value" style="color:#64748b;">{tot_notstart}</div></div>', unsafe_allow_html=True)
+                            with cols_kpi_at[4]:
+                                st.markdown(f'<div class="kpi-card card-sp"><div class="kpi-title">🚨 Lewat Tenggat<br>(OVERDUE)</div><div class="kpi-value" style="color:#b91c1c;">{tot_overdue}</div></div>', unsafe_allow_html=True)
+
+                            st.markdown("---")
+
+                            # 3. VISUALISASI GRAFIK (DONUT & BAR CHART BEBAN KERJA PIC)
+                            col_chart_at1, col_chart_at2 = st.columns([4, 6])
+                            color_map_at = {'DONE': '#22c55e', 'ON PROGRESS': '#f59e0b', 'NOT STARTED': '#ef4444'}
+
+                            with col_chart_at1:
+                                st.markdown("##### 🎯 Proporsi Penyelesaian Tindak Lanjut")
+                                df_pie_at = df_at_f[col_prog].value_counts().reset_index()
+                                df_pie_at.columns = ['Status', 'Jumlah']
+                                fig_pie_at = px.pie(
+                                    df_pie_at, values='Jumlah', names='Status', hole=0.45,
+                                    color='Status', color_discrete_map=color_map_at
+                                )
+                                fig_pie_at.update_traces(textposition='inside', textinfo='percent+label', textfont=dict(size=14, weight='bold'))
+                                fig_pie_at.update_layout(height=360, showlegend=True, legend=dict(orientation="h", yanchor="bottom", y=-0.15, xanchor="center", x=0.5), margin=dict(t=20, b=20, l=10, r=10))
+                                st.plotly_chart(fig_pie_at, use_container_width=True)
+
+                            with col_chart_at2:
+                                st.markdown("##### 👥 Distribusi Beban Tindak Lanjut per PIC")
+                                df_bar_pic = df_at_f.groupby([col_pic, col_prog]).size().reset_index(name='Jumlah')
+                                fig_bar_pic = px.bar(
+                                    df_bar_pic, x='Jumlah', y=col_pic, color=col_prog, orientation='h',
+                                    text='Jumlah', barmode='stack', color_discrete_map=color_map_at
+                                )
+                                fig_bar_pic.update_traces(textposition='inside', textfont=dict(color='white', weight='bold'))
+                                fig_bar_pic.update_layout(height=360, xaxis_title="Jumlah Action Plan", yaxis_title="", legend_title_text="Status", legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1), margin=dict(t=30, b=20, l=10, r=10))
+                                st.plotly_chart(fig_bar_pic, use_container_width=True)
+
+                            # 4. TABEL DETAIL & HIGHLIGHT OVERDUE
+                            st.markdown("---")
+                            st.markdown("##### 📄 Daftar Detail Action Plan & Status Eksekusi")
+                            if tot_overdue > 0:
+                                st.error(f"🚨 **Perhatian:** Terdapat **{tot_overdue} item Action Plan** yang sudah melewati batas waktu (*Target Waktu*) namun belum berstatus DONE.")
+
+                            cols_tampil_at = [c for c in [col_jenis, col_tgl, col_isu, col_ap, col_pic, col_target, col_prog, col_cat] if c in df_at_f.columns]
+                            st.dataframe(df_at_f[cols_tampil_at], use_container_width=True, hide_index=True)
+
+                            # 5. AI EXECUTIVE SUMMARY (BOTTLENECK ANALYZER)
+                            st.markdown("---")
+                            st.markdown("#### 🤖 AI Executive Summary & Bottleneck Analyzer")
+                            st.write("Sintesis otomatis berbasis AI untuk memetakan hambatan utama (*bottleneck*) pada item rapat yang belum selesai.")
+                            
+                            if st.button("⚡ Generate Executive Summary Action Tracker (AI)", type="primary", key="btn_ai_at"):
+                                df_pending_at = df_at_f[df_at_f[col_prog] != 'DONE']
+                                if df_pending_at.empty:
+                                    st.success("🎉 Seluruh item pada filter ini telah berstatus DONE! Tidak ada tunggakan pekerjaan.")
+                                else:
+                                    with st.spinner("Gemini AI sedang menganalisis tunggakan Action Plan..."):
+                                        sample_pending = df_pending_at[[col_isu, col_ap, col_pic, col_target, col_prog]].head(20).to_string(index=False)
+                                        prompt_at = f"""
+                                        Bertindaklah sebagai Senior PMO (Project Management Officer) di PT PLN (Persero) UPDL Jakarta.
+                                        Berikut adalah daftar Action Plan hasil rapat manajemen yang masih berstatus ON PROGRESS atau NOT STARTED:
+                                        {sample_pending}
+
+                                        Tugas Anda:
+                                        1. Berikan ringkasan eksekutif singkat (1 paragraf) mengenai postur penyelesaian tindak lanjut rapat saat ini.
+                                        2. Identifikasi area bottleneck utama (PIC mana yang paling banyak memegang tanggungan krusial dan isu apa yang paling mendesak).
+                                        3. Berikan 3 poin rekomendasi langkah akselerasi yang tegas untuk dibahas pada Rapat Manajemen berikutnya.
+                                        Gunakan format HTML murni (tanpa blok ```html).
+                                        """
+                                        try:
+                                            if model is not None:
+                                                resp_at = model.generate_content(prompt_at)
+                                                teks_at = resp_at.text.strip().replace("```html", "").replace("```", "").strip()
+                                                st.markdown(f"""
+                                                <div style="background-color:#f0fdf4; border:1.5px solid #86efac; border-radius:12px; padding:20px; margin-top:10px;">
+                                                    <h4 style="margin-top:0; color:#065f46;">📊 Hasil Analisis PMO AI: Action Tracker Operasional</h4>
+                                                    <div style="color:#1e293b; line-height:1.6;">{teks_at}</div>
+                                                </div>
+                                                """, unsafe_allow_html=True)
+                                            else:
+                                                st.warning("⚠️ Model Gemini AI belum terkonfigurasi di Streamlit Secrets.")
+                                        except Exception as e_ai_at:
+                                            st.error(f"Gagal memanggil AI: {e_ai_at}")
+                        else:
+                            st.warning("⚠️ Data Action Tracker kosong atau sedang disinkronkan.")
+
+                    # ─────────────────────────────────────────────────────────────
+                    # SUB-TAB 2: PANTAUAN PROGRAM STRATEGIS
+                    # ─────────────────────────────────────────────────────────────
+                    with subtab_at_strat:
+                        st.markdown("#### 🎯 Pemantauan Inisiatif & Program Strategis UPDL Jakarta")
+                        st.write("Pemantauan makro untuk memastikan pencapaian *output* dan *milestone* dari setiap Program Strategis.")
+
+                        @st.cache_data(ttl=300)
+                        def load_prog_strategis(csv_url):
+                            df_s = pd.read_csv(csv_url)
+                            df_s.columns = df_s.columns.astype(str).str.strip()
+                            # Karena sel No, PIC, Program, Tujuan, dan Output di-merge secara vertikal di Google Sheets,
+                            # kita gunakan forward-fill (ffill) agar setiap baris Action Plan memiliki identitas Program utuh.
+                            cols_ffill = [c for c in ['No', 'PIC', 'Program', 'Tujuan', 'Output / Target'] if c in df_s.columns]
+                            if cols_ffill:
+                                df_s[cols_ffill] = df_s[cols_ffill].ffill()
+                            if 'Action Plan' in df_s.columns:
+                                df_s = df_s.dropna(subset=['Action Plan'], how='all')
+                                df_s = df_s[df_s['Action Plan'].astype(str).str.strip() != '']
+                            return df_s
+
+                        try:
+                            df_strat = load_prog_strategis(url_prog_strategis)
+                        except Exception as e_st:
+                            df_strat = pd.DataFrame()
+                            st.error(f"Gagal memuat sheet 'Program Strategis': {e_st}")
+
+                        if not df_strat.empty:
+                            df_strat['Status_Clean'] = df_strat['Status'].fillna('Not Started').astype(str).str.strip().str.title()
+                            df_strat['PIC_Clean'] = df_strat['PIC'].fillna('-').astype(str).str.strip().str.upper()
+
+                            # 1. FILTER PROGRAM STRATEGIS
+                            col_fs1, col_fs2, col_fs3 = st.columns(3)
+                            with col_fs1:
+                                opsi_pic_s = ["Semua Bidang / PIC"] + sorted(list(df_strat['PIC_Clean'].unique()))
+                                f_pic_s = st.selectbox("🏢 Filter Bidang / PIC:", opsi_pic_s, key="f_strat_pic")
+                            with col_fs2:
+                                df_sub_prog = df_strat if f_pic_s == "Semua Bidang / PIC" else df_strat[df_strat['PIC_Clean'] == f_pic_s]
+                                opsi_prog_s = ["Semua Program Strategis"] + sorted(list(df_sub_prog['Program'].dropna().unique()))
+                                f_prog_s = st.selectbox("🎯 Pilih Program Strategis:", opsi_prog_s, key="f_strat_prog")
+                            with col_fs3:
+                                opsi_stat_s = ["Semua Status"] + sorted(list(df_strat['Status_Clean'].unique()))
+                                f_stat_s = st.selectbox("🚦 Filter Status Milestone:", opsi_stat_s, key="f_strat_stat")
+
+                            df_strat_f = df_strat.copy()
+                            if f_pic_s != "Semua Bidang / PIC":
+                                df_strat_f = df_strat_f[df_strat_f['PIC_Clean'] == f_pic_s]
+                            if f_prog_s != "Semua Program Strategis":
+                                df_strat_f = df_strat_f[df_strat_f['Program'] == f_prog_s]
+                            if f_stat_s != "Semua Status":
+                                df_strat_f = df_strat_f[df_strat_f['Status_Clean'] == f_stat_s]
+
+                            # 2. KPI CARDS PROGRAM STRATEGIS
+                            jml_prog_unik = df_strat_f['Program'].nunique()
+                            tot_ms = len(df_strat_f)
+                            ms_done = len(df_strat_f[df_strat_f['Status_Clean'] == 'Done'])
+                            ms_onprog = len(df_strat_f[df_strat_f['Status_Clean'] == 'On Progress'])
+                            pct_ms_done = (ms_done / tot_ms * 100) if tot_ms > 0 else 0.0
+
+                            st.markdown("---")
+                            cols_kpi_st = st.columns(4)
+                            with cols_kpi_st[0]:
+                                st.markdown(f'<div class="kpi-card"><div class="kpi-title">🎯 Total Program<br>Strategis Aktif</div><div class="kpi-value" style="color:#0055A4;">{jml_prog_unik}</div></div>', unsafe_allow_html=True)
+                            with cols_kpi_st[1]:
+                                st.markdown(f'<div class="kpi-card card-fill"><div class="kpi-title">📌 Total Milestone<br>(Action Plan)</div><div class="kpi-value">{tot_ms}</div></div>', unsafe_allow_html=True)
+                            with cols_kpi_st[2]:
+                                st.markdown(f'<div class="kpi-card card-ok"><div class="kpi-title">✅ Milestone Selesai<br>(Completion Rate)</div><div class="kpi-value" style="color:#15803d;">{ms_done} <span style="font-size:18px;">({pct_ms_done:.1f}%)</span></div></div>', unsafe_allow_html=True)
+                            with cols_kpi_st[3]:
+                                st.markdown(f'<div class="kpi-card card-inst"><div class="kpi-title">⏳ Sedang Berjalan<br>(On Progress)</div><div class="kpi-value" style="color:#d97706;">{ms_onprog}</div></div>', unsafe_allow_html=True)
+
+                            st.markdown("---")
+
+                            # 3. GRAFIK PROGRES PER PROGRAM STRATEGIS
+                            st.markdown("##### 📊 Progres Penyelesaian Milestone per Program Strategis")
+                            df_prog_chart = df_strat_f.groupby(['Program', 'Status_Clean']).size().reset_index(name='Jumlah')
+                            color_map_strat = {'Done': '#22c55e', 'On Progress': '#f59e0b', 'Not Started': '#cbd5e1'}
+
+                            fig_strat = px.bar(
+                                df_prog_chart, x='Jumlah', y='Program', color='Status_Clean', orientation='h',
+                                text='Jumlah', barmode='stack', color_discrete_map=color_map_strat
+                            )
+                            fig_strat.update_traces(textposition='inside', textfont=dict(weight='bold'))
+                            fig_strat.update_layout(
+                                height=max(320, jml_prog_unik * 45),
+                                xaxis_title="Jumlah Milestone / Action Plan", yaxis_title="",
+                                legend_title_text="Status", legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+                                margin=dict(t=30, b=20, l=10, r=10)
+                            )
+                            st.plotly_chart(fig_strat, use_container_width=True)
+
+                            # 4. KARTU DETAIL PER PROGRAM STRATEGIS (EXPANDABLE)
+                            st.markdown("---")
+                            st.markdown("##### 🗂️ Rincian Tujuan, Target & Milestone per Program Strategis")
+                            for prog_name, group_df in df_strat_f.groupby('Program', sort=False):
+                                pic_prog = group_df['PIC_Clean'].iloc[0]
+                                tujuan_prog = group_df['Tujuan'].iloc[0] if 'Tujuan' in group_df.columns and pd.notna(group_df['Tujuan'].iloc[0]) else "-"
+                                output_prog = group_df['Output / Target'].iloc[0] if 'Output / Target' in group_df.columns and pd.notna(group_df['Output / Target'].iloc[0]) else "-"
+                                
+                                done_c = len(group_df[group_df['Status_Clean'] == 'Done'])
+                                tot_c = len(group_df)
+                                pct_c = int(done_c / tot_c * 100) if tot_c > 0 else 0
+
+                                with st.expander(f"📌 [{pic_prog}] {prog_name} — Progres: {done_c}/{tot_c} Milestone ({pct_c}%)", expanded=False):
+                                    st.markdown(f"**🎯 Tujuan Strategis:** {tujuan_prog}")
+                                    if str(output_prog).strip() not in ["-", "", "nan"]:
+                                        st.markdown(f"**🏆 Output / Target:** {output_prog}")
+                                    st.progress(pct_c / 100.0)
+                                    
+                                    cols_show_s = [c for c in ['Action Plan', 'Target Waktu', 'Status_Clean', 'Catatan'] if c in group_df.columns]
+                                    st.dataframe(
+                                        group_df[cols_show_s].rename(columns={'Status_Clean': 'Status'}),
+                                        use_container_width=True, hide_index=True
+                                    )
+                        else:
+                            st.warning("⚠️ Data Program Strategis kosong atau sedang disinkronkan.")
         except Exception as e:
             st.error(f"Gagal memuat data: {e}")
             
