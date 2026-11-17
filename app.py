@@ -1593,128 +1593,155 @@ else:
                         st.markdown("---")
                         
                         # ==============================================================
-                        # --- SMART NARRATIVE DENGAN DETEKSI MODEL OTOMATIS (LISTMODELS) ---
+                        # --- SMART NARRATIVE DENGAN DETEKSI MODEL OTOMATIS (ON-DEMAND) ---
                         # ==============================================================
                         st.markdown("<h3 style='font-size: 22px; color: #0f172a;'>C. Smart Narrative (Performance Dialogue Area)</h3>", unsafe_allow_html=True)
                         st.write("Area ini mendeteksi metrik yang berada dalam zona bahaya untuk segera dilakukan dialog kinerja.")
                         
                         df_bahaya = df_20[df_20['Status_Final'] == 'Bahaya']
                         
+                        if "ai_kinerja_cache" not in st.session_state:
+                            st.session_state["ai_kinerja_cache"] = {}
+                        
                         if not df_bahaya.empty:
-                            st.error(f"⚠️ Ditemukan **{len(df_bahaya)}** sub-indikator kritis yang memerlukan **Action Plan** segera berdasarkan evaluasi status terbaru.")
+                            col_info_bhy, col_btn_bhy = st.columns([3, 1])
+                            with col_info_bhy:
+                                st.error(f"⚠️ Ditemukan **{len(df_bahaya)}** sub-indikator kritis yang memerlukan **Action Plan** segera berdasarkan evaluasi status terbaru.")
+                            with col_btn_bhy:
+                                btn_ai_kinerja = st.button("⚡ Rumuskan Action Plan (AI)", type="primary", use_container_width=True, key="btn_trigger_ai_kinerja")
                             
-                            # Deteksi daftar model aktif sekali saja sebelum looping indikator
-                            active_models = []
-                            error_init_ai = ""
-                            if "GEMINI_API_KEY" in st.secrets:
-                                try:
-                                    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-                                    raw_models = [
-                                        m.name for m in genai.list_models() 
-                                        if 'generateContent' in m.supported_generation_methods
-                                    ]
-                                    # Urutkan berdasarkan prioritas model generasi terbaru
-                                    prioritas = ['2.5-flash', '2.0-flash', '1.5-flash', 'flash', 'pro']
-                                    for p in prioritas:
+                            # 1. PROSES GEMINI AI HANYA DIJALANKAN JIKA TOMBOL DIKLIK
+                            if btn_ai_kinerja:
+                                active_models = []
+                                error_init_ai = ""
+                                if "GEMINI_API_KEY" in st.secrets:
+                                    try:
+                                        genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+                                        raw_models = [
+                                            m.name for m in genai.list_models() 
+                                            if 'generateContent' in m.supported_generation_methods
+                                        ]
+                                        # Urutkan berdasarkan prioritas model generasi terbaru
+                                        prioritas = ['2.5-flash', '2.0-flash', '1.5-flash', 'flash', 'pro']
+                                        for p in prioritas:
+                                            for rm in raw_models:
+                                                if p in rm.lower() and rm not in active_models:
+                                                    active_models.append(rm)
                                         for rm in raw_models:
-                                            if p in rm.lower() and rm not in active_models:
+                                            if rm not in active_models:
                                                 active_models.append(rm)
-                                    for rm in raw_models:
-                                        if rm not in active_models:
-                                            active_models.append(rm)
-                                except Exception as e_list:
-                                    error_init_ai = str(e_list)
-                            
-                            with st.spinner("🤖 AI sedang merumuskan rekomendasi Action Plan cerdas..."):
-                                for idx, row in df_bahaya.iterrows():
-                                    sub_indikator = row['SUB INDIKATOR KINERJA']
-                                    pic = row['PIC UTAMA']
-                                    realisasi = row['Realisasi_Bulan']
-                                    target = row['Target_Bulan']
-                                    pct = row['Pencapaian_Pct']
-                                    
-                                    gap_aktual = abs(target - realisasi)
-                                    
-                                    if pct < 0.5:
-                                        bg_color = "#fef2f2"; border_color = "#ef4444" 
-                                        icon_sev = "🔴"; teks_sev = "KRITIS (< 50%)"; color_sev = "#7f1d1d"
-                                    else:
-                                        bg_color = "#fffbeb"; border_color = "#f59e0b" 
-                                        icon_sev = "🟠"; teks_sev = "PERINGATAN (50% - 99%)"; color_sev = "#92400e"
-                                    
-                                    action_plan_raw = str(row['ACTION PLAN']).strip() if pd.notna(row['ACTION PLAN']) else ""
-                                    kendala = str(row['KENDALA']).strip() if pd.notna(row['KENDALA']) else ""
-                                    
-                                    if action_plan_raw in ["", "nan", "None"]: action_plan_raw = "Belum ada rencana tindak lanjut di Master Data"
-                                    if kendala in ["", "nan", "None"]: kendala = "Belum ada kendala yang diidentifikasi"
-                                    
-                                    # --- EKSEKUSI PROMPT GEMINI AI ---
-                                    action_plan_smart = f"<p>{action_plan_raw}</p>"
-                                    
-                                    if action_plan_raw != "Belum ada rencana tindak lanjut di Master Data" and action_plan_raw != "":
-                                        if "GEMINI_API_KEY" not in st.secrets:
-                                            action_plan_smart = f"<p style='color:#f59e0b; font-weight:bold;'>⚠️ API Key Gemini belum dikonfigurasi di Streamlit Secrets.</p><p>{action_plan_raw}</p>"
-                                        elif not active_models:
-                                            action_plan_smart = f"<p style='color:#ef4444; font-weight:bold;'>⚠️ Tidak ada model yang ditemukan untuk API Key ini ({error_init_ai}).</p><p>{action_plan_raw}</p>"
-                                        else:
-                                            prompt_dialog = f"""
-                                            Bertindaklah sebagai Konsultan Manajemen Kinerja di PLN.
-                                            Tugas Anda adalah mengembangkan draft kalimat Action Plan singkat ini: "{action_plan_raw}" 
-                                            menjadi 3 poin langkah strategis manajerial (metode SMART) untuk mengatasi kendala "{kendala}" 
-                                            pada metrik "{sub_indikator}".
-                                            
-                                            Aturan Wajib:
-                                            - Gunakan format HTML list (<ul><li>...</li></ul>) secara langsung.
-                                            - JANGAN gunakan format markdown block (seperti ```html).
-                                            - Gunakan bahasa profesional, tajam, preskriptif, dan aplikatif.
-                                            """
-                                            berhasil = False
-                                            pesan_error = ""
-                                            for m_name in active_models:
-                                                try:
-                                                    temp_model = genai.GenerativeModel(m_name)
-                                                    resp_ai = temp_model.generate_content(prompt_dialog)
-                                                    ai_text = resp_ai.text.strip()
-                                                    
-                                                    if ai_text.startswith("```html"): ai_text = ai_text[7:-3].strip()
-                                                    elif ai_text.startswith("```"): ai_text = ai_text[3:-3].strip()
-                                                    
-                                                    action_plan_smart = ai_text
-                                                    berhasil = True
-                                                    break
-                                                except Exception as e:
-                                                    pesan_error = str(e)
-                                                    continue
-                                            
-                                            if not berhasil:
-                                                action_plan_smart = f"<p style='color:#ef4444; font-weight:bold;'>⚠️ AI Error: {pesan_error}</p><p>{action_plan_raw}</p>"
-                                            
-                                    with st.expander(f"{icon_sev} Dialog Kinerja: {sub_indikator} (PIC: {pic}) - {teks_sev}", expanded=False):
-                                        st.markdown(f'''
-                                        <div style="background-color: {bg_color}; padding: 15px; border-left: 5px solid {border_color}; border-radius: 5px;">
-                                            <p style="margin-top:0;">Indikator <b>{sub_indikator}</b> berada di level <b>{teks_sev}</b>. Diperlukan eskalasi dan diskusi mendalam bersama PIC <b>{pic}</b>.</p>
-                                            <table style="width:100%; border-collapse: collapse; margin-bottom: 10px;">
-                                                <tr>
-                                                    <td style="padding: 5px; width: 30%; font-weight: bold; color: {color_sev}; border-bottom: 1px solid rgba(0,0,0,0.05);">Target ({bulan_terpilih})</td>
-                                                    <td style="padding: 5px; color: {color_sev}; border-bottom: 1px solid rgba(0,0,0,0.05);">: {target:.2f}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td style="padding: 5px; font-weight: bold; color: {color_sev}; border-bottom: 1px solid rgba(0,0,0,0.05);">Realisasi Aktual</td>
-                                                    <td style="padding: 5px; color: {color_sev}; border-bottom: 1px solid rgba(0,0,0,0.05);">: <b>{realisasi:.2f}</b></td>
-                                                </tr>
-                                                <tr>
-                                                    <td style="padding: 5px; font-weight: bold; color: #b91c1c;">Gap / Selisih (Shortfall)</td>
-                                                    <td style="padding: 5px; color: #b91c1c; font-weight: bold;">: -{gap_aktual:.2f}</td>
-                                                </tr>
-                                            </table>
-                                            <p style="margin-bottom:2px; font-weight:bold; color:{color_sev};">🛑 Identifikasi Kendala:</p>
-                                            <p style="margin-top:0; font-style:italic; color:{color_sev};">"{kendala}"</p>
-                                            <p style="margin-bottom:2px; font-weight:bold; color:#065f46;">✨ Rekomendasi Action Plan Cerdas (AI-Generated):</p>
-                                            <div style="margin-top:0; color:#064e3b; background-color:#ecfdf5; padding: 10px; border-radius:4px; border: 1px solid #a7f3d0;">
-                                                {action_plan_smart}
-                                            </div>
+                                    except Exception as e_list:
+                                        error_init_ai = str(e_list)
+                                
+                                with st.spinner("🤖 AI sedang merumuskan rekomendasi Action Plan cerdas..."):
+                                    for idx, row in df_bahaya.iterrows():
+                                        sub_indikator = row['SUB INDIKATOR KINERJA']
+                                        cache_key = f"{bulan_terpilih}_{sub_indikator}"
+                                        
+                                        action_plan_raw = str(row['ACTION PLAN']).strip() if pd.notna(row['ACTION PLAN']) else ""
+                                        kendala = str(row['KENDALA']).strip() if pd.notna(row['KENDALA']) else ""
+                                        
+                                        if action_plan_raw in ["", "nan", "None"]: action_plan_raw = "Belum ada rencana tindak lanjut di Master Data"
+                                        if kendala in ["", "nan", "None"]: kendala = "Belum ada kendala yang diidentifikasi"
+                                        
+                                        # --- EKSEKUSI PROMPT GEMINI AI ---
+                                        action_plan_smart = f"<p>{action_plan_raw}</p>"
+                                        
+                                        if action_plan_raw != "Belum ada rencana tindak lanjut di Master Data" and action_plan_raw != "":
+                                            if "GEMINI_API_KEY" not in st.secrets:
+                                                action_plan_smart = f"<p style='color:#f59e0b; font-weight:bold;'>⚠️ API Key Gemini belum dikonfigurasi di Streamlit Secrets.</p><p>{action_plan_raw}</p>"
+                                            elif not active_models:
+                                                action_plan_smart = f"<p style='color:#ef4444; font-weight:bold;'>⚠️ Tidak ada model yang ditemukan untuk API Key ini ({error_init_ai}).</p><p>{action_plan_raw}</p>"
+                                            else:
+                                                prompt_dialog = f"""
+                                                Bertindaklah sebagai Konsultan Manajemen Kinerja di PLN.
+                                                Tugas Anda adalah mengembangkan draft kalimat Action Plan singkat ini: "{action_plan_raw}" 
+                                                menjadi 3 poin langkah strategis manajerial (metode SMART) untuk mengatasi kendala "{kendala}" 
+                                                pada metrik "{sub_indikator}".
+                                                
+                                                Aturan Wajib:
+                                                - Gunakan format HTML list (<ul><li>...</li></ul>) secara langsung.
+                                                - JANGAN gunakan format markdown block (seperti ```html).
+                                                - Gunakan bahasa profesional, tajam, preskriptif, dan aplikatif.
+                                                """
+                                                berhasil = False
+                                                pesan_error = ""
+                                                for m_name in active_models:
+                                                    try:
+                                                        temp_model = genai.GenerativeModel(m_name)
+                                                        resp_ai = temp_model.generate_content(prompt_dialog)
+                                                        ai_text = resp_ai.text.strip()
+                                                        
+                                                        if ai_text.startswith("```html"): ai_text = ai_text[7:-3].strip()
+                                                        elif ai_text.startswith("```"): ai_text = ai_text[3:-3].strip()
+                                                        
+                                                        action_plan_smart = ai_text
+                                                        berhasil = True
+                                                        break
+                                                    except Exception as e:
+                                                        pesan_error = str(e)
+                                                        continue
+                                                
+                                                if not berhasil:
+                                                    action_plan_smart = f"<p style='color:#ef4444; font-weight:bold;'>⚠️ AI Error: {pesan_error}</p><p>{action_plan_raw}</p>"
+                                        
+                                        st.session_state["ai_kinerja_cache"][cache_key] = action_plan_smart
+
+                            # 2. TAMPILKAN EXPANDER DIALOG KINERJA SECARA INSTAN (TANPA MENUNGGU AI)
+                            for idx, row in df_bahaya.iterrows():
+                                sub_indikator = row['SUB INDIKATOR KINERJA']
+                                pic = row['PIC UTAMA']
+                                realisasi = row['Realisasi_Bulan']
+                                target = row['Target_Bulan']
+                                pct = row['Pencapaian_Pct']
+                                
+                                gap_aktual = abs(target - realisasi)
+                                
+                                if pct < 0.5:
+                                    bg_color = "#fef2f2"; border_color = "#ef4444" 
+                                    icon_sev = "🔴"; teks_sev = "KRITIS (< 50%)"; color_sev = "#7f1d1d"
+                                else:
+                                    bg_color = "#fffbeb"; border_color = "#f59e0b" 
+                                    icon_sev = "🟠"; teks_sev = "PERINGATAN (50% - 99%)"; color_sev = "#92400e"
+                                
+                                action_plan_raw = str(row['ACTION PLAN']).strip() if pd.notna(row['ACTION PLAN']) else ""
+                                kendala = str(row['KENDALA']).strip() if pd.notna(row['KENDALA']) else ""
+                                
+                                if action_plan_raw in ["", "nan", "None"]: action_plan_raw = "Belum ada rencana tindak lanjut di Master Data"
+                                if kendala in ["", "nan", "None"]: kendala = "Belum ada kendala yang diidentifikasi"
+                                
+                                cache_key = f"{bulan_terpilih}_{sub_indikator}"
+                                action_plan_smart = st.session_state["ai_kinerja_cache"].get(
+                                    cache_key,
+                                    f"<p style='margin-bottom:4px;'>{action_plan_raw}</p><span style='font-size:11.5px; color:#047857;'><i>💡 Klik tombol <b>⚡ Rumuskan Action Plan (AI)</b> di kanan atas untuk menghasilkan 3 langkah SMART otomatis dari Gemini AI.</i></span>"
+                                )
+                                
+                                with st.expander(f"{icon_sev} Dialog Kinerja: {sub_indikator} (PIC: {pic}) - {teks_sev}", expanded=False):
+                                    st.markdown(f'''
+                                    <div style="background-color: {bg_color}; padding: 15px; border-left: 5px solid {border_color}; border-radius: 5px;">
+                                        <p style="margin-top:0;">Indikator <b>{sub_indikator}</b> berada di level <b>{teks_sev}</b>. Diperlukan eskalasi dan diskusi mendalam bersama PIC <b>{pic}</b>.</p>
+                                        <table style="width:100%; border-collapse: collapse; margin-bottom: 10px;">
+                                            <tr>
+                                                <td style="padding: 5px; width: 30%; font-weight: bold; color: {color_sev}; border-bottom: 1px solid rgba(0,0,0,0.05);">Target ({bulan_terpilih})</td>
+                                                <td style="padding: 5px; color: {color_sev}; border-bottom: 1px solid rgba(0,0,0,0.05);">: {target:.2f}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 5px; font-weight: bold; color: {color_sev}; border-bottom: 1px solid rgba(0,0,0,0.05);">Realisasi Aktual</td>
+                                                <td style="padding: 5px; color: {color_sev}; border-bottom: 1px solid rgba(0,0,0,0.05);">: <b>{realisasi:.2f}</b></td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 5px; font-weight: bold; color: #b91c1c;">Gap / Selisih (Shortfall)</td>
+                                                <td style="padding: 5px; color: #b91c1c; font-weight: bold;">: -{gap_aktual:.2f}</td>
+                                            </tr>
+                                        </table>
+                                        <p style="margin-bottom:2px; font-weight:bold; color:{color_sev};">🛑 Identifikasi Kendala:</p>
+                                        <p style="margin-top:0; font-style:italic; color:{color_sev};">"{kendala}"</p>
+                                        <p style="margin-bottom:2px; font-weight:bold; color:#065f46;">✨ Rekomendasi Action Plan Cerdas (AI-Generated):</p>
+                                        <div style="margin-top:0; color:#064e3b; background-color:#ecfdf5; padding: 10px; border-radius:4px; border: 1px solid #a7f3d0;">
+                                            {action_plan_smart}
                                         </div>
-                                        ''', unsafe_allow_html=True)
+                                    </div>
+                                    ''', unsafe_allow_html=True)
                         else:
                             st.success(f"🎉 **Luar Biasa!** Tidak ada sub-indikator yang berstatus 'Bahaya'. Operasional berjalan optimal!")
 
