@@ -933,8 +933,8 @@ else:
                     st.warning("⚠️ Tidak ada data. Sesuaikan filter.")
 
             elif menu_selection == "📊 DASHBOARD":
-                # ─── 1. MEMBUAT 4 TAB UTAMA (LEVEL 1) ─────────
-                tab_utama_eval, tab_utama_kinerja, tab_utama_pengajaran, tab_utama_risiko = st.tabs([
+                # ─── 1. MEMBUAT 5 TAB UTAMA (LEVEL 1) ─────────
+                tab_utama_eval, tab_utama_kinerja, tab_utama_pengajaran, tab_utama_risiko, tab_utama_action = st.tabs([
                     "📋 Dashboard Evaluasi", 
                     "📈 Dashboard Kinerja", 
                     "🎓 Dashboard Pengajaran",
