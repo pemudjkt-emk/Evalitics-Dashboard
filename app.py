@@ -1340,7 +1340,7 @@ else:
                         st.warning("⚠️ Tidak ada data. Sesuaikan filter.")
                 
                # ==========================================
-                # TAB UTAMA 2: DASHBOARD KINERJA (BARU)
+                # TAB UTAMA 2: DASHBOARD KINERJA (UPDATED)
                 # ==========================================
                 with tab_utama_kinerja:
                     st.markdown("### 📈 Analisis Kinerja UPDL Jakarta")
@@ -1390,20 +1390,30 @@ else:
                         
                         col_tr, col_real, col_pct = month_col_map[bulan_terpilih]
 
-                        # Membersihkan nilai numerik
+                        # Membersihkan nilai numerik untuk bulan terpilih
                         df_20['Target_Bulan'] = df_20[col_tr].apply(robust_float)
                         df_20['Realisasi_Bulan'] = df_20[col_real].apply(robust_float)
                         df_20['Pencapaian_Pct'] = df_20[col_pct].apply(robust_float)
                         df_20['Bobot_K'] = df_20['BOBOT '].apply(robust_float)
 
-                        # --- A. KALKULASI SKOR BULANAN (CAPPING 110%) ---
+                        # --- A. KALKULASI SKOR BULANAN TERPILIH (CAPPING 110%) ---
                         df_20['Pencapaian_Capped'] = df_20['Pencapaian_Pct'].clip(upper=1.1)
                         df_20['Skor_Bulanan'] = df_20['Pencapaian_Capped'] * df_20['Bobot_K']
                         
-                        # --- B. KALKULASI AKUMULASI (DITARIK LANGSUNG DARI KOLOM NILAI KINERJA) ---
-                        df_20['Skor_Akumulasi'] = df_20['NILAI KINERJA'].apply(robust_float)
+                        # --- B. KALKULASI PROGNOSA OPTIMIS (DARI SKOR BULAN DESEMBER, CAPPING 110%) ---
+                        df_20['Pencapaian_Des_Pct'] = df_20['PENCAPAIAN DESEMBER'].apply(robust_float)
+                        df_20['Pencapaian_Des_Capped'] = df_20['Pencapaian_Des_Pct'].clip(upper=1.1)
+                        df_20['Skor_Optimis_Des'] = df_20['Pencapaian_Des_Capped'] * df_20['Bobot_K']
 
-                        # --- C. AMBIL STATUS LANGSUNG DARI KOLOM EXCEL (Status) ---
+                        # --- C. KALKULASI PROGNOSA REALISTIS (DARI KOLOM 'NILAI KINERJA REALISTIS') ---
+                        # Pencarian kolom fleksibel untuk mengantisipasi spasi berlebih pada header Excel
+                        col_realistis = next((c for c in df_20.columns if c.strip().upper() == 'NILAI KINERJA REALISTIS'), None)
+                        if col_realistis:
+                            df_20['Skor_Realistis'] = df_20[col_realistis].apply(robust_float)
+                        else:
+                            df_20['Skor_Realistis'] = 0.0
+
+                        # --- D. AMBIL STATUS LANGSUNG DARI KOLOM EXCEL (Status) ---
                         def clean_status(val):
                             v = str(val).strip()
                             if v in ['nan', 'None', '', '#DIV/0!']: return 'Belum Ada Data'
@@ -1412,17 +1422,19 @@ else:
                             
                         df_20['Status_Final'] = df_20['Status'].apply(clean_status)
 
-                        # --- D. TERAPKAN FILTER PIC JIKA DIPILIH ---
+                        # --- E. TERAPKAN FILTER PIC JIKA DIPILIH ---
                         if pic_terpilih != "Semua PIC Utama":
                             df_20 = df_20[df_20['PIC UTAMA'].astype(str).str.strip() == pic_terpilih]
 
-                        # --- E. MENGHITUNG HASIL AKHIR UNTUK KPI CARD ---
+                        # --- F. MENGHITUNG HASIL AKHIR UNTUK KPI CARD ---
                         skor_kinerja_bulanan = df_20['Skor_Bulanan'].sum()
                         total_bobot_maksimal = df_20['Bobot_K'].sum()
-                        skor_kinerja_akumulasi = df_20['Skor_Akumulasi'].sum()
-
-                        persentase_pencapaian = (skor_kinerja_bulanan / total_bobot_maksimal * 100) if total_bobot_maksimal > 0 else 0
                         
+                        skor_kinerja_optimis = df_20['Skor_Optimis_Des'].sum()
+                        skor_kinerja_realistis = df_20['Skor_Realistis'].sum()
+
+                        # Penentuan warna & status untuk Skor Bulanan
+                        persentase_pencapaian = (skor_kinerja_bulanan / total_bobot_maksimal * 100) if total_bobot_maksimal > 0 else 0
                         if persentase_pencapaian >= 100:
                             status_overall = "Beyond Target"; warna_border = "#22c55e"; warna_teks = "#15803d"
                         elif persentase_pencapaian >= 90:
@@ -1430,20 +1442,57 @@ else:
                         else:
                             status_overall = "Underperform"; warna_border = "#ef4444"; warna_teks = "#b91c1c"
                             
+                        # Penentuan warna dinamis untuk Prognosa Optimis & Realistis
+                        warna_opt = "#15803d" if skor_kinerja_optimis >= 100 else ("#0055A4" if skor_kinerja_optimis >= 90 else "#b91c1c")
+                        border_opt = "#22c55e" if skor_kinerja_optimis >= 100 else ("#0055A4" if skor_kinerja_optimis >= 90 else "#ef4444")
+
+                        warna_real = "#15803d" if skor_kinerja_realistis >= 100 else ("#0055A4" if skor_kinerja_realistis >= 90 else "#b91c1c")
+                        border_real = "#22c55e" if skor_kinerja_realistis >= 100 else ("#0055A4" if skor_kinerja_realistis >= 90 else "#ef4444")
+
                         jml_bahaya = len(df_20[df_20['Status_Final'] == 'Bahaya'])
                         jml_beyond = len(df_20[df_20['Status_Final'].isin(['Beyond Target', 'Tercapai'])])
                         
-                        # --- RENDER KPI CARDS ---
-                        st.markdown("#### A. Ringkasan Pencapaian Kinerja")
-                        cols_kinerja = st.columns(4)
+                        # --- RENDER KPI CARDS (5 KARTU) ---
+                        st.markdown("#### A. Ringkasan Pencapaian & Prognosa Kinerja")
+                        cols_kinerja = st.columns(5)
+                        
                         with cols_kinerja[0]: 
-                            st.markdown(f'<div class="kpi-card" style="border-left-color: {warna_border};"><div class="kpi-title">🏆 Skor Kinerja<br>Bulanan</div><div class="kpi-value" style="color:{warna_teks};">{skor_kinerja_bulanan:.2f} <span style="font-size:16px;">/ {total_bobot_maksimal:.0f}</span></div><div style="font-size:11px; color:#64748b; margin-top:5px;">*Capping Max 110%</div></div>', unsafe_allow_html=True)
+                            st.markdown(f'''
+                            <div class="kpi-card" style="border-left-color: {warna_border};">
+                                <div class="kpi-title">🏆 Skor Kinerja<br>({bulan_terpilih})</div>
+                                <div class="kpi-value" style="color:{warna_teks};">{skor_kinerja_bulanan:.2f} <span style="font-size:15px;">/ {total_bobot_maksimal:.0f}</span></div>
+                                <div style="font-size:11px; font-weight:bold; color:{warna_teks}; margin-top:5px;">Status: {status_overall}</div>
+                            </div>''', unsafe_allow_html=True)
+                            
                         with cols_kinerja[1]: 
-                            st.markdown(f'<div class="kpi-card" style="border-left-color: {warna_border};"><div class="kpi-title">📈 Skor Akumulasi<br>Semester (Kolom AF)</div><div class="kpi-value" style="color:{warna_teks};">{skor_kinerja_akumulasi:.2f}</div><div style="font-size:12px; font-weight:bold; color:{warna_teks}; margin-top:5px;">Status Bulanan: {status_overall}</div></div>', unsafe_allow_html=True)
+                            st.markdown(f'''
+                            <div class="kpi-card" style="border-left-color: {border_opt};">
+                                <div class="kpi-title">🌟 Kinerja Optimis<br>(Prognosa Des)</div>
+                                <div class="kpi-value" style="color:{warna_opt};">{skor_kinerja_optimis:.2f}</div>
+                                <div style="font-size:11px; color:#64748b; margin-top:5px;">*Skor Des (Cap 110%)</div>
+                            </div>''', unsafe_allow_html=True)
+
                         with cols_kinerja[2]: 
-                            st.markdown(f'<div class="kpi-card card-warn"><div class="kpi-title">🚨 Indikator<br>Status Bahaya</div><div class="kpi-value">{jml_bahaya}</div></div>', unsafe_allow_html=True)
+                            st.markdown(f'''
+                            <div class="kpi-card" style="border-left-color: {border_real};">
+                                <div class="kpi-title">🎯 Kinerja<br>Realistis</div>
+                                <div class="kpi-value" style="color:{warna_real};">{skor_kinerja_realistis:.2f}</div>
+                                <div style="font-size:11px; color:#64748b; margin-top:5px;">*Nilai Kinerja Realistis</div>
+                            </div>''', unsafe_allow_html=True)
+                            
                         with cols_kinerja[3]: 
-                            st.markdown(f'<div class="kpi-card card-ok"><div class="kpi-title">🚀 Indikator<br>Aman / Beyond</div><div class="kpi-value">{jml_beyond}</div></div>', unsafe_allow_html=True)
+                            st.markdown(f'''
+                            <div class="kpi-card card-warn">
+                                <div class="kpi-title">🚨 Indikator<br>Status Bahaya</div>
+                                <div class="kpi-value">{jml_bahaya}</div>
+                            </div>''', unsafe_allow_html=True)
+                            
+                        with cols_kinerja[4]: 
+                            st.markdown(f'''
+                            <div class="kpi-card card-ok">
+                                <div class="kpi-title">🚀 Indikator<br>Aman / Beyond</div>
+                                <div class="kpi-value">{jml_beyond}</div>
+                            </div>''', unsafe_allow_html=True)
 
                         st.markdown("<br>", unsafe_allow_html=True)
 
@@ -1621,7 +1670,6 @@ else:
                                             m.name for m in genai.list_models() 
                                             if 'generateContent' in m.supported_generation_methods
                                         ]
-                                        # Urutkan berdasarkan prioritas model generasi terbaru
                                         prioritas = ['2.5-flash', '2.0-flash', '1.5-flash', 'flash', 'pro']
                                         for p in prioritas:
                                             for rm in raw_models:
@@ -1746,7 +1794,11 @@ else:
                             st.success(f"🎉 **Luar Biasa!** Tidak ada sub-indikator yang berstatus 'Bahaya'. Operasional berjalan optimal!")
 
                         with st.expander("📄 Lihat Tabel Kinerja Detail (20 Indikator Utama)", expanded=False):
-                            tabel_tampil = df_20[['NO', 'INDIKATOR KINERJA', 'PIC UTAMA', 'Target_Bulan', 'Realisasi_Bulan', 'Pencapaian_Pct', 'Bobot_K', 'Skor_Bulanan', 'Status_Final']]
+                            tabel_tampil = df_20[[
+                                'NO', 'INDIKATOR KINERJA', 'PIC UTAMA', 
+                                'Target_Bulan', 'Realisasi_Bulan', 'Pencapaian_Pct', 
+                                'Bobot_K', 'Skor_Bulanan', 'Skor_Optimis_Des', 'Skor_Realistis', 'Status_Final'
+                            ]]
                             st.dataframe(tabel_tampil, use_container_width=True)
                             
                     except Exception as e:
