@@ -4319,7 +4319,7 @@ else:
                                     return html_rows
                                 
                                 tabel_outstanding_html = render_tabel_matriks(df_isu_outstanding)
-                                tabel_baru_html = render_tabel_matriks(df_isu_baru
+                                tabel_baru_html = render_tabel_matriks(df_isu_baru)
                                 
                                 html_notulen = f"""
                                 <html><head><meta charset="utf-8"></head>
