@@ -3107,7 +3107,13 @@ else:
     elif menu_selection in ["📑 REPORT & KATALOG", "📄 Laporan Pembelajaran"]:
         
         if st.session_state["role"] == "SuperAdmin":
-            sub_rep_generator, sub_lap_pembelajaran, sub_katalog = st.tabs(["📑 Laporan Evaluasi", "📄 Laporan Pembelajaran", "👨‍🏫 Katalog Instruktur"])
+            # [UBAHAN]: Menambah sub_notulen dan tab "📝 Notulen Rapat"
+            sub_rep_generator, sub_lap_pembelajaran, sub_katalog, sub_notulen = st.tabs([
+                "📑 Laporan Evaluasi", 
+                "📄 Laporan Pembelajaran", 
+                "👨‍🏫 Katalog Instruktur", 
+                "📝 Notulen Rapat"
+            ])
         else:
             sub_lap_pembelajaran = st.container()
 
@@ -4198,6 +4204,169 @@ else:
                         st.warning("⚠ Database Instruktur kosong atau belum ditarik dari Google Sheets.")
                 except Exception as e:
                     st.error(f"Gagal memuat data Katalog Instruktur: {e}")
+        # -------------------------------------------------------------------------
+        # --- SUB TAB 4: GENERATOR NOTULEN RAPAT (ACTION TRACKER) ---
+        # -------------------------------------------------------------------------
+        if st.session_state["role"] == "SuperAdmin":
+            with sub_notulen:
+                st.markdown("### 📝 Generator Notulen Rapat (Action Tracker)")
+                st.write("Sintesis otomatis narasi notulen dan matriks tindak lanjut dari data Action Tracker.")
+                
+                try:
+                    sheet_id_at = '147uJ-KrYvfTdOkG6myQFAwpGRW6SfXikHtFWKwzn2xU'
+                    url_at = f"https://docs.google.com/spreadsheets/d/{sheet_id_at}/gviz/tq?tqx=out:csv&sheet=Action%20Tracker"
+                    
+                    @st.cache_data(ttl=300)
+                    def fetch_action_tracker_report(url):
+                        df_raw = pd.read_csv(url, header=None)
+                        header_idx = 0
+                        for idx, row in df_raw.iterrows():
+                            row_vals = [str(v).strip().upper() for v in row.values]
+                            if 'JENIS RAPAT' in row_vals or 'ACTION PLAN / TINDAK LANJUT' in row_vals:
+                                header_idx = idx; break
+                        new_cols = [str(c).strip().replace('\n', ' ') for c in df_raw.iloc[header_idx].values]
+                        df_clean = df_raw.iloc[header_idx + 1:].copy()
+                        df_clean.columns = new_cols
+                        col_ap = next((c for c in new_cols if 'Action Plan' in c), None)
+                        if col_ap:
+                            df_clean = df_clean.dropna(subset=[col_ap], how='all')
+                            df_clean = df_clean[~df_clean[col_ap].astype(str).str.strip().isin(['', 'nan', 'None'])]
+                        return df_clean
+
+                    df_at = fetch_action_tracker_report(url_at)
+                    
+                    if not df_at.empty:
+                        col_tgl = next((c for c in df_at.columns if 'Tanggal' in c), 'Tanggal')
+                        col_jenis = next((c for c in df_at.columns if 'Jenis Rapat' in c), 'Jenis Rapat')
+                        col_isu = next((c for c in df_at.columns if 'Isu' in c), 'Isu')
+                        col_ap = next((c for c in df_at.columns if 'Action Plan' in c), 'Action Plan')
+                        col_pic = next((c for c in df_at.columns if 'PIC' in c), 'PIC')
+                        col_target = next((c for c in df_at.columns if 'Target' in c), 'Target Waktu')
+                        col_prog = next((c for c in df_at.columns if 'Progress' in c), 'Progress')
+                        
+                        df_at['Opsi_Rapat'] = df_at[col_tgl].astype(str) + " — " + df_at[col_jenis].astype(str)
+                        list_rapat = df_at['Opsi_Rapat'].dropna().unique().tolist()
+                        
+                        col_n1, col_n2 = st.columns([2, 1])
+                        with col_n1:
+                            rapat_terpilih = st.selectbox("📅 Pilih Rapat untuk Dibuatkan Notulen:", list_rapat, key="notulen_rapat")
+                            pimpinan_rapat = st.text_input("Pimpinan Rapat:", "Manager UPDL Jakarta - Zaki Yamani Kertapati", key="notulen_pimpinan")
+                        with col_n2:
+                            st.markdown("<br>", unsafe_allow_html=True)
+                            btn_notulen = st.button("🚀 Generate Notulen (Word)", type="primary", use_container_width=True)
+                        
+                        if btn_notulen:
+                            df_rapat = df_at[df_at['Opsi_Rapat'] == rapat_terpilih].copy()
+                            tgl_rapat_val = str(df_rapat[col_tgl].iloc[0])
+                            jenis_rapat_val = str(df_rapat[col_jenis].iloc[0])
+                            jml_isu = len(df_rapat)
+                            
+                            with st.spinner("AI sedang merumuskan Ringkasan Eksekutif Notulen..."):
+                                narasi_notulen = ""
+                                if "GEMINI_API_KEY" in st.secrets:
+                                    try:
+                                        genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+                                        temp_model = genai.GenerativeModel("gemini-1.5-flash")
+                                        
+                                        data_ringkas = df_rapat[[col_isu, col_ap, col_pic]].to_string(index=False)
+                                        prompt_notulen = f"""
+                                        Buatkan Ringkasan Eksekutif Notulen (maksimal 2 paragraf) untuk agenda "{jenis_rapat_val}" pada tanggal {tgl_rapat_val}.
+                                        Data Pembahasan:
+                                        {data_ringkas}
+                                        
+                                        Tugas:
+                                        Rangkum fokus utama pembahasan dan arahan strategis dari manajemen. 
+                                        Gunakan bahasa korporat resmi yang lugas, tanpa menyebutkan angka/tabel rinci (karena tabel akan dilampirkan terpisah).
+                                        Jangan gunakan format markdown tebal berlebihan.
+                                        """
+                                        resp = temp_model.generate_content(prompt_notulen)
+                                        narasi_notulen = resp.text.strip().replace('\n', '<br>')
+                                    except Exception:
+                                        narasi_notulen = f"Rapat {jenis_rapat_val} ini membahas {jml_isu} pokok isu strategis dan operasional untuk ditindaklanjuti oleh fungsi-fungsi terkait di UPDL Jakarta."
+                                else:
+                                    narasi_notulen = f"Rapat membahas {jml_isu} pokok isu strategis dan operasional untuk ditindaklanjuti oleh fungsi-fungsi terkait di UPDL Jakarta."
+                                
+                                # Render Tabel Matriks Tindak Lanjut
+                                tabel_html = ""
+                                for i, r in df_rapat.iterrows():
+                                    tabel_html += f"""
+                                    <tr>
+                                        <td style="border: 1px solid #cbd5e1; padding: 8px;">{r.get(col_isu, '-')}</td>
+                                        <td style="border: 1px solid #cbd5e1; padding: 8px;">{r.get(col_ap, '-')}</td>
+                                        <td style="border: 1px solid #cbd5e1; padding: 8px; text-align:center;"><b>{r.get(col_pic, '-')}</b></td>
+                                        <td style="border: 1px solid #cbd5e1; padding: 8px; text-align:center;">{r.get(col_target, '-')}</td>
+                                        <td style="border: 1px solid #cbd5e1; padding: 8px; text-align:center;">{r.get(col_prog, '-')}</td>
+                                    </tr>
+                                    """
+                                
+                                html_notulen = f"""
+                                <html><head><meta charset="utf-8"></head>
+                                <body style="font-family: 'Segoe UI', Arial, sans-serif; font-size: 11pt; color: #1e293b;">
+                                    <table style="width:100%; border-bottom: 2px solid #003366; margin-bottom: 20px;">
+                                        <tr>
+                                            <td style="width:50%; text-align:left;"><img src="data:image/png;base64,{get_base64_img('logo_danantara.png')}" height="35" style="background:white; padding:3px;"></td>
+                                            <td style="width:50%; text-align:right;"><img src="data:image/png;base64,{get_base64_img('Logo PLN.png')}" height="50"></td>
+                                        </tr>
+                                    </table>
+                                    
+                                    <h2 style="text-align:center; color:#0055A4; margin-bottom:5px;">MINUTES OF MEETING (MOM)</h2>
+                                    <h3 style="text-align:center; margin-top:0;">{jenis_rapat_val.upper()}</h3>
+                                    <br>
+                                    
+                                    <table style="width:100%; border:none; margin-bottom:15px; font-size:11pt;">
+                                        <tr><td style="width:20%;"><b>Hari / Tanggal</b></td><td style="width:2%;">:</td><td style="width:78%;">{tgl_rapat_val}</td></tr>
+                                        <tr><td><b>Pimpinan Rapat</b></td><td>:</td><td>{pimpinan_rapat}</td></tr>
+                                        <tr><td><b>Agenda</b></td><td>:</td><td>Evaluasi Kinerja & Tindak Lanjut Organisasi ({jml_isu} Pokok Bahasan)</td></tr>
+                                    </table>
+                                    
+                                    <h4 style="color:#0055A4; border-bottom:1px solid #cbd5e1; padding-bottom:5px;">I. RINGKASAN PEMBAHASAN</h4>
+                                    <p style="text-align: justify; line-height: 1.6;">{narasi_notulen}</p>
+                                    
+                                    <h4 style="color:#0055A4; border-bottom:1px solid #cbd5e1; padding-bottom:5px; margin-top:20px;">II. MATRIKS KEPUTUSAN & TINDAK LANJUT</h4>
+                                    <table style="width:100%; border-collapse: collapse; font-size:10pt;" border="1">
+                                        <tr style="background-color:#003366; color:white; text-align:center;">
+                                            <th style="padding:8px; width:25%;">Isu / Pokok Bahasan</th>
+                                            <th style="padding:8px; width:35%;">Rencana Tindak Lanjut (Action Plan)</th>
+                                            <th style="padding:8px; width:15%;">PIC</th>
+                                            <th style="padding:8px; width:15%;">Target Waktu</th>
+                                            <th style="padding:8px; width:10%;">Status</th>
+                                        </tr>
+                                        {tabel_html}
+                                    </table>
+                                    
+                                    <table style="page-break-inside: avoid; width:100%; text-align:center; border: none; margin-top: 50px;">
+                                        <tr>
+                                            <td style="width:50%; border: none;">
+                                                Jakarta, {datetime.now().strftime('%d %B %Y')}<br>
+                                                Notulis,<br><br><br><br>
+                                                <b>( _________________________ )</b><br>Tim Pengendalian Mutu & Kinerja
+                                            </td>
+                                            <td style="width:50%; border: none;">
+                                                Mengetahui,<br>
+                                                <b>MANAGER UPDL</b><br><br>
+                                                <div style="font-size: 14pt; font-weight: 900; color: #000000; letter-spacing: 2px; margin: 10px 0;">[ APPROVED ]</div><br>
+                                                <b>{pimpinan_rapat.split('-')[-1].strip()}</b>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </body>
+                                </html>
+                                """
+                                
+                                st.success("✅ Notulen berhasil dirumuskan oleh AI!")
+                                st.download_button(
+                                    label="📥 DOWNLOAD NOTULEN RAPAT (.doc)",
+                                    data=html_notulen.encode('utf-8'),
+                                    file_name=f"Notulen_{jenis_rapat_val.replace(' ', '_')}_{tgl_rapat_val.replace(' ', '_')}.doc",
+                                    mime="application/msword",
+                                    type="primary",
+                                    use_container_width=True
+                                )
+                                with st.expander("👀 Pratinjau Dokumen Notulen"):
+                                    st.components.v1.html(html_notulen, height=500, scrolling=True)
+                                    
+                except Exception as e:
+                    st.error(f"Gagal memuat sistem Notulen: {e}")
 
     # ══════════════════════════════════════════════════════════════════════════════
     # KONTEN: ⚙️ PENGATURAN
