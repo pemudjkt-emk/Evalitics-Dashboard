@@ -4263,10 +4263,13 @@ else:
                             jenis_rapat_val = str(rapat_terpilih).split(" — ")[-1].strip()
                             tgl_rapat_dt = pd.to_datetime(tgl_rapat_val, errors='coerce')
                             
-                            # Logika Pemisahan Tabel Isu Baru vs Outstanding
-                            df_isu_baru = df_at[df_at['Tanggal_DT'] == tgl_rapat_dt].copy()
+                            # 1. Tabel Isu Baru (Dari rapat yang sedang dipilih)
+                            df_isu_baru = df_at[df_at['Opsi_Rapat'] == rapat_terpilih].copy()
+                            
+                            # 2. Tabel Tinjauan Outstanding (Dari rapat jenis yang sama pada tanggal sebelumnya)
                             df_isu_outstanding = df_at[
                                 (df_at['Tanggal_DT'] < tgl_rapat_dt) & 
+                                (df_at[col_jenis] == jenis_rapat_val) & 
                                 (df_at[col_prog].str.upper() != 'DONE')
                             ].copy()
                             
@@ -4316,7 +4319,7 @@ else:
                                     return html_rows
                                 
                                 tabel_outstanding_html = render_tabel_matriks(df_isu_outstanding)
-                                tabel_baru_html = render_tabel_matriks(df_isu_baru)
+                                tabel_baru_html = render_tabel_matriks(df_isu_baru
                                 
                                 html_notulen = f"""
                                 <html><head><meta charset="utf-8"></head>
